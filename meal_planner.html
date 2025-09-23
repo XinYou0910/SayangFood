@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Weekly Meal Planner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{font-family:system-ui,Arial,sans-serif;margin:24px;background:#f8fafc;color:#111}
+    .wrap{max-width:1100px;margin:0 auto}
+    .row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .btn{padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;cursor:pointer}
+    .primary{background:#4f46e5;color:#fff;border-color:#4f46e5}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px;margin:16px 0}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid #eee;vertical-align:top}
+    th{color:#6b7280}
+    select,input{width:100%;padding:8px;border:1px solid #d1d5db;border-radius:8px}
+    .sub{font-size:12px;color:#6b7280}
+    .flash{padding:10px;border-radius:10px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;margin:10px 0}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Weekly Meal Planner</h1>
+
+  <?php if($flash): ?>
+    <div class="flash"><?= htmlspecialchars($flash['msg'] ?? '', ENT_QUOTES) ?></div>
+  <?php endif; ?>
+
+  <div class="row">
+    <div class="sub">
+      Week of <strong><?= $weekStart->format('Y-m-d') ?></strong> (Mon–Sun)
+    </div>
+    <div class="row" style="gap:8px">
+      <a class="btn" href="?week=<?= (clone $weekStart)->modify('-7 days')->format('Y-m-d') ?>">◀ Prev week</a>
+      <a class="btn" href="?week=<?= (new DateTime('monday this week'))->format('Y-m-d') ?>">This week</a>
+      <a class="btn" href="?week=<?= (clone $weekStart)->modify('+7 days')->format('Y-m-d') ?>">Next week ▶</a>
+    </div>
+  </div>
+
+  <form method="post" action="meal_save.php" class="card">
+    <input type="hidden" name="plan_id" value="<?= $planId ?>">
+    <input type="hidden" name="week_start" value="<?= $weekStart->format('Y-m-d') ?>">
+
+    <table>
+      <thead>
+        <tr>
+          <th>Day</th>
+          <th>Breakfast</th>
+          <th>Lunch</th>
+          <th>Dinner</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php
+          $slots = ['breakfast','lunch','dinner'];
+          foreach ($weekDates as $d):
+            $dateStr = $d->format('Y-m-d');
+        ?>
+        <tr>
+          <td style="width:140px">
+            <strong><?= $d->format('D') ?></strong><br>
+            <span class="sub"><?= $dateStr ?></span>
+          </td>
+          <?php foreach ($slots as $slot): ?>
+            <td>
+              <label class="sub">Pick from inventory</label>
+              <select name="item_id[<?= $dateStr ?>][<?= $slot ?>]">
+                <option value="">— None —</option>
+                <?php foreach($inventory as $it):
+                  $sel = (string)$it['item_id'] === (string)entryItemId($entries,$dateStr,$slot) ? 'selected' : '';
+                  $expBadge = '';
+                  $expDays = (new DateTime($it['expiry_date']))->diff(new DateTime('today'))->format('%r%a');
+                  if ((int)$expDays < 0) $expBadge = ' (EXPIRED)';
+                ?>
+                  <option value="<?= (int)$it['item_id'] ?>" <?= $sel ?>>
+                    <?= htmlspecialchars($it['item_name']) ?> — Qty <?= (int)$it['quantity'] ?> (exp <?= htmlspecialchars($it['expiry_date']) ?>)<?= $expBadge ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+              <label class="sub" style="margin-top:6px;display:block">Or type a dish name (optional)</label>
+              <input name="dish[<?= $dateStr ?>][<?= $slot ?>]" value="<?= htmlspecialchars(entryDish($entries,$dateStr,$slot)) ?>" placeholder="e.g., Tomato Egg / Fried Rice" />
+            </td>
+          <?php endforeach; ?>
+        </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+
+    <div class="row" style="margin-top:12px">
+      <a class="btn" href="index.html">Back to Home</a>
+      <button class="btn primary" type="submit">Save Weekly Plan</button>
+    </div>
+  </form>
+
+  <div class="card">
+    <h3 style="margin:0 0 8px">Tips</h3>
+    <ul class="sub">
+      <li>Choosing an inventory item links the meal to what you actually have.</li>
+      <li>If you only type a dish name, the entry saves without an inventory link.</li>
+      <li>Use “Prev/Next week” to plan other weeks.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
