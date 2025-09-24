@@ -21,10 +21,25 @@ body {
   width: 240px;
 }
 
-.sidebar h2 {
-  text-align: center;
-  font-size: 18px;
+/* Logo at top */
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 30px;
+  padding: 0 10px;
+  text-align: left;
+}
+
+.logo-img {
+  width: 40px;   /* adjust size of logo */
+  height: 40px;
+  margin-right: 10px;
+}
+
+.logo-text .brand {
+  font-size: 18px;
+  font-weight: bold;
   color: #333;
 }
 
@@ -37,6 +52,8 @@ body {
   width: 100%;
   font-size: 15px;
   transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
 }
 
 .menu-item.active {
@@ -47,6 +64,14 @@ body {
 
 .menu-item:hover {
   background: #d4ed91;
+}
+
+/* Sidebar icons */
+.icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 10px;
+  vertical-align: middle;
 }
 
 /* Dropdown container */
@@ -79,6 +104,13 @@ body {
   font-size: 14px;
   color: #555;
   border-top: 1px solid #ddd;
+}
+
+.profile-img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  margin-bottom: 8px;
 }
 
 /* Main content */
