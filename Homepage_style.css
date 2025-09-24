@@ -57,6 +57,30 @@ nav button:hover {
   color: #fff;
 }
 
+/* Sign up button - Grey */
+.signup-btn {
+  border: none;
+  background: grey;
+  color: white;
+}
+
+.signup-btn:hover {
+  background: #000;
+}
+
+/* Log in button - outlined */
+.login-btn {
+  border: 2px solid #000;
+  background: transparent;
+  color: #000;
+}
+
+.login-btn:hover {
+  background: #000;
+  color: #fff;
+}
+
+
 /* Hero Section */
 .hero {
   display: flex;
