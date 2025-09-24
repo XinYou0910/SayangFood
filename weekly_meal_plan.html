@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Weekly Meal Plan • SayangFood</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="script.js"></script>
+<style>
+  :root{
+    --bg:#f7f9fb; --card:#fff; --text:#0f172a; --muted:#64748b; --border:#e5e7f0;
+    --brand:#15803d; --brand-2:#16a34a; --ok:#16a34a;
+    --shadow: 0 6px 24px rgba(2,6,23,.06), 0 2px 6px rgba(2,6,23,.06);
+    --radius: 14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);background:var(--bg)}
+  a{color:inherit;text-decoration:none}
+
+  .container{max-width:1150px;margin:0 auto;padding:20px}
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:12px 0}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{width:36px;height:36px;object-fit:contain;border-radius:8px;display:block}
+  .name{font-weight:800;font-size:20px;background:linear-gradient(180deg,var(--brand),var(--brand-2));
+        -webkit-background-clip:text;background-clip:text;color:transparent}
+  .menu{display:flex;gap:18px}
+  .menu a{color:var(--muted);padding:6px 8px;border-radius:10px}
+  .menu a:hover{background:rgba(0,0,0,.04);color:var(--text)}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;font-weight:600;cursor:pointer}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.ghost{background:#fff;border-color:#dbe3ef}
+  .btn.reject{border-color:#fecaca;background:#fff;color:#991b1b}
+  .btn.accept{background:var(--ok);border-color:var(--ok);color:#fff}
+
+  .page-title{font-size:36px;font-weight:800;margin:6px 0 8px}
+  .bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:18px 0}
+  .pill{background:#eef2ff;color:#3730a3;border:1px solid #e0e7ff;padding:6px 10px;border-radius:999px;font-weight:600}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+  .card h3{margin:0 0 8px}
+  .note{font-size:13px;color:var(--muted)}
+
+  table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:12px;border:1px solid var(--border)}
+  thead th{background:#f3f6fb;color:#475569;font-weight:700}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  .status{font-size:12px;padding:3px 8px;border-radius:999px;border:1px solid #e2e8f0;display:inline-block}
+  .status.warn{background:#fff7ed;border-color:#fed7aa;color:#a16207}
+  .status.ok{background:#ecfdf5;border-color:#bbf7d0;color:#166534}
+
+  .suggest-actions{display:flex;justify-content:space-between;gap:12px;margin-top:10px}
+  .footer-actions{display:flex;justify-content:flex-end;gap:12px;margin-top:16px}
+
+  input[type="text"], input[type="date"], select{
+    width:100%; padding:8px; border:1px solid var(--border); border-radius:10px; background:#fff;
+  }
+  @media (max-width: 860px){ .menu{display:none} .page-title{font-size:28px} table{font-size:14px} }
+</style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="nav">
+      <a class="brand" href="index.html">
+        <img src="Logo.png" class="logo" alt="SayangFood" width="36" height="36">
+        <div class="name">SayangFood</div>
+      </a>
+      <nav class="menu">
+        <a href="index.html">Home</a>
+        <a href="inventory_list.php">Inventory</a>
+        <a href="meal_planner.php" style="font-weight:700;color:#0f172a">Meal Planner</a>
+        <a href="donations.php">Donations</a>
+      </nav>
+    </div>
+
+    <div class="page-title">Weekly Meal Plan</div>
+    <div class="bar">
+      <div class="pill">This Week</div>
+      <div>
+        <button class="btn ghost">◀ Prev</button>
+        <button class="btn ghost">This Week</button>
+        <button class="btn ghost">Next ▶</button>
+      </div>
+    </div>
+
+    <!-- This Week -->
+    <section class="card">
+      <h3>This Week</h3>
+      <table id="weekTable">
+        <thead>
+          <tr>
+            <th style="width:125px">Meal Date</th>
+            <th style="width:110px">Meal Slot</th>
+            <th>Meal Name</th>
+            <th>Item Name</th>
+            <th style="width:90px">Quantity</th>
+            <th>Remark</th>
+            <th style="width:120px">Status</th>
+          </tr>
+        </thead>
+        <tbody id="weekBody">
+          <!-- One filled sample row (plain text) -->
+            <tr>
+                <td data-field="date">2025-09-20</td>
+                <td data-field="slot">Breakfast</td>
+                <td data-field="meal">Boiled Chicken Breast</td>
+                <td data-field="item">Chicken Breast</td>
+                <td data-field="qty">800g</td>
+                <td data-field="remark">After Workout</td>
+                <td><span class="status warn">Ingredient Insufficient</span></td>
+            </tr>
+            <tr id="addRow">
+                <td colspan="7" style="text-align:center; padding:16px;">
+                <button onclick="addNewMealRow()" style="padding:12px 20px; border:2px dashed #cbd5e1;
+                    border-radius:12px; background:#f9fafb; cursor:pointer; font-size:18px; font-weight:600; color:#475569;">
+                    ＋ Add Meal
+                </button>
+                </td>
+            </tr>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Suggested -->
+    <section class="card" style="margin-top:18px">
+      <h3>Suggested Meal Plan</h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:125px">Meal Date</th>
+            <th style="width:110px">Meal Slot</th>
+            <th>Meal Name</th>
+            <th>Item Name</th>
+            <th style="width:90px">Quantity</th>
+            <th>Remark</th>
+            <th style="width:120px">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="suggestRow">
+            <td>2025-09-21</td>
+            <td>Lunch</td>
+            <td>Tomato, Egg</td>
+            <td>Canned Beans</td>
+            <td>1 can</td>
+            <td>Prepare for Kids</td>
+            <td><span class="status ok">Available</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="suggest-actions">
+        <button class="btn reject" onclick="rejectSuggestion()">Reject</button>
+        <button class="btn accept" onclick="acceptSuggestion()">Accept</button>
+      </div>
+    </section>
+
+    <!-- Actions -->
+    <div class="footer-actions">
+      <button class="btn" id="editBtn" onclick="toggleEdit(true)">Edit</button>
+      <button class="btn primary" onclick="savePlan()">Create Meal Plan</button>
+    </div>
+  </div>
+
+<script>
+  let editing = false;
+
+  function cellToInput(td){
+    const field = td.getAttribute('data-field');
+    const val = td.textContent.trim();
+    let html = '';
+
+    if (field === 'date'){
+      html = `<input type="date" value="${val}">`;
+    } else if (field === 'slot'){
+      const opts = ['Breakfast','Lunch','Dinner']
+        .map(o => `<option ${o===val?'selected':''}>${o}</option>`).join('');
+      html = `<select>${opts}</select>`;
+    } else {
+      html = `<input type="text" value="${val}" placeholder="${placeholderFor(field)}">`;
+    }
+    td.innerHTML = html;
+  }
+
+  function inputToCell(td){
+    const field = td.getAttribute('data-field');
+    const input = td.querySelector('input,select');
+    const val = input ? input.value.trim() : '';
+    td.textContent = val;
+  }
+
+  function placeholderFor(field){
+    return ({
+      meal:'Meal name…',
+      item:'Item name…',
+      qty:'Qty',
+      remark:'Remark'
+    }[field] || '');
+  }
+
+  function toggleEdit(enable){
+    editing = enable;
+    const body = document.getElementById('weekBody');
+    const tds = body.querySelectorAll('td[data-field]');
+
+    if (editing){
+      tds.forEach(td => cellToInput(td));
+      document.getElementById('editBtn').disabled = true;
+    } else {
+      tds.forEach(td => inputToCell(td));
+      document.getElementById('editBtn').disabled = false;
+    }
+  }
+
+  function acceptSuggestion(){
+    const s = document.querySelector('#suggestRow').children;
+    const rowData = {
+      date: s[0].textContent.trim(),
+      slot: s[1].textContent.trim(),
+      meal: s[2].textContent.trim(),
+      item: s[3].textContent.trim(),
+      qty : s[4].textContent.trim(),
+      remark: s[5].textContent.trim(),
+      status: 'Accepted'
+    };
+    appendWeekRow(rowData);
+    document.getElementById('suggestRow').style.opacity = .45;
+  }
+
+  function appendWeekRow(data){
+    const body = document.getElementById('weekBody');
+    const tr = document.createElement('tr');
+
+    function tdField(name, value){
+      const td = document.createElement('td');
+      td.setAttribute('data-field', name);
+      td.textContent = value || '';
+      if (editing) cellToInput(td);
+      return td;
+    }
+
+    tr.appendChild(tdField('date', data.date));
+    tr.appendChild(tdField('slot', data.slot));
+    tr.appendChild(tdField('meal', data.meal));
+    tr.appendChild(tdField('item', data.item));
+    tr.appendChild(tdField('qty', data.qty));
+    tr.appendChild(tdField('remark', data.remark));
+
+    const statusTd = document.createElement('td');
+    statusTd.innerHTML = `<span class="status ok">${data.status || ''}</span>`;
+    tr.appendChild(statusTd);
+
+    body.appendChild(tr);
+  }
+
+  function rejectSuggestion(){
+    const chip = document.querySelector('#suggestRow .status');
+    chip.className = 'status';
+    chip.textContent = 'Rejected';
+    document.getElementById('suggestRow').style.opacity = .35;
+  }
+
+  function savePlan(){
+    // If in edit mode, convert inputs back to text (so you can serialize easily or POST form fields you collect separately)
+    if (editing){
+      toggleEdit(false);
+    }
+    alert('Here you would gather the table data and POST to meal_save.php.');
+  }
+</script>
+</body>
+</html>
