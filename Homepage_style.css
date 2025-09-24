@@ -41,16 +41,18 @@ header {
   color: #666;
 }
 
-nav button {
+nav button,
+nav a {
   margin-left: 10px;
   padding: 8px 18px;
-  border: 2px solid #000;
   border-radius: 25px;
-  background: transparent;
-  cursor: pointer;
   font-weight: bold;
+  cursor: pointer;
+  text-decoration: none; /* remove underline from <a> */
+  display: inline-block; /* make <a> behave like button */
   transition: 0.3s;
 }
+
 
 nav button:hover {
   background: #000;
@@ -59,9 +61,9 @@ nav button:hover {
 
 /* Sign up button - Grey */
 .signup-btn {
-  border: none;
   background: grey;
   color: white;
+  border: none;
 }
 
 .signup-btn:hover {
