@@ -22,7 +22,7 @@ body {
   line-height: 1.6;
 }
 
-/* Enhanced Sidebar */
+/*Sidebar*/
 .sidebar {
   width: 260px;
   background: linear-gradient(180deg, var(--bg-white) 0%, #f7f9f8 100%);
@@ -40,7 +40,7 @@ body {
   box-shadow: 4px 0 15px var(--shadow-medium);
 }
 
-/* Enhanced Logo area */
+/*logo*/
 .logo-container {
   display: flex;
   align-items: center;
@@ -73,7 +73,7 @@ body {
   text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
 }
 
-/* Enhanced Menu items */
+/*menuitem*/
 .menu-item {
   padding: 15px 25px;
   cursor: pointer;
@@ -121,7 +121,7 @@ body {
   filter: brightness(1) invert(1);
 }
 
-/* Enhanced Dropdown */
+/*dropdown*/
 .dropdown-container {
   display: none;
   flex-direction: column;
@@ -153,7 +153,7 @@ body {
   transform: translateX(3px);
 }
 
-/* Enhanced Profile */
+/*profile*/
 .profile {
   margin-top: auto;
   padding: 20px;
@@ -182,7 +182,7 @@ body {
   font-weight: bold;
 }
 
-/* Enhanced Main content */
+/*main content*/
 .main {
   flex: 1;
   padding: 30px;
@@ -197,7 +197,7 @@ body {
   text-shadow: 1px 1px 2px var(--shadow-light);
 }
 
-/* Enhanced Filter + Search */
+/*Filter + Search*/
 .controls {
   margin: 20px 0 25px 0;
   display: flex;
@@ -226,7 +226,7 @@ body {
   box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
 }
 
-/* Enhanced Table */
+/*Table*/
 table {
   width: 100%;
   border-collapse: collapse;
@@ -262,7 +262,7 @@ tr:hover {
   transition: all 0.2s ease;
 }
 
-/* Enhanced Buttons */
+/*buttons*/
 .action-btn {
   padding: 8px 16px;
   margin: 3px;
@@ -318,7 +318,7 @@ tr:hover {
   box-shadow: 0 8px 25px rgba(230, 126, 34, 0.4);
 }
 
-/* Enhanced Popup */
+/*popup*/
 .popup {
   display: none;
   position: fixed;
@@ -396,7 +396,7 @@ tr:hover {
   box-shadow: 0 4px 12px var(--shadow-medium);
 }
 
-/* Enhanced Mobile Responsive */
+/*size adjustment*/
 .menu-toggle {
   display: none;
   position: fixed;
