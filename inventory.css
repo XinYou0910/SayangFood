@@ -162,6 +162,18 @@ body {
   color: var(--text-medium);
   border-top: 2px solid var(--border-light);
   background: var(--bg-light);
+  border-radius: 10px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.profile:hover {
+  background-color: #7fab8b;
+  cursor: pointer;
+  transform: scale(1.02); 
+}
+
+.profile:hover .username {
+  color: white;
 }
 
 .profile-img {
