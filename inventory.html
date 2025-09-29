@@ -1,65 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SayangFood - Food Inventory</title>
-  <!--font-->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="inventory.css">
 </head>
 <body>
-  <!--sidebar-->
-<div class="sidebar">
-  <div class="logo-container">
-  <img src="pic/logo.png" alt="SayangFood Logo" class="logo-img">
-  <div class="logo-text">
-    <span class="brand">SayangFood</span><br>
-    <small>Food Management System</small>
-  </div>
-</div>
 
+  <!-- Hamburger Menu Button -->
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
 
-  <button class="menu-item">
-    <img src="pic/home.png" alt="Home" class="icon"> Home
-  </button>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo-container">
+      <img src="pic/logo.png" alt="SayangFood Logo" class="logo-img">
+      <div class="logo-text">
+        <span class="brand">SayangFood</span><br>
+        <small>Food Management System</small>
+      </div>
+    </div>
 
-  <!-- Dropdown -->
-  <button class="menu-item dropdown-btn">
-    <img src="pic/search.png" alt="Browse" class="icon"> Browse Food Items
-  </button>
-  <div class="dropdown-container">
-    <button>Inventory</button>
-    <button>Weekly Meal</button>
-    <button>Donations</button>
-    <button>Shopping List</button>
-  </div>
+    <button class="menu-item active">
+      <img src="pic/home.png" alt="Home Icon" class="icon"> Home
+    </button>
 
-  <button class="menu-item">
-    <img src="pic/data-analytics.png" alt="Analytics" class="icon"> Food Analytics
-  </button>
+    <button class="menu-item dropdown-btn">
+      <img src="pic/search.png" alt="Browse Icon" class="icon"> Browse Food Items
+    </button>
 
-  <button class="menu-item">
-    <img src="pic/notification.png" alt="Notification" class="icon"> Notification
-  </button>
+    <div class="dropdown-container">
+      <button>Inventory</button>
+      <button>Weekly Meal</button>
+      <button>Donations</button>
+      <button>Shopping List</button>
+    </div>
 
-  <div class="profile">
-    <img src="pic/user.png" alt="User" class="profile-img">
-    <div class="profile-info">
-      <p class="username">ZhiLim</p>
-      <p class="role">User Profile</p>
+    <button class="menu-item">
+      <img src="pic/data-analytics.png" alt="Analytics Icon" class="icon"> Food Analytics
+    </button>
+
+    <button class="menu-item">
+      <img src="pic/notification.png" alt="Notification Icon" class="icon"> Notification
+    </button>
+
+    <div class="profile">
+      <img src="pic/user.png" alt="User" class="profile-img">
+      <div class="profile-info">
+        <p class="username">ZhiLim</p>
+        <p class="role">User Profile</p>
+      </div>
     </div>
   </div>
-</div>
 
-
-  <!--content-->
+  <!-- Main Content -->
   <div class="main">
     <div class="header">
       <h1>Food Item Inventory</h1>
     </div>
 
-    <!--FilterSearch-->
+    <!-- Filter + Search -->
     <div class="controls">
       <select>
         <option value="all">Filter by...</option>
@@ -116,7 +117,7 @@
     <button class="add-btn" onclick="openPopup()">Add New Food</button>
   </div>
 
-  <!--form-->
+  <!-- Popup Form -->
   <div class="popup" id="popupForm">
     <div class="popup-content">
       <h2>Add New Food Item</h2>
