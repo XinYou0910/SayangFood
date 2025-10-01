@@ -48,36 +48,21 @@
             <th>Status</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="weekTableBody">
           <tr>
-            <td><input type="date" value="2025-09-20"></td>
-            <td>
-              <select>
-                <option>Breakfast</option>
-                <option>Lunch</option>
-                <option>Dinner</option>
-              </select>
+            <td><span>20/09/2025</span><input type="date" value="2025-09-20" hidden></td>
+            <td><span>Breakfast</span>
+                <select hidden>
+                  <option>Breakfast</option>
+                  <option>Lunch</option>
+                  <option>Dinner</option>
+                </select>
             </td>
-            <td><input type="text" value="Boiled Chicken Breast"></td>
-            <td><input type="text" value="Chicken Breast"></td>
-            <td><input type="text" value="800g"></td>
-            <td><input type="text" value="After Workout"></td>
-            <td><span class="status status-warning">Ingredient Insufficient</span></td>
-          </tr>
-          <tr>
-            <td><input type="date"></td>
-            <td>
-              <select>
-                <option>Breakfast</option>
-                <option>Lunch</option>
-                <option>Dinner</option>
-              </select>
-            </td>
-            <td><input type="text" placeholder="Meal name"></td>
-            <td><input type="text" placeholder="Item name"></td>
-            <td><input type="text" placeholder="Qty"></td>
-            <td><input type="text" placeholder="Remark"></td>
-            <td><span class="status">—</span></td>
+            <td><span>Boiled Chicken Breast</span><input type="text" value="Boiled Chicken Breast" hidden></td>
+            <td><span>Chicken Breast</span><input type="text" value="Chicken Breast" hidden></td>
+            <td><span>800g</span><input type="text" value="800g" hidden></td>
+            <td><span>After Workout</span><input type="text" value="After Workout" hidden></td>
+            <td><span class="status warn">Ingredient Insufficient</span></td>
           </tr>
         </tbody>
       </table>
@@ -114,9 +99,9 @@
       <button class="btn btn-green">Accept</button>
     </div>
 
-    <div class="actions">
-      <button class="btn btn-gray">Edit</button>
-      <button class="btn btn-green">Save Weekly Plan</button>
+    <div class="footer-actions">
+      <button id="editBtn" class="btn neutral" onclick="toggleEditMode()">Edit</button>
+      <button id="saveBtn" class="btn primary" onclick="saveWeeklyPlan()" disabled>Save Weekly Plan</button>
     </div>
   </div>
 </body>
