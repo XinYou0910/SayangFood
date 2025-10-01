@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Weekly Meal Planner • SayangFood</title>
+  <title>Weekly Meal Planner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="meal_plan.css">
 </head>
 <body>
@@ -13,38 +13,28 @@
       <h2>SayangFood</h2>
       <p>Food Management System</p>
     </div>
-    <nav>
-      <a href="index.html">🏠 Home</a>
-      <div class="dropdown">
-        <button class="dropbtn">🔍 Browse Food Items</button>
-        <div class="dropdown-content">
-          <a href="inventory_list.html">Inventory</a>
-          <a href="meal_planner.html" class="active">Weekly Meal</a>
-          <a href="donations.html">Donations</a>
-          <a href="shopping_list.html">Shopping List</a>
-        </div>
-      </div>
-      <a href="analytics.html">📊 Food Analytics</a>
-      <a href="notifications.html">🔔 Notification</a>
-    </nav>
-    <div class="user-profile">
+    <ul class="nav">
+      <li><a href="index.html" class="active">🏠 Home</a></li>
+      <li><a href="#">🔍 Browse Food Items</a></li>
+      <li><a href="inventory.html">📦 Inventory</a></li>
+      <li><a href="meal_planner.html">🥗 Weekly Meal</a></li>
+      <li><a href="donations.html">🎁 Donations</a></li>
+      <li><a href="shopping_list.html">🛒 Shopping List</a></li>
+      <li><a href="#">📊 Food Analytics</a></li>
+      <li><a href="#">🔔 Notification</a></li>
+    </ul>
+    <div class="profile">
       <img src="pic/user.png" alt="User Profile">
       <p>ZhiLim</p>
-      <span>User Profile</span>
+      <small>User Profile</small>
     </div>
   </div>
 
-  <div class="main">
-    <header>
-      <h1>Weekly Meal Planner</h1>
-      <div class="week-nav">
-        <button class="btn">◀ Prev Week</button>
-        <button class="btn active">This Week</button>
-        <button class="btn">Next Week ▶</button>
-      </div>
-    </header>
+  <div class="main-content">
+    <h1>Weekly Meal Planner</h1>
 
-    <section class="card">
+    <!-- This Week -->
+    <div class="card">
       <h2>This Week</h2>
       <table>
         <thead>
@@ -72,7 +62,7 @@
             <td><input type="text" value="Chicken Breast"></td>
             <td><input type="text" value="800g"></td>
             <td><input type="text" value="After Workout"></td>
-            <td><span class="status warn">Ingredient Insufficient</span></td>
+            <td><span class="status status-warning">Ingredient Insufficient</span></td>
           </tr>
           <tr>
             <td><input type="date"></td>
@@ -87,13 +77,14 @@
             <td><input type="text" placeholder="Item name"></td>
             <td><input type="text" placeholder="Qty"></td>
             <td><input type="text" placeholder="Remark"></td>
-            <td></td>
+            <td><span class="status">—</span></td>
           </tr>
         </tbody>
       </table>
-    </section>
+    </div>
 
-    <section class="card">
+    <!-- Suggested Meal Plan -->
+    <div class="card">
       <h2>Suggested Meal Plan</h2>
       <table>
         <thead>
@@ -115,20 +106,18 @@
             <td>Canned Beans</td>
             <td>1 can</td>
             <td>Prepare for Kids</td>
-            <td><span class="status ok">Available</span></td>
+            <td><span class="status status-available">Available</span></td>
           </tr>
         </tbody>
       </table>
-      <div class="actions">
-        <button class="btn reject">Reject</button>
-        <button class="btn accept">Accept</button>
-      </div>
-    </section>
+      <button class="btn btn-red">Reject</button>
+      <button class="btn btn-green">Accept</button>
+    </div>
 
-    <footer class="footer-actions">
-      <button class="btn">Edit</button>
-      <button class="btn primary">Save Weekly Plan</button>
-    </footer>
+    <div class="actions">
+      <button class="btn btn-gray">Edit</button>
+      <button class="btn btn-green">Save Weekly Plan</button>
+    </div>
   </div>
 </body>
 </html>
