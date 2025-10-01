@@ -3,7 +3,7 @@
         'name' => '__root__',
         'pretty_version' => 'dev-register&privacy-branch',
         'version' => 'dev-register&privacy-branch',
-        'reference' => 'aaeab400b8c3f846b16b046a06c8c47860acd66b',
+        'reference' => 'c8a0777f68734abc3741cdb7b2d92100221a87e2',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         '__root__' => array(
             'pretty_version' => 'dev-register&privacy-branch',
             'version' => 'dev-register&privacy-branch',
-            'reference' => 'aaeab400b8c3f846b16b046a06c8c47860acd66b',
+            'reference' => 'c8a0777f68734abc3741cdb7b2d92100221a87e2',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
