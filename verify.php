@@ -1,9 +1,9 @@
 <?php
 include 'db_connect.php';
 
-if (isset($_GET['email']) && isset($_GET['code'])) {
-    $email = $_GET['email'];
-    $code  = $_GET['code'];
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $email = $_POST['email'];
+    $code  = $_POST['code'];
 
     $stmt = $conn->prepare("SELECT verification_code FROM users WHERE email=? AND is_verified=0");
     $stmt->bind_param("s", $email);
@@ -12,7 +12,7 @@ if (isset($_GET['email']) && isset($_GET['code'])) {
     $stmt->fetch();
     $stmt->close();
 
-    if ($db_code === $code) {
+    if ($db_code && $db_code === $code) {
         $update = $conn->prepare("UPDATE users SET is_verified=1 WHERE email=?");
         $update->bind_param("s", $email);
         $update->execute();
@@ -20,5 +20,7 @@ if (isset($_GET['email']) && isset($_GET['code'])) {
     } else {
         echo "❌ Invalid or expired verification code.";
     }
+} else {
+    echo "⚠️ Please submit the form.";
 }
 ?>

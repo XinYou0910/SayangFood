@@ -61,16 +61,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $mail->Subject = 'Welcome to SayangFood - Verify Your Account';
            // build base URL dynamically
             $base_url = "http://localhost/" . basename(__DIR__);
-            $verify_link = $base_url . "/verify.php?email=$email&code=$verification_code";
+            $verify_link = "http://localhost/SayangFood/verify.php?email=$email&code=$verification_code";
+
 
 // email body
             $mail->Body = "
                 <h2>Welcome to SayangFood, $user_name!</h2>
                 <p>Thank you for registering.</p>
                 <p>Your 6-digit verification code is: <b>$verification_code</b></p>
-                <p>Or click this link to verify:</p>
-                <a href='$verify_link'>Verify My Account</a>
+                <p>Please go to the verification page and enter your code:</p>
+                <a href='http://localhost/SayangFood/verify.html'>Verify My Account</a>
             ";
+
 
 
             $mail->send();
