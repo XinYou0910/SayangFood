@@ -1,0 +1,123 @@
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #fefffd; /* light green background */
+}
+
+.container {
+  width: 700px;
+  height: 550px;
+  margin: 220px auto;
+  display: flex;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Left side */
+.left {
+  flex: 1;
+  background: #5cdf5c;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  text-align: center;
+}
+
+.left h2 {
+  margin: 20px 0 10px;
+  font-weight: bold;
+}
+
+.left p {
+  color: #555;
+  font-size: 14px;
+  margin-bottom: 40px;
+}
+
+.signup-btn {
+  display: inline-block;
+  padding: 10px 25px;
+  font-size: 16px;
+  font-weight: bold;
+  border: 1px solid #000;
+  background: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  text-decoration: none; /* remove underline for <a> */
+  color: #000;
+  transition: all 0.3s ease;
+}
+
+.signup-btn:hover {
+  background: #000;
+  color: #fff;
+}
+
+/* Right side */
+.right {
+  flex: 1.5;
+  padding: 50px;
+}
+
+.right h2 {
+  margin-bottom: 30px;
+  font-size: 26px;
+  font-weight: bold;
+}
+
+label {
+  display: block;
+  margin: 15px 0 5px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0 20px;
+  font-size: 12px;
+}
+
+.options label {
+  font-weight: normal;
+  display: flex;
+  align-items: center;
+}
+
+.options input {
+  margin-right: 5px;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  background: #5cdf5c; /* active green */
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.login-btn:hover {
+  background: #46b346;
+}
+
