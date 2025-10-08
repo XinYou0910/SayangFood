@@ -1,0 +1,45 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <link rel="stylesheet" href="login.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Left Side -->
+    <div class="left">
+      <h3>LOGO</h3>
+      <h2>SayangFood</h2>
+      <p>Your Smart Food Waste Management System</p>
+      <!-- Sign Up button that redirects -->
+      <a href="register.html" class="signup-btn">Sign up</a>
+    </div>
+
+    <!-- Right Side -->
+    <div class="right">
+      <h2>Login</h2>
+      <!-- Added action + method -->
+      <form action="login.php" method="POST">
+        <label for="email">Email</label>
+        <!-- Added name="email" -->
+        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+
+        <label for="password">Password</label>
+        <!-- Added name="password" -->
+        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+
+        <div class="options">
+          <label><input type="checkbox" name="remember"> Remember Me</label>
+          <a href="forgot_password.html">Forgot Password?</a>
+        </div>
+
+        <button type="submit" class="login-btn">Log In</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
+```
