@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SayangFood - Food Inventory</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="inventory.css">
+</head>
+<body>
+
+  <!-- Hamburger Menu Button -->
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo-container">
+      <img src="pic/logo.png" alt="SayangFood Logo" class="logo-img">
+      <div class="logo-text">
+        <span class="brand">SayangFood</span><br>
+        <small>Food Management System</small>
+      </div>
+    </div>
+
+    <button class="menu-item">
+      <img src="pic/home.png" alt="Home Icon" class="icon"> Home
+    </button>
+
+    <button class="menu-item dropdown-btn">
+      <img src="pic/search.png" alt="Browse Icon" class="icon"> Browse Food Items
+    </button>
+
+    <div class="dropdown-container">
+      <button>Inventory</button>
+      <button>Weekly Meal</button>
+      <button>Donations</button>
+      <button>Shopping List</button>
+    </div>
+
+    <button class="menu-item">
+      <img src="pic/data-analytics.png" alt="Analytics Icon" class="icon"> Food Analytics
+    </button>
+
+    <button class="menu-item">
+      <img src="pic/notification.png" alt="Notification Icon" class="icon"> Notification
+    </button>
+
+    <div class="profile">
+      <img src="pic/user.png" alt="User" class="profile-img">
+      <div class="profile-info">
+        <p class="username">ZhiLim</p>
+        <p class="role">User Profile</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <div class="header">
+      <h1>Food Item Inventory</h1>
+    </div>
+
+    <!-- Filter + Search -->
+    <div class="controls">
+      <select>
+        <option value="all">Filter by...</option>
+        <option value="item">Item Name</option>
+        <option value="category">Category</option>
+        <option value="quantity">Quantity</option>
+        <option value="expiry">Expiry Date</option>
+        <option value="storage">Storage Place</option>
+        <option value="remark">Remark</option>
+        <option value="status">Status</option>
+      </select>
+      <input type="text" placeholder="Search item name...">
+    </div>
+
+    <table>
+      <tr>
+        <th>Item Name</th>
+        <th>Category</th>
+        <th>Quantity</th>
+        <th>Expiry Date</th>
+        <th>Storage Place</th>
+        <th>Remark</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+      <tr>
+        <td>Chicken Breast</td>
+        <td>Meat</td>
+        <td>750g</td>
+        <td>15/10/2025</td>
+        <td>Fridge</td>
+        <td>After Workout</td>
+        <td>Available</td>
+        <td>
+          <button class="action-btn edit-btn">Edit</button>
+          <button class="action-btn donate-btn">Donate</button>
+        </td>
+      </tr>
+      <tr>
+        <td>Tomato Sauce</td>
+        <td>Condiments</td>
+        <td>1 jar</td>
+        <td>5/3/2026</td>
+        <td>Pantry</td>
+        <td>-</td>
+        <td>Available</td>
+        <td>
+          <button class="action-btn edit-btn">Edit</button>
+          <button class="action-btn donate-btn">Donate</button>
+        </td>
+      </tr>
+    </table>
+
+    <button class="add-btn" onclick="openPopup()">Add New Food</button>
+  </div>
+
+  <!-- Popup Form -->
+  <div class="popup" id="popupForm">
+    <div class="popup-content">
+      <h2>Add New Food Item</h2>
+      <input type="text" id="itemName" placeholder="Item Name">
+      <input type="text" id="category" placeholder="Category">
+      <input type="text" id="quantity" placeholder="Quantity">
+      <input type="date" id="expiryDate">
+      <input type="text" id="storagePlace" placeholder="Storage Place">
+      <textarea id="remark" placeholder="Remark"></textarea>
+      <button class="save" onclick="closePopup()">Save</button>
+      <button class="cancel" onclick="closePopup()">Cancel</button>
+    </div>
+  </div>
+
+  <script src="inventory.js"></script>
+</body>
+</html>
