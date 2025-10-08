@@ -1,3 +1,16 @@
+/* Donate Popup vertical actions */
+.donate-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.donate-cancel {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+}
 :root {
   --primary-green: #4a7c59;
   --light-green: #6b9b7a;
@@ -306,6 +319,16 @@ tr:hover {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   transition: all 0.3s ease;
+}
+
+.view-btn {
+  background: linear-gradient(135deg, var(--light-orange) 0%, var(--accent-orange) 100%);
+  color: white;
+}
+
+.view-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(230, 126, 34, 0.3);
 }
 
 .edit-btn {
