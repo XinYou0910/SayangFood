@@ -107,3 +107,11 @@ function appendWeekRow(data) {
 
   // Insert above the Add Meal button row
   bod
+
+function openPopup() {
+  document.getElementById("popupForm").style.display = "flex";
+}
+
+function closePopup() {
+  document.getElementById("popupForm").style.display = "none";
+}
