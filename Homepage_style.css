@@ -235,29 +235,49 @@ nav a {
 /* =========================
    Feature Detail Sections
 ========================= */
-.feature-detail {
-  padding: 100px 20px;
-  background: #f7f7f7;
-  border-top: 1px solid #e0e0e0;
+.feature-details-container {
+  padding: 80px 20px;
+  background: #fff;
   text-align: center;
 }
 
-.feature-detail:nth-child(even) {
-  background: #ffffff;
+.feature-detail {
+  display: none;
+  max-width: 900px;
+  margin: 0 auto;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.feature-detail.visible {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .feature-detail h2 {
   color: #2f7a2f;
-  margin-bottom: 20px;
   font-size: 28px;
+  margin-bottom: 20px;
 }
 
 .feature-detail p {
-  max-width: 800px;
-  margin: 0 auto;
-  line-height: 1.7;
-  color: #555;
   font-size: 16px;
+  color: #555;
+  line-height: 1.8;
+}
+
+/* Active Card Highlight */
+.feature-card.active {
+  background: linear-gradient(120deg, #a8e063, #56ab2f);
+  color: white;
+  transform: scale(1.05);
+}
+
+.feature-card.active h3,
+.feature-card.active p {
+  color: white;
 }
 
 /* =========================
