@@ -321,19 +321,9 @@ tr:hover {
   transition: all 0.3s ease;
 }
 
-.view-btn {
-  background: linear-gradient(135deg, var(--light-orange) 0%, var(--accent-orange) 100%);
-  color: white;
-}
-
-.view-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(230, 126, 34, 0.3);
-}
-
 .edit-btn {
-  background: linear-gradient(135deg, var(--light-orange) 0%, var(--accent-orange) 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--light-green) 0%, var(--primary-green) 100%);
+  color: rgb(0, 0, 0);
 }
 
 .edit-btn:hover {
@@ -342,7 +332,7 @@ tr:hover {
 }
 
 .donate-btn {
-  background: linear-gradient(135deg, var(--light-green) 0%, var(--primary-green) 100%);
+  background: linear-gradient(135deg, var(--light-orange) 0%, var(--accent-orange) 100%);
   color: white;
 }
 
