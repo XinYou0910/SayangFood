@@ -639,3 +639,76 @@ h1 {
   background-color: #c9facc;
   color: #007e1b;
 }
+
+/* ============================
+   POPUP FORM STYLING (CLEANED)
+============================ */
+
+/* Two-column layout for Category/Quantity and Expiry/Storage rows */
+.form-row {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* All form inputs, dropdowns, and textarea same look */
+.popup-content input,
+.popup-content select,
+.popup-content textarea {
+  width: 100%;
+  height: 45px;
+  padding: 12px 15px;
+  margin: 10px 0;
+  border: 2px solid var(--border-light);
+  border-radius: 8px;
+  font-size: 15px;
+  background: var(--bg-white);
+  color: var(--text-dark);
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+.popup-content textarea {
+  height: 80px;
+  resize: vertical;
+}
+
+.popup-content input:focus,
+.popup-content select:focus,
+.popup-content textarea:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
+}
+
+/* Form layout */
+.form-row {
+  display: flex;
+  gap: 20px;
+}
+
+.form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+  }
+}
+
+#categoryWrapper, #storageWrapper {
+  transition: all 0.3s ease;
+}
+#categoryWrapper input, #storageWrapper input {
+  width: 100%;
+}

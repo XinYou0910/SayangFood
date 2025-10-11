@@ -3,10 +3,10 @@ include 'db_connect.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $item_name = $_POST['item_name'];
-    $item_category = $_POST['item_category'];
+    $item_category = ($_POST['item_category'] === 'Other') ? $_POST['item_category_other'] : $_POST['item_category'];
     $quantity = $_POST['quantity'];
     $expiry_date = $_POST['expiry_date'];
-    $storage_place = $_POST['storage_place'];
+    $storage_place = ($_POST['storage_place'] === 'Other') ? $_POST['storage_place_other'] : $_POST['storage_place'];
     $item_remark = $_POST['item_remark'];
 
     $user_id = 1;

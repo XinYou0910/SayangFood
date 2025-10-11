@@ -22,6 +22,7 @@ if (!$result) {
 
   <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
 
+  <!-- Sidebar -->
   <div class="sidebar">
     <div class="logo-container">
       <img src="pic/logo.png" alt="SayangFood Logo" class="logo-img">
@@ -53,6 +54,7 @@ if (!$result) {
     </div>
   </div>
 
+  <!-- Main -->
   <div class="main">
     <div class="header">
       <h1>Food Item Inventory</h1>
@@ -87,7 +89,23 @@ if (!$result) {
         <td><?= date('d/m/Y', strtotime($row['expiry_date'])) ?></td>
         <td><?= htmlspecialchars($row['storage_place']) ?></td>
         <td><?= htmlspecialchars($row['item_remark']) ?></td>
-        <td><?= htmlspecialchars($row['item_status']) ?></td>
+        <?php
+          $status = $row['item_status']; // from database
+          $expiryDate = strtotime($row['expiry_date']);
+          $today = strtotime(date('Y-m-d'));
+
+          // Only determine status if not "Used"
+          if (strtolower($status) !== "used") {
+            if ($expiryDate < $today) {
+              $status = "Expired";
+            } else {
+              $status = "Available";
+            }
+          }
+        ?>
+        <td class="<?= strtolower($status) === 'expired' ? 'status-expired' : 'status-available' ?>">
+          <?= htmlspecialchars($status) ?>
+        </td>
         <td>
           <button class="action-btn edit-btn">Edit</button>
           <button class="action-btn donate-btn">Donate</button>
@@ -104,37 +122,67 @@ if (!$result) {
     <div class="popup-content">
       <h2>Add New Food Item</h2>
       <form action="add_food.php" method="POST">
+        
         <label for="itemName">Item Name</label>
-        <input type="text" name="item_name" id="itemName" placeholder="Item Name" required>
+        <input type="text" name="item_name" id="itemName" placeholder="e.g. Chicken Breast, Milk, Pasta" required>
 
-        <label for="category">Category</label>
-        <input type="text" name="item_category" id="category" placeholder="Category" required>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="category">Category</label>
+            <div id="categoryWrapper">
+              <select name="item_category" id="category" onchange="switchCategoryInput()" required>
+                <option value="">-- Select Category --</option>
+                <option value="Meat">Meat</option>
+                <option value="Vegetable">Vegetable</option>
+                <option value="Seafood">Seafood</option>
+                <option value="Dairy">Dairy</option>
+                <option value="Grains">Grains</option>
+                <option value="Beverage">Beverage</option>
+                <option value="Snacks">Snacks</option>
+                <option value="Condiment">Condiment</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
 
-        <label for="quantity">Quantity</label>
-        <input type="text" name="quantity" id="quantity" placeholder="Quantity" required>
+          <div class="form-group">
+            <label for="quantity">Quantity</label>
+            <input type="text" name="quantity" id="quantity" placeholder="e.g. 5 packs / 2 kg / 3 pcs" required>
+          </div>
+        </div>
 
-        <label for="expiryDate">Expiry Date</label>
-        <input type="date" name="expiry_date" id="expiryDate" required>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="expiryDate">Expiry Date</label>
+            <input type="date" name="expiry_date" id="expiryDate" required>
+          </div>
 
-        <label for="storagePlace">Storage Place</label>
-        <input type="text" name="storage_place" id="storagePlace" placeholder="Storage Place" required>
+          <div class="form-group">
+            <label for="storagePlace">Storage Place</label>
+            <div id="storageWrapper">
+              <select name="storage_place" id="storagePlace" onchange="switchStorageInput()" required>
+                <option value="">-- Select Storage Place --</option>
+                <option value="Refrigerator">Refrigerator</option>
+                <option value="Freezer">Freezer</option>
+                <option value="Pantry">Pantry</option>
+                <option value="Cabinet">Cabinet</option>
+                <option value="Storage Box">Storage Box</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
         <label for="remark">Remark</label>
-        <textarea name="item_remark" id="remark" placeholder="Remark"></textarea>
+        <textarea name="item_remark" id="remark" placeholder="Optional: e.g. Use soon, almost expired, for donation..."></textarea>
 
-        <button type="submit" class="save">Save</button>
-        <button type="button" class="cancel" onclick="closePopup()">Cancel</button>
+        <div class="form-buttons">
+          <button type="submit" class="save">Save</button>
+          <button type="button" class="cancel" onclick="closePopup()">Cancel</button>
+        </div>
       </form>
     </div>
   </div>
-
-  <script>
-    function openPopup() {
-      document.getElementById("popupForm").style.display = "flex";
-    }
-    function closePopup() {
-      document.getElementById("popupForm").style.display = "none";
-    }
-  </script>
+<script src="script.js"></script>
 </body>
 </html>
