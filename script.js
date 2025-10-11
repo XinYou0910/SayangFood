@@ -105,9 +105,7 @@ function appendWeekRow(data) {
   }
   tr.appendChild(statusTd);
 
-  // Insert above the Add Meal button row
-  bod
-
+  
 function openPopup() {
   document.getElementById("popupForm").style.display = "flex";
 }
