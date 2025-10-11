@@ -86,34 +86,23 @@
         <th>Status</th>
         <th>Actions</th>
       </tr>
-      <tr>
-        <td>Chicken Breast</td>
-        <td>Meat</td>
-        <td>750g</td>
-        <td>15/10/2025</td>
-        <td>Fridge</td>
-        <td>After Workout</td>
-        <td>Used</td>
-        <td>
-          <button class="action-btn edit-btn">Edit</button>
-          <button class="action-btn donate-btn" onclick="openDonatePopup()">Donate</button>
-        </td>
-      </tr>
-      <tr>
-        <td>Tomato Sauce</td>
-        <td>Condiments</td>
-        <td>1 jar</td>
-        <td>5/3/2026</td>
-        <td>Pantry</td>
-        <td>-</td>
-        <td>Available</td>
-        <td>
-          <button class="action-btn edit-btn">Edit</button>
-          <button class="action-btn donate-btn" onclick="openDonatePopup()">Donate</button>
-        </td>
-      </tr>
-    </table>
 
+      <?php while($row = mysqli_fetch_assoc($result)) { ?>
+      <tr>
+        <td><?= htmlspecialchars($row['item_name']) ?></td>
+        <td><?= htmlspecialchars($row['item_category']) ?></td>
+        <td><?= htmlspecialchars($row['quantity']) ?></td>
+        <td><?= date('d/m/Y', strtotime($row['expiry_date'])) ?></td>
+        <td><?= htmlspecialchars($row['storage_place']) ?></td>
+        <td><?= htmlspecialchars($row['item_remark']) ?></td>
+        <td><?= htmlspecialchars($row['item_status']) ?></td>
+        <td>
+          <button class="action-btn edit-btn">Edit</button>
+          <button class="action-btn donate-btn">Donate</button>
+        </td>
+      </tr>
+      <?php } ?>
+    </table>
     <button class="add-btn" onclick="openPopup()">Add New Food</button>
   </div>
 
