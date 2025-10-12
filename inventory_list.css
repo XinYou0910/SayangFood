@@ -37,7 +37,7 @@ body {
 
 /*Sidebar*/
 .sidebar {
-  width: 260px;
+  width: 320px;
   background: linear-gradient(180deg, var(--bg-white) 0%, #f7f9f8 100%);
   border-right: 2px solid var(--border-light);
   height: 100vh;
@@ -48,9 +48,63 @@ body {
   box-shadow: 2px 0 10px var(--shadow-light);
 }
 
-.sidebar:hover {
-  width: 280px;
-  box-shadow: 4px 0 15px var(--shadow-medium);
+/* Align sidebar menu icons and text neatly */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 22px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-dark);
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.menu-item img.icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.menu-item span {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+/* Ensure all sidebar items same alignment */
+.sidebar .menu-item,
+.sidebar .dropdown-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 25px;
+  margin: 2px 10px;
+  border-radius: 8px;
+  background: none;
+  border: none;
+  text-align: left;
+  width: calc(100% - 20px);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Hover & active keep alignment consistent */
+.menu-item:hover,
+.dropdown-btn:hover {
+  background: linear-gradient(135deg, var(--light-green) 0%, #7db88d 100%);
+  color: white;
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px var(--shadow-medium);
+}
+
+.menu-item.active,
+.dropdown-btn.active {
+  background: linear-gradient(135deg, var(--primary-green) 0%, var(--light-green) 100%);
+  color: white;
 }
 
 /*logo*/
@@ -59,7 +113,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  padding: 25px 15px;
+  padding: 25px 18px;
   border-bottom: 2px solid var(--border-light);
   background: linear-gradient(135deg, var(--primary-green) 0%, var(--light-green) 100%);
   color: white;
@@ -77,6 +131,11 @@ body {
 .logo-text {
   text-align: left;
   font-size: 15px;
+}
+
+.logo-text small,
+.menu-item {
+  white-space: nowrap;
 }
 
 .brand {
@@ -752,73 +811,5 @@ h1 {
 
 .inline-name span {
   color: #222;
-}
-
-/* ----- Dropdown Main Button ----- */
-.dropdown-btn {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  font-size: 16px;
-  color: #000000; /* black text */
-  background-color: transparent;
-  border: none;
-  outline: none;
-  cursor: pointer;
-  padding: 12px 18px;
-  text-align: left;
-  transition: background 0.3s ease;
-}
-
-.dropdown-btn:hover {
-  background-color: #e9ecef; /* light grey on hover */
-  border-radius: 8px;
-}
-
-.arrow {
-  font-size: 12px;
-  transition: transform 0.3s ease;
-  color: #000000;
-}
-
-/* ----- Dropdown Container ----- */
-.dropdown-container {
-  display: none;
-  flex-direction: column;
-  background-color: #f1f1f1; /* light grey background */
-  border-radius: 8px;
-  margin-left: 15px;
-  padding: 5px 0;
-  overflow: hidden;
-  animation: slideDown 0.3s ease forwards;
-}
-
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ----- Submenu Items ----- */
-.submenu-item {
-  background-color: #f1f1f1; /* grey background */
-  border: none;
-  color: #000000; /* black text */
-  padding: 10px 20px;
-  text-align: left;
-  font-size: 15px;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-}
-
-.submenu-item:hover {
-  background-color: #dee2e6; /* darker grey on hover */
-}
-
-/* ----- Active Page Highlight ----- */
-.submenu-item.active {
-  background-color: #cfd8dc; /* slightly darker grey */
-  font-weight: bold;
-  color: #000000;
 }
 
