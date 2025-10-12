@@ -302,3 +302,135 @@ function changeQty(change) {
   input.value = current;
 }
 
+function openEditPopup(item) {
+  document.getElementById("editId").value = item.item_id;
+  document.getElementById("editItemName").textContent = item.item_name;
+  document.getElementById("editItemNameInput").value = item.item_name;
+
+  // ✅ Split quantity value and unit
+  const quantityParts = (item.quantity || "").split(" ");
+  const quantityNumber = quantityParts[0] || "";
+  const quantityUnit = quantityParts[1] || "";
+
+  document.getElementById("editQuantityValue").value = quantityNumber;
+  document.getElementById("editQuantityUnit").value = quantityUnit;
+
+  document.getElementById("editExpiryDate").value = item.expiry_date;
+  document.getElementById("editCategory").value = item.item_category;
+  document.getElementById("editStorage").value = item.storage_place;
+  document.getElementById("editRemark").value = item.item_remark;
+  document.getElementById("editStatus").value =
+    ["Available", "Used"].includes(item.item_status?.trim())
+      ? item.item_status
+      : "Available";
+
+  document.getElementById("editPopup").style.display = "flex";
+}
+
+function closeEditPopup() {
+  document.getElementById("editPopup").style.display = "none";
+}
+
+// ------- CATEGORY: Inline "Other" switch -------
+function switchEditCategoryInput() {
+  const wrapper = document.getElementById("editCategoryWrapper");
+  const select = document.getElementById("editCategory");
+
+  if (select && select.value === "Other") {
+    wrapper.innerHTML = `
+      <input type="text" name="item_category" id="editCategoryInput"
+             placeholder="Enter custom category" required
+             onblur="restoreEditCategoryDropdown(this.value)">
+    `;
+    document.getElementById("editCategoryInput").focus();
+  }
+}
+
+function restoreEditCategoryDropdown(customValue) {
+  const wrapper = document.getElementById("editCategoryWrapper");
+  wrapper.innerHTML = `
+    <select name="item_category" id="editCategory" onchange="switchEditCategoryInput()" required>
+      <option value="">-- Select Category --</option>
+      <option value="Meat">Meat</option>
+      <option value="Vegetable">Vegetable</option>
+      <option value="Seafood">Seafood</option>
+      <option value="Dairy">Dairy</option>
+      <option value="Grains">Grains</option>
+      <option value="Beverage">Beverage</option>
+      <option value="Snacks">Snacks</option>
+      <option value="Condiment">Condiment</option>
+      <option value="Other">Other</option>
+    </select>
+  `;
+  if (customValue && customValue.trim() !== "" && customValue !== "Other") {
+    const select = document.getElementById("editCategory");
+    const opt = document.createElement("option");
+    opt.value = customValue.trim();
+    opt.textContent = customValue.trim();
+    select.appendChild(opt);
+    select.value = customValue.trim();
+  }
+}
+
+// ------- STORAGE: Inline "Other" switch -------
+function switchEditStorageInput() {
+  const wrapper = document.getElementById("editStorageWrapper");
+  const select = document.getElementById("editStorage");
+
+  if (select && select.value === "Other") {
+    wrapper.innerHTML = `
+      <input type="text" name="storage_place" id="editStorageInput"
+             placeholder="Enter custom storage place" required
+             onblur="restoreEditStorageDropdown(this.value)">
+    `;
+    document.getElementById("editStorageInput").focus();
+  }
+}
+
+function restoreEditStorageDropdown(customValue) {
+  const wrapper = document.getElementById("editStorageWrapper");
+  wrapper.innerHTML = `
+    <select name="storage_place" id="editStorage" onchange="switchEditStorageInput()" required>
+      <option value="">-- Select Storage Place --</option>
+      <option value="Refrigerator">Refrigerator</option>
+      <option value="Freezer">Freezer</option>
+      <option value="Pantry">Pantry</option>
+      <option value="Cabinet">Cabinet</option>
+      <option value="Storage Box">Storage Box</option>
+      <option value="Other">Other</option>
+    </select>
+  `;
+  if (customValue && customValue.trim() !== "" && customValue !== "Other") {
+    const select = document.getElementById("editStorage");
+    const opt = document.createElement("option");
+    opt.value = customValue.trim();
+    opt.textContent = customValue.trim();
+    select.appendChild(opt);
+    select.value = customValue.trim();
+  }
+}
+
+function openDonatePopup(item) {
+  document.getElementById("donateItemId").value = item.item_id;
+  document.getElementById("donateItemName").textContent = item.item_name;
+  document.getElementById("donateQuantity").textContent = item.quantity;
+  document.getElementById("donateExpiry").textContent = item.expiry_date;
+  document.getElementById("donatePopup").style.display = "flex";
+}
+
+function closeDonatePopup() {
+  document.getElementById("donatePopup").style.display = "none";
+}
+
+function toggleDropdown() {
+  const dropdown = document.getElementById("dropdownMenu");
+  const arrow = document.getElementById("arrowIcon");
+
+  if (dropdown.style.display === "flex") {
+    dropdown.style.display = "none";
+    arrow.style.transform = "rotate(0deg)";
+  } else {
+    dropdown.style.display = "flex";
+    arrow.style.transform = "rotate(180deg)";
+  }
+}

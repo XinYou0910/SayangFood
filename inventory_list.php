@@ -221,15 +221,44 @@ if (!$result) {
       <form id="editForm" method="POST" action="update_food.php">
         <input type="hidden" name="item_id" id="editId">
 
-        <!-- Display Item Name as text -->
+        <!-- Inline Item Name -->
         <div class="inline-name">
           <label>Item Name:</label>
           <span id="editItemName"></span>
           <input type="hidden" name="item_name" id="editItemNameInput">
         </div>
 
+        <!-- Quantity + Unit + Expiry Date -->
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group quantity">
+            <label for="editQuantityValue">Quantity</label>
+            <input type="number" id="editQuantityValue" name="quantityValue" min="1" required>
+          </div>
+
+          <div class="form-group unit">
+            <label for="editQuantityUnit">Unit</label>
+            <select id="editQuantityUnit" name="quantityUnit" required>
+              <option value="">-- Select Unit --</option>
+              <option value="pcs">pcs</option>
+              <option value="packs">packs</option>
+              <option value="kg">kg</option>
+              <option value="g">g</option>
+              <option value="litres">litres</option>
+              <option value="ml">ml</option>
+              <option value="loaf">loaf</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group expiry">
+            <label for="editExpiryDate">Expiry Date</label>
+            <input type="date" id="editExpiryDate" name="expiry_date" required>
+          </div>
+        </div>
+
+        <!-- Category + Storage Place -->
+        <div class="form-row">
+          <div class="form-group category">
             <label>Category</label>
             <div id="editCategoryWrapper">
               <select name="item_category" id="editCategory" onchange="switchEditCategoryInput()" required>
@@ -247,19 +276,7 @@ if (!$result) {
             </div>
           </div>
 
-          <div class="form-group">
-            <label>Quantity</label>
-            <input type="text" id="editQuantity" name="quantity" required>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Expiry Date</label>
-            <input type="date" id="editExpiryDate" name="expiry_date" required>
-          </div>
-
-          <div class="form-group">
+          <div class="form-group storage">
             <label>Storage Place</label>
             <div id="editStorageWrapper">
               <select name="storage_place" id="editStorage" onchange="switchEditStorageInput()" required>
@@ -275,15 +292,18 @@ if (!$result) {
           </div>
         </div>
 
-        <label>Remark</label>
+        <!-- Remark -->
+        <label for="editRemark">Remark</label>
         <textarea id="editRemark" name="item_remark"></textarea>
 
+        <!-- Status -->
         <label>Status</label>
         <select id="editStatus" name="item_status" required>
           <option value="Available">Available</option>
           <option value="Used">Used</option>
         </select>
 
+        <!-- Buttons -->
         <div class="form-buttons">
           <button type="submit" class="save">Save</button>
           <button type="button" class="cancel" onclick="closeEditPopup()">Cancel</button>
@@ -291,6 +311,7 @@ if (!$result) {
       </form>
     </div>
   </div>
+
 
   <!-- Donate Confirmation Popup -->
   <div class="popup" id="donatePopup">
@@ -319,135 +340,6 @@ if (!$result) {
   </div>
 
 <script src="script.js"></script>
-
-<!-- Edit Popup Logic -->
-<script>
-function openEditPopup(item) {
-  document.getElementById("editId").value = item.item_id || item.id;
-  document.getElementById("editItemName").textContent = item.item_name;
-  document.getElementById("editItemNameInput").value = item.item_name; // ✅ added
-  document.getElementById("editCategory").value = item.item_category;
-  document.getElementById("editQuantity").value = item.quantity;
-  document.getElementById("editExpiryDate").value = item.expiry_date;
-  document.getElementById("editStorage").value = item.storage_place;
-  document.getElementById("editRemark").value = item.item_remark;
-
-  const status = item.item_status?.trim() || "Available";
-  document.getElementById("editStatus").value =
-    ["Available", "Used"].includes(status) ? status : "Available";
-
-  document.getElementById("editPopup").style.display = "flex";
-}
-
-function closeEditPopup() {
-  document.getElementById("editPopup").style.display = "none";
-}
-
-// ------- CATEGORY: Inline "Other" switch -------
-function switchEditCategoryInput() {
-  const wrapper = document.getElementById("editCategoryWrapper");
-  const select = document.getElementById("editCategory");
-
-  if (select && select.value === "Other") {
-    wrapper.innerHTML = `
-      <input type="text" name="item_category" id="editCategoryInput"
-             placeholder="Enter custom category" required
-             onblur="restoreEditCategoryDropdown(this.value)">
-    `;
-    document.getElementById("editCategoryInput").focus();
-  }
-}
-
-function restoreEditCategoryDropdown(customValue) {
-  const wrapper = document.getElementById("editCategoryWrapper");
-  wrapper.innerHTML = `
-    <select name="item_category" id="editCategory" onchange="switchEditCategoryInput()" required>
-      <option value="">-- Select Category --</option>
-      <option value="Meat">Meat</option>
-      <option value="Vegetable">Vegetable</option>
-      <option value="Seafood">Seafood</option>
-      <option value="Dairy">Dairy</option>
-      <option value="Grains">Grains</option>
-      <option value="Beverage">Beverage</option>
-      <option value="Snacks">Snacks</option>
-      <option value="Condiment">Condiment</option>
-      <option value="Other">Other</option>
-    </select>
-  `;
-  if (customValue && customValue.trim() !== "" && customValue !== "Other") {
-    const select = document.getElementById("editCategory");
-    const opt = document.createElement("option");
-    opt.value = customValue.trim();
-    opt.textContent = customValue.trim();
-    select.appendChild(opt);
-    select.value = customValue.trim();
-  }
-}
-
-// ------- STORAGE: Inline "Other" switch -------
-function switchEditStorageInput() {
-  const wrapper = document.getElementById("editStorageWrapper");
-  const select = document.getElementById("editStorage");
-
-  if (select && select.value === "Other") {
-    wrapper.innerHTML = `
-      <input type="text" name="storage_place" id="editStorageInput"
-             placeholder="Enter custom storage place" required
-             onblur="restoreEditStorageDropdown(this.value)">
-    `;
-    document.getElementById("editStorageInput").focus();
-  }
-}
-
-function restoreEditStorageDropdown(customValue) {
-  const wrapper = document.getElementById("editStorageWrapper");
-  wrapper.innerHTML = `
-    <select name="storage_place" id="editStorage" onchange="switchEditStorageInput()" required>
-      <option value="">-- Select Storage Place --</option>
-      <option value="Refrigerator">Refrigerator</option>
-      <option value="Freezer">Freezer</option>
-      <option value="Pantry">Pantry</option>
-      <option value="Cabinet">Cabinet</option>
-      <option value="Storage Box">Storage Box</option>
-      <option value="Other">Other</option>
-    </select>
-  `;
-  if (customValue && customValue.trim() !== "" && customValue !== "Other") {
-    const select = document.getElementById("editStorage");
-    const opt = document.createElement("option");
-    opt.value = customValue.trim();
-    opt.textContent = customValue.trim();
-    select.appendChild(opt);
-    select.value = customValue.trim();
-  }
-}
-
-function openDonatePopup(item) {
-  document.getElementById("donateItemId").value = item.item_id;
-  document.getElementById("donateItemName").textContent = item.item_name;
-  document.getElementById("donateQuantity").textContent = item.quantity;
-  document.getElementById("donateExpiry").textContent = item.expiry_date;
-  document.getElementById("donatePopup").style.display = "flex";
-}
-
-function closeDonatePopup() {
-  document.getElementById("donatePopup").style.display = "none";
-}
-
-function toggleDropdown() {
-  const dropdown = document.getElementById("dropdownMenu");
-  const arrow = document.getElementById("arrowIcon");
-
-  if (dropdown.style.display === "flex") {
-    dropdown.style.display = "none";
-    arrow.style.transform = "rotate(0deg)";
-  } else {
-    dropdown.style.display = "flex";
-    arrow.style.transform = "rotate(180deg)";
-  }
-}
-
-</script>
 
 </body>
 </html>
