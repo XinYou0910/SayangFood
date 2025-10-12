@@ -1,11 +1,17 @@
 <?php
 include 'db_connect.php';
-$query = "SELECT d.*, f.item_name, f.quantity, f.expiry_date 
-          FROM donation d
-          JOIN food_item_inventory f ON d.item_id = f.item_id
-          ORDER BY d.donation_id DESC";
-$result = mysqli_query($conn, $query);
 
+// ✅ Query joins donation + food_item_inventory
+// It works safely even when items are still present with status 'Donated'
+$query = "SELECT d.*, 
+                 f.item_name, 
+                 f.quantity, 
+                 f.expiry_date
+          FROM donation d
+          LEFT JOIN food_item_inventory f ON d.item_id = f.item_id
+          ORDER BY d.donation_id DESC";
+
+$result = mysqli_query($conn, $query);
 if (!$result) {
   die('Query failed: ' . mysqli_error($conn));
 }
@@ -67,7 +73,6 @@ if (!$result) {
     </div>
   </div>
 
-
   <!-- Main -->
   <div class="main">
     <div class="header">
@@ -96,13 +101,20 @@ if (!$result) {
 
       <?php while($row = mysqli_fetch_assoc($result)) { ?>
       <tr>
-        <td><?= htmlspecialchars($row['item_name']) ?></td>
-        <td><?= htmlspecialchars($row['quantity']) ?></td>
-        <td><?= htmlspecialchars(date('Y-m-d', strtotime($row['expiry_date']))) ?></td>
+        <td><?= htmlspecialchars($row['item_name'] ?? 'N/A') ?></td>
+        <td><?= htmlspecialchars($row['quantity'] ?? 'N/A') ?></td>
+        <td><?= $row['expiry_date'] ? htmlspecialchars(date('Y-m-d', strtotime($row['expiry_date']))) : 'N/A' ?></td>
         <td><?= htmlspecialchars($row['pickup_location']) ?></td>
-        <td class="<?= strtolower($row['donation_status']) === 'donated' ? 'status-available' : 'status-expired' ?>">
+
+        <?php
+          $statusClass = strtolower($row['donation_status']) === 'donated'
+                         ? 'status-available'
+                         : 'status-expired';
+        ?>
+        <td class="<?= $statusClass ?>">
           <?= htmlspecialchars($row['donation_status']) ?>
         </td>
+
         <td><?= htmlspecialchars($row['donation_remark']) ?></td>
         <td>
           <button class="action-btn edit-btn" onclick='openEditDonatePopup(<?= json_encode($row) ?>)'>Edit</button>
@@ -156,10 +168,10 @@ if (!$result) {
 <script>
 function openEditDonatePopup(item) {
   document.getElementById("editDonationId").value = item.donation_id;
-  document.getElementById("editDonateItemName").textContent = item.item_name;
-  document.getElementById("editPickup").value = item.pickup_location;
-  document.getElementById("editDonateRemark").value = item.donation_remark;
-  document.getElementById("editDonateStatus").value = item.donation_status;
+  document.getElementById("editDonateItemName").textContent = item.item_name || 'N/A';
+  document.getElementById("editPickup").value = item.pickup_location || '';
+  document.getElementById("editDonateRemark").value = item.donation_remark || '';
+  document.getElementById("editDonateStatus").value = item.donation_status || 'Available';
   document.getElementById("editDonatePopup").style.display = "flex";
 }
 
@@ -170,7 +182,6 @@ function closeEditDonatePopup() {
 function toggleDropdown() {
   const dropdown = document.getElementById("dropdownMenu");
   const arrow = document.getElementById("arrowIcon");
-
   if (dropdown.style.display === "flex") {
     dropdown.style.display = "none";
     arrow.style.transform = "rotate(0deg)";
@@ -179,7 +190,6 @@ function toggleDropdown() {
     arrow.style.transform = "rotate(180deg)";
   }
 }
-
 </script>
 
 </body>
