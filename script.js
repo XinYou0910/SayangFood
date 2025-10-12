@@ -411,6 +411,20 @@ function restoreEditStorageDropdown(customValue) {
 }
 
 function openDonatePopup(item) {
+  const status = item.item_status?.trim().toLowerCase();
+
+  if (status === "used" || status === "expired") {
+    Swal.fire({
+      icon: "warning",
+      title: "Cannot Donate",
+      text: `This item cannot be donated because it is marked as "${item.item_status}".`,
+      confirmButtonColor: "#4a7c59",
+      confirmButtonText: "OK"
+    });
+    return; // Stop further execution
+  }
+
+  // Proceed with donation if Available
   document.getElementById("donateItemId").value = item.item_id;
   document.getElementById("donateItemName").textContent = item.item_name;
   document.getElementById("donateQuantity").textContent = item.quantity;
@@ -433,4 +447,14 @@ function toggleDropdown() {
     dropdown.style.display = "flex";
     arrow.style.transform = "rotate(180deg)";
   }
+}
+
+function showCannotDonateMessage() {
+  Swal.fire({
+    icon: "warning",
+    title: "Donation Not Allowed",
+    text: "This item cannot be donated because it is marked as 'Used' or 'Expired'.",
+    confirmButtonColor: "#4a7c59",
+    confirmButtonText: "OK"
+  });
 }

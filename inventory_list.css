@@ -862,3 +862,14 @@ h1 {
 #unitWrapper {
   width: 100%;
 }
+
+/* Disabled Donate button */
+button.donate-btn.disabled,
+button.donate-btn:disabled {
+  background: #ccc !important;
+  color: #666 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+  opacity: 0.8;
+}

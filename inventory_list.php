@@ -1,6 +1,14 @@
 <?php
 include 'db_connect.php'; // connect to database
 
+// Automatically mark expired items in the database
+mysqli_query($conn, "
+  UPDATE food_item_inventory
+  SET item_status = 'Expired'
+  WHERE expiry_date < CURDATE()
+    AND item_status NOT IN ('Used', 'Donated', 'Expired')
+");
+
 $query = "SELECT * FROM food_item_inventory WHERE item_status != 'Donated'";
 $result = mysqli_query($conn, $query);
 
@@ -115,8 +123,16 @@ if (!$result) {
         <td>
           <button class="action-btn edit-btn" 
             onclick='openEditPopup(<?= json_encode($row) ?>)'>Edit</button>
-          <button class="action-btn donate-btn" 
-            onclick='openDonatePopup(<?= json_encode($row) ?>)'>Donate</button>
+          <?php
+            $isDisabled = (strtolower($status) === 'used' || strtolower($status) === 'expired');
+          ?>
+          <?php if ($isDisabled): ?>
+            <button class="action-btn donate-btn disabled" 
+              onclick="showCannotDonateMessage('<?= ucfirst($status) ?>')">Donate</button>
+          <?php else: ?>
+            <button class="action-btn donate-btn" 
+              onclick='openDonatePopup(<?= json_encode($row) ?>)'>Donate</button>
+          <?php endif; ?>
         </td>
       </tr>
       <?php } ?>
@@ -340,6 +356,6 @@ if (!$result) {
   </div>
 
 <script src="script.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 </html>
