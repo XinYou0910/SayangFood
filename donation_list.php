@@ -4,11 +4,10 @@ include 'db_connect.php';
 // ✅ Query joins donation + food_item_inventory
 // It works safely even when items are still present with status 'Donated'
 $query = "SELECT d.*, 
-                 f.item_name, 
-                 f.quantity, 
-                 f.expiry_date
+                (SELECT item_name FROM food_item_inventory WHERE item_id = d.item_id) AS item_name,
+                (SELECT quantity FROM food_item_inventory WHERE item_id = d.item_id) AS quantity,
+                (SELECT expiry_date FROM food_item_inventory WHERE item_id = d.item_id) AS expiry_date
           FROM donation d
-          LEFT JOIN food_item_inventory f ON d.item_id = f.item_id
           ORDER BY d.donation_id DESC";
 
 $result = mysqli_query($conn, $query);

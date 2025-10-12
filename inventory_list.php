@@ -1,7 +1,7 @@
 <?php
 include 'db_connect.php'; // connect to database
 
-$query = "SELECT * FROM food_item_inventory";
+$query = "SELECT * FROM food_item_inventory WHERE item_status != 'Donated'";
 $result = mysqli_query($conn, $query);
 
 if (!$result) {
