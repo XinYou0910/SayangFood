@@ -722,3 +722,35 @@ h1 {
   color: red;
   font-weight: bold;
 }
+
+.readonly-field {
+  background: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.inline-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+  color: #333;
+}
+
+.inline-name label {
+  font-weight: 600;
+  color: #333;
+  margin-right: 4px;
+}
+
+.inline-name span {
+  color: #222;
+}
+

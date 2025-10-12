@@ -86,28 +86,23 @@ if (!$result) {
         <td><?= htmlspecialchars($row['item_name']) ?></td>
         <td><?= htmlspecialchars($row['item_category']) ?></td>
         <td><?= htmlspecialchars($row['quantity']) ?></td>
-        <td><?= date('d/m/Y', strtotime($row['expiry_date'])) ?></td>
+        <td><?= date('Y-m-d', strtotime($row['expiry_date'])) ?></td>
         <td><?= htmlspecialchars($row['storage_place']) ?></td>
         <td><?= htmlspecialchars($row['item_remark']) ?></td>
         <?php
-          $status = $row['item_status']; // from database
+          $status = $row['item_status'];
           $expiryDate = strtotime($row['expiry_date']);
           $today = strtotime(date('Y-m-d'));
-
-          // Only determine status if not "Used"
           if (strtolower($status) !== "used") {
-            if ($expiryDate < $today) {
-              $status = "Expired";
-            } else {
-              $status = "Available";
-            }
+            $status = ($expiryDate < $today) ? "Expired" : "Available";
           }
         ?>
         <td class="<?= strtolower($status) === 'expired' ? 'status-expired' : 'status-available' ?>">
           <?= htmlspecialchars($status) ?>
         </td>
         <td>
-          <button class="action-btn edit-btn">Edit</button>
+          <button class="action-btn edit-btn" 
+            onclick='openEditPopup(<?= json_encode($row) ?>)'>Edit</button>
           <button class="action-btn donate-btn">Donate</button>
         </td>
       </tr>
@@ -117,12 +112,11 @@ if (!$result) {
     <button class="add-btn" onclick="openPopup()">Add New Food</button>
   </div>
 
-  <!-- Popup Form -->
+  <!-- Add Popup -->
   <div class="popup" id="popupForm">
     <div class="popup-content">
       <h2>Add New Food Item</h2>
       <form action="add_food.php" method="POST">
-        
         <label for="itemName">Item Name</label>
         <input type="text" name="item_name" id="itemName" placeholder="e.g. Chicken Breast, Milk, Pasta" required>
 
@@ -189,19 +183,70 @@ if (!$result) {
     <div class="popup-content">
       <h2>Edit Food Item</h2>
       <form id="editForm" method="POST" action="update_food.php">
-        <input type="hidden" name="id" id="editId">
+        <input type="hidden" name="item_id" id="editId">
 
-        <label for="editItemName">Item Name</label>
-        <input type="text" id="editItemName" name="item_name" readonly>
+        <!-- Display Item Name as text -->
+        <div class="inline-name">
+          <label>Item Name:</label>
+          <span id="editItemName"></span>
+          <input type="hidden" name="item_name" id="editItemNameInput">
+        </div>
 
-        <label for="editQuantity">Quantity</label>
-        <input type="text" id="editQuantity" name="quantity" required>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category</label>
+            <div id="editCategoryWrapper">
+              <select name="item_category" id="editCategory" onchange="switchEditCategoryInput()" required>
+                <option value="">-- Select Category --</option>
+                <option value="Meat">Meat</option>
+                <option value="Vegetable">Vegetable</option>
+                <option value="Seafood">Seafood</option>
+                <option value="Dairy">Dairy</option>
+                <option value="Grains">Grains</option>
+                <option value="Beverage">Beverage</option>
+                <option value="Snacks">Snacks</option>
+                <option value="Condiment">Condiment</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
 
-        <label for="editExpiryDate">Expiry Date</label>
-        <input type="date" id="editExpiryDate" name="expiry_date" required>
+          <div class="form-group">
+            <label>Quantity</label>
+            <input type="text" id="editQuantity" name="quantity" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Expiry Date</label>
+            <input type="date" id="editExpiryDate" name="expiry_date" required>
+          </div>
+
+          <div class="form-group">
+            <label>Storage Place</label>
+            <div id="editStorageWrapper">
+              <select name="storage_place" id="editStorage" onchange="switchEditStorageInput()" required>
+                <option value="">-- Select Storage Place --</option>
+                <option value="Refrigerator">Refrigerator</option>
+                <option value="Freezer">Freezer</option>
+                <option value="Pantry">Pantry</option>
+                <option value="Cabinet">Cabinet</option>
+                <option value="Storage Box">Storage Box</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <label>Remark</label>
+        <textarea id="editRemark" name="item_remark"></textarea>
 
         <label>Status</label>
-        <input type="text" id="editStatus" name="item_status" readonly>
+        <select id="editStatus" name="item_status" required>
+          <option value="Available">Available</option>
+          <option value="Used">Used</option>
+        </select>
 
         <div class="form-buttons">
           <button type="submit" class="save">Save</button>
@@ -210,6 +255,111 @@ if (!$result) {
       </form>
     </div>
   </div>
+
 <script src="script.js"></script>
+
+<!-- Edit Popup Logic -->
+<script>
+function openEditPopup(item) {
+  document.getElementById("editId").value = item.item_id || item.id;
+  document.getElementById("editItemName").textContent = item.item_name;
+  document.getElementById("editItemNameInput").value = item.item_name; // ✅ added
+  document.getElementById("editCategory").value = item.item_category;
+  document.getElementById("editQuantity").value = item.quantity;
+  document.getElementById("editExpiryDate").value = item.expiry_date;
+  document.getElementById("editStorage").value = item.storage_place;
+  document.getElementById("editRemark").value = item.item_remark;
+
+  const status = item.item_status?.trim() || "Available";
+  document.getElementById("editStatus").value =
+    ["Available", "Used"].includes(status) ? status : "Available";
+
+  document.getElementById("editPopup").style.display = "flex";
+}
+
+function closeEditPopup() {
+  document.getElementById("editPopup").style.display = "none";
+}
+
+// ------- CATEGORY: Inline "Other" switch -------
+function switchEditCategoryInput() {
+  const wrapper = document.getElementById("editCategoryWrapper");
+  const select = document.getElementById("editCategory");
+
+  if (select && select.value === "Other") {
+    wrapper.innerHTML = `
+      <input type="text" name="item_category" id="editCategoryInput"
+             placeholder="Enter custom category" required
+             onblur="restoreEditCategoryDropdown(this.value)">
+    `;
+    document.getElementById("editCategoryInput").focus();
+  }
+}
+
+function restoreEditCategoryDropdown(customValue) {
+  const wrapper = document.getElementById("editCategoryWrapper");
+  wrapper.innerHTML = `
+    <select name="item_category" id="editCategory" onchange="switchEditCategoryInput()" required>
+      <option value="">-- Select Category --</option>
+      <option value="Meat">Meat</option>
+      <option value="Vegetable">Vegetable</option>
+      <option value="Seafood">Seafood</option>
+      <option value="Dairy">Dairy</option>
+      <option value="Grains">Grains</option>
+      <option value="Beverage">Beverage</option>
+      <option value="Snacks">Snacks</option>
+      <option value="Condiment">Condiment</option>
+      <option value="Other">Other</option>
+    </select>
+  `;
+  if (customValue && customValue.trim() !== "" && customValue !== "Other") {
+    const select = document.getElementById("editCategory");
+    const opt = document.createElement("option");
+    opt.value = customValue.trim();
+    opt.textContent = customValue.trim();
+    select.appendChild(opt);
+    select.value = customValue.trim();
+  }
+}
+
+// ------- STORAGE: Inline "Other" switch -------
+function switchEditStorageInput() {
+  const wrapper = document.getElementById("editStorageWrapper");
+  const select = document.getElementById("editStorage");
+
+  if (select && select.value === "Other") {
+    wrapper.innerHTML = `
+      <input type="text" name="storage_place" id="editStorageInput"
+             placeholder="Enter custom storage place" required
+             onblur="restoreEditStorageDropdown(this.value)">
+    `;
+    document.getElementById("editStorageInput").focus();
+  }
+}
+
+function restoreEditStorageDropdown(customValue) {
+  const wrapper = document.getElementById("editStorageWrapper");
+  wrapper.innerHTML = `
+    <select name="storage_place" id="editStorage" onchange="switchEditStorageInput()" required>
+      <option value="">-- Select Storage Place --</option>
+      <option value="Refrigerator">Refrigerator</option>
+      <option value="Freezer">Freezer</option>
+      <option value="Pantry">Pantry</option>
+      <option value="Cabinet">Cabinet</option>
+      <option value="Storage Box">Storage Box</option>
+      <option value="Other">Other</option>
+    </select>
+  `;
+  if (customValue && customValue.trim() !== "" && customValue !== "Other") {
+    const select = document.getElementById("editStorage");
+    const opt = document.createElement("option");
+    opt.value = customValue.trim();
+    opt.textContent = customValue.trim();
+    select.appendChild(opt);
+    select.value = customValue.trim();
+  }
+}
+</script>
+
 </body>
 </html>
