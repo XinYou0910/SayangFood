@@ -112,7 +112,7 @@ if (!$result) {
         ?>
         <td class="<?= $statusClass ?>">
           <?= htmlspecialchars($row['donation_status']) ?>
-        </td>
+        </td> 
 
         <td><?= htmlspecialchars($row['donation_remark']) ?></td>
         <td>

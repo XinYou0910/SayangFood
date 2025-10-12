@@ -436,9 +436,9 @@ tr:hover {
 
 .popup-content {
   background: var(--bg-white);
-  padding: 30px;
+  padding: 35px 40px;
   border-radius: 15px;
-  width: 450px;
+  width: 400px;
   box-shadow: 0 10px 30px var(--shadow-medium);
   border: 2px solid var(--border-light);
 }
