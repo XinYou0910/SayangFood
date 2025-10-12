@@ -209,6 +209,47 @@ function restoreStorageDropdown(customValue) {
 }
 
 // ----------------------
+// UNIT DROPDOWN INLINE SWITCH (for Quantity)
+// ----------------------
+function switchUnitInput() {
+  const wrapper = document.getElementById("unitWrapper");
+  const select = document.getElementById("quantityUnit");
+
+  if (select && select.value === "Other") {
+    wrapper.innerHTML = `
+      <input type="text" name="quantityUnit" id="quantityUnitInput"
+             placeholder="Enter custom unit (e.g. bottle)" required
+             onblur="restoreUnitDropdown(this.value)">
+    `;
+    document.getElementById("quantityUnitInput").focus();
+  }
+}
+
+function restoreUnitDropdown(customValue) {
+  const wrapper = document.getElementById("unitWrapper");
+  wrapper.innerHTML = `
+    <select id="quantityUnit" name="quantityUnit" onchange="switchUnitInput()" required>
+      <option value="">-- Select Unit --</option>
+      <option value="pcs">pcs</option>
+      <option value="packs">packs</option>
+      <option value="kg">kg</option>
+      <option value="g">g</option>
+      <option value="litres">litres</option>
+      <option value="ml">ml</option>
+      <option value="Other">Other</option>
+    </select>
+  `;
+  if (customValue && customValue.trim() !== "" && customValue !== "Other") {
+    const select = document.getElementById("quantityUnit");
+    const opt = document.createElement("option");
+    opt.value = customValue.trim();
+    opt.textContent = customValue.trim();
+    select.appendChild(opt);
+    select.value = customValue.trim();
+  }
+}
+
+// ----------------------
 // BROWSE FOOD DROPDOWN (NEW VERSION)
 // ----------------------
 document.addEventListener("DOMContentLoaded", () => {
@@ -253,3 +294,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (item.dataset.page === currentPage) item.classList.add("active");
   });
 });
+
+function changeQty(change) {
+  const input = document.getElementById('quantityValue');
+  let current = parseInt(input.value) || 0;
+  current = Math.max(1, current + change); // prevent going below 1
+  input.value = current;
+}
+

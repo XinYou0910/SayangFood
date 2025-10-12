@@ -703,18 +703,50 @@ h1 {
    POPUP FORM STYLING (CLEANED)
 ============================ */
 
-/* Two-column layout for Category/Quantity and Expiry/Storage rows */
+/* Adjust layout for Category, Quantity, and Unit row */
 .form-row {
   display: flex;
-  gap: 20px;
   justify-content: space-between;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .form-group {
-  flex: 1;
   display: flex;
   flex-direction: column;
+}
+
+/* Make category and unit wider, quantity shorter */
+.form-group.quantity {
+  flex: 0.5;
+}
+
+.form-group.unit {
+  flex: 1.2;
+}
+
+.form-group.category {
+  flex: 1.0;
+}
+
+.form-group.storage {
+  flex: 1.0;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.form-group select,
+.form-group input[type="number"],
+.form-group input[type="text"] {
+  padding: 8px;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  font-size: 15px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* All form inputs, dropdowns, and textarea same look */
@@ -745,24 +777,6 @@ h1 {
   outline: none;
   border-color: var(--primary-green);
   box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
-}
-
-/* Form layout */
-.form-row {
-  display: flex;
-  gap: 20px;
-}
-
-.form-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-@media (max-width: 768px) {
-  .form-row {
-    flex-direction: column;
-  }
 }
 
 #categoryWrapper, #storageWrapper {
@@ -813,3 +827,38 @@ h1 {
   color: #222;
 }
 
+.quantity-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quantity-wrapper input[type="number"],
+.quantity-wrapper select,
+.quantity-wrapper input[type="text"] {
+  width: 100%;
+  flex: 1;
+}
+
+/* Make quantity narrower */
+.quantity-wrapper input[type="number"] {
+  max-width: 180px;
+}
+
+.unit-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#customUnit {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+#unitWrapper {
+  width: 100%;
+}

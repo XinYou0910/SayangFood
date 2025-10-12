@@ -130,13 +130,45 @@ if (!$result) {
     <div class="popup-content">
       <h2>Add New Food Item</h2>
       <form action="add_food.php" method="POST">
+
+        <!-- Item Name -->
         <label for="itemName">Item Name</label>
         <input type="text" name="item_name" id="itemName" placeholder="e.g. Chicken Breast, Milk, Pasta" required>
 
+        <!-- Quantity + Unit + Expiry Date -->
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group quantity">
+            <label for="quantityValue">Quantity</label>
+            <input type="number" id="quantityValue" name="quantityValue" min="1" value="1" required>
+          </div>
+
+          <div class="form-group unit">
+            <label for="quantityUnit">Unit</label>
+            <div id="unitWrapper">
+              <select id="quantityUnit" name="quantityUnit" onchange="switchUnitInput()" required>
+                <option value="">-- Select Unit --</option>
+                <option value="pcs">pcs</option>
+                <option value="packs">packs</option>
+                <option value="kg">kg</option>
+                <option value="g">g</option>
+                <option value="litres">litres</option>
+                <option value="ml">ml</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group expiry">
+            <label for="expiryDate">Expiry Date</label>
+            <input type="date" name="expiry_date" id="expiryDate" required>
+          </div>
+        </div>
+
+        <!-- Expiry Date + Storage Place -->
+        <div class="form-row">
+          <div class="form-group category">
             <label for="category">Category</label>
-            <div id="categoryWrapper">
+            <div id="categoryWrapper" class="dual-input-wrapper">
               <select name="item_category" id="category" onchange="switchCategoryInput()" required>
                 <option value="">-- Select Category --</option>
                 <option value="Meat">Meat</option>
@@ -152,19 +184,7 @@ if (!$result) {
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="quantity">Quantity</label>
-            <input type="text" name="quantity" id="quantity" placeholder="e.g. 5 packs / 2 kg / 3 pcs" required>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="expiryDate">Expiry Date</label>
-            <input type="date" name="expiry_date" id="expiryDate" required>
-          </div>
-
-          <div class="form-group">
+          <div class="form-group storage">
             <label for="storagePlace">Storage Place</label>
             <div id="storageWrapper">
               <select name="storage_place" id="storagePlace" onchange="switchStorageInput()" required>
@@ -180,9 +200,11 @@ if (!$result) {
           </div>
         </div>
 
+        <!-- Remark -->
         <label for="remark">Remark</label>
         <textarea name="item_remark" id="remark" placeholder="Optional: e.g. Use soon, almost expired, for donation..."></textarea>
 
+        <!-- Buttons -->
         <div class="form-buttons">
           <button type="submit" class="save">Save</button>
           <button type="button" class="cancel" onclick="closePopup()">Cancel</button>
@@ -190,6 +212,7 @@ if (!$result) {
       </form>
     </div>
   </div>
+
 
   <!-- Edit Popup -->
   <div class="popup" id="editPopup">
