@@ -183,6 +183,33 @@ if (!$result) {
       </form>
     </div>
   </div>
+
+  <!-- Edit Popup -->
+  <div class="popup" id="editPopup">
+    <div class="popup-content">
+      <h2>Edit Food Item</h2>
+      <form id="editForm" method="POST" action="update_food.php">
+        <input type="hidden" name="id" id="editId">
+
+        <label for="editItemName">Item Name</label>
+        <input type="text" id="editItemName" name="item_name" readonly>
+
+        <label for="editQuantity">Quantity</label>
+        <input type="text" id="editQuantity" name="quantity" required>
+
+        <label for="editExpiryDate">Expiry Date</label>
+        <input type="date" id="editExpiryDate" name="expiry_date" required>
+
+        <label>Status</label>
+        <input type="text" id="editStatus" name="item_status" readonly>
+
+        <div class="form-buttons">
+          <button type="submit" class="save">Save</button>
+          <button type="button" class="cancel" onclick="closeEditPopup()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
 <script src="script.js"></script>
 </body>
 </html>

@@ -712,3 +712,13 @@ h1 {
 #categoryWrapper input, #storageWrapper input {
   width: 100%;
 }
+
+.status-available {
+  color: green;
+  font-weight: bold;
+}
+
+.status-expired {
+  color: red;
+  font-weight: bold;
+}
