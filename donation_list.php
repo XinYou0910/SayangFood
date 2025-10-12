@@ -102,7 +102,7 @@ if (!$result) {
   <div class="popup" id="editDonatePopup">
     <div class="popup-content">
       <h2>Edit Donation Item</h2>
-      <form id="editDonateForm" method="POST" action="update_donation.php">
+      <form id="editDonateForm" method="POST" action="edit_donation.php">
         <input type="hidden" name="donation_id" id="editDonationId">
 
         <div class="inline-name">
