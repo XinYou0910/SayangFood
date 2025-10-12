@@ -7,7 +7,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $pickup_location = $_POST["pickup_location"];
     $donation_remark = $_POST["donation_remark"];
     $donation_date = date("Y-m-d");
-    $donation_status = "Pending";
+    $donation_status = "Available";
 
     // Get item details before moving
     $item_query = mysqli_query($conn, "SELECT * FROM food_item_inventory WHERE item_id = '$item_id'");
