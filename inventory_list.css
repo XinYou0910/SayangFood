@@ -754,3 +754,71 @@ h1 {
   color: #222;
 }
 
+/* ----- Dropdown Main Button ----- */
+.dropdown-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 16px;
+  color: #000000; /* black text */
+  background-color: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 12px 18px;
+  text-align: left;
+  transition: background 0.3s ease;
+}
+
+.dropdown-btn:hover {
+  background-color: #e9ecef; /* light grey on hover */
+  border-radius: 8px;
+}
+
+.arrow {
+  font-size: 12px;
+  transition: transform 0.3s ease;
+  color: #000000;
+}
+
+/* ----- Dropdown Container ----- */
+.dropdown-container {
+  display: none;
+  flex-direction: column;
+  background-color: #f1f1f1; /* light grey background */
+  border-radius: 8px;
+  margin-left: 15px;
+  padding: 5px 0;
+  overflow: hidden;
+  animation: slideDown 0.3s ease forwards;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ----- Submenu Items ----- */
+.submenu-item {
+  background-color: #f1f1f1; /* grey background */
+  border: none;
+  color: #000000; /* black text */
+  padding: 10px 20px;
+  text-align: left;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.submenu-item:hover {
+  background-color: #dee2e6; /* darker grey on hover */
+}
+
+/* ----- Active Page Highlight ----- */
+.submenu-item.active {
+  background-color: #cfd8dc; /* slightly darker grey */
+  font-weight: bold;
+  color: #000000;
+}
+

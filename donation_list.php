@@ -34,16 +34,29 @@ if (!$result) {
       </div>
     </div>
 
-    <button class="menu-item"><img src="pic/home.png" class="icon"> Home</button>
-    <button class="menu-item dropdown-btn"><img src="pic/search.png" class="icon"> Browse Food Items</button>
+    <button class="menu-item" onclick="window.location.href='home.php'">
+      <img src="pic/home.png" class="icon"> Home
+    </button>
 
-    <div class="dropdown-container">
-      <button onclick="window.location.href='inventory_list.php'">Inventory</button>
-      <button onclick="window.location.href='donation_list.php'">Donations</button>
+    <!-- Dropdown main button -->
+    <button class="menu-item dropdown-btn" onclick="toggleDropdown()">
+      <img src="pic/search.png" class="icon"> Browse Food Items
+      <span class="arrow" id="arrowIcon">▼</span>
+    </button>
+
+    <!-- Dropdown sub-menu -->
+    <div class="dropdown-container" id="dropdownMenu">
+      <button class="submenu-item" data-page="inventory_list.php" onclick="window.location.href='inventory_list.php'">Inventory</button>
+      <button class="submenu-item" data-page="weekly_meal.php" onclick="window.location.href='weekly_meal.php'">Weekly Meal</button>
+      <button class="submenu-item" data-page="donation_list.php" onclick="window.location.href='donation_list.php'">Donations</button>
     </div>
 
-    <button class="menu-item"><img src="pic/data-analytics.png" class="icon"> Food Analytics</button>
-    <button class="menu-item"><img src="pic/notification.png" class="icon"> Notification</button>
+    <button class="menu-item">
+      <img src="pic/data-analytics.png" class="icon"> Food Analytics
+    </button>
+    <button class="menu-item">
+      <img src="pic/notification.png" class="icon"> Notification
+    </button>
 
     <div class="profile">
       <img src="pic/user.png" alt="User" class="profile-img">
@@ -53,6 +66,7 @@ if (!$result) {
       </div>
     </div>
   </div>
+
 
   <!-- Main -->
   <div class="main">
@@ -152,6 +166,20 @@ function openEditDonatePopup(item) {
 function closeEditDonatePopup() {
   document.getElementById("editDonatePopup").style.display = "none";
 }
+
+function toggleDropdown() {
+  const dropdown = document.getElementById("dropdownMenu");
+  const arrow = document.getElementById("arrowIcon");
+
+  if (dropdown.style.display === "flex") {
+    dropdown.style.display = "none";
+    arrow.style.transform = "rotate(0deg)";
+  } else {
+    dropdown.style.display = "flex";
+    arrow.style.transform = "rotate(180deg)";
+  }
+}
+
 </script>
 
 </body>

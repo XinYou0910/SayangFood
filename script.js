@@ -215,3 +215,69 @@
       select.value = customValue.trim();
     }
   }
+
+  function toggleDropdown() {
+  const dropdown = document.getElementById("dropdownMenu");
+  const arrow = document.getElementById("arrowIcon");
+
+  // Toggle display
+  if (dropdown.style.display === "flex") {
+    dropdown.style.display = "none";
+    arrow.style.transform = "rotate(0deg)";
+  } else {
+    dropdown.style.display = "flex";
+    arrow.style.transform = "rotate(180deg)";
+  }
+}
+
+// Highlight active subpage
+document.addEventListener("DOMContentLoaded", () => {
+  const currentPage = window.location.pathname.split("/").pop();
+  const menuItems = document.querySelectorAll(".submenu-item");
+
+  menuItems.forEach(item => {
+    if (item.dataset.page === currentPage) {
+      item.classList.add("active");
+      document.getElementById("dropdownMenu").style.display = "flex";
+      document.getElementById("arrowIcon").style.transform = "rotate(180deg)";
+    }
+  });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const dropdownBtn = document.querySelector(".dropdown-btn");
+  const dropdownMenu = document.getElementById("dropdownMenu");
+  const arrowIcon = document.getElementById("arrowIcon");
+
+  // --- Toggle dropdown when clicked ---
+  dropdownBtn.addEventListener("click", (e) => {
+    e.stopPropagation(); // prevent body click from triggering immediately
+    const isOpen = dropdownMenu.style.display === "flex";
+
+    // Close any open dropdown first
+    document.querySelectorAll(".dropdown-container").forEach(menu => menu.style.display = "none");
+    document.querySelectorAll(".arrow").forEach(arrow => arrow.style.transform = "rotate(0deg)");
+
+    if (!isOpen) {
+      dropdownMenu.style.display = "flex";
+      arrowIcon.style.transform = "rotate(180deg)";
+    }
+  });
+
+  // --- Auto close dropdown when clicking outside ---
+  document.addEventListener("click", (e) => {
+    if (!dropdownMenu.contains(e.target) && !dropdownBtn.contains(e.target)) {
+      dropdownMenu.style.display = "none";
+      arrowIcon.style.transform = "rotate(0deg)";
+    }
+  });
+
+  // --- Keep active highlight when on a page ---
+  const currentPage = window.location.pathname.split("/").pop();
+  const submenuItems = document.querySelectorAll(".submenu-item");
+  submenuItems.forEach(item => {
+    if (item.dataset.page === currentPage) {
+      item.classList.add("active");
+    }
+  });
+});
