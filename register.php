@@ -1,84 +1,64 @@
 <?php
-// Include DB connection
 include 'db_connect.php';
 
-// Import PHPMailer classes
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 require 'vendor/autoload.php';
 
-
-// Check if form was submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Collect data from form
-    $user_name = $_POST['user_name'];
-    $email     = $_POST['email'];
-    $user_password  = $_POST['password'];
-    $address   = $_POST['address'];
-    $gender    = $_POST['gender'];
-    $age       = $_POST['age'];
-    $phone_num = $_POST['phone_num'];
+    $user_name = trim($_POST['user_name']);
+    $email = strtolower(trim($_POST['email']));
+    $user_password = trim($_POST['password']);
+    $household_size = !empty($_POST['household_size']) ? $_POST['household_size'] : null;
 
-    // Hash password
-    $hashed_password = password_hash($user_password, PASSWORD_DEFAULT);
-
-    // Generate 6-digit verification code
-    $verification_code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
-
-    // Insert user (unverified)
-    $stmt = $conn->prepare("INSERT INTO users 
-        (user_name, email, user_password, address, gender, age, phone_num, is_public, verification_code, is_verified) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, 0)");
-
-    if ($stmt === false) {
-        die("❌ Error in SQL: " . $conn->error);
+    if (empty($user_name) || empty($email) || empty($user_password)) {
+        die("⚠️ Please fill in all required fields.");
     }
 
-    $stmt->bind_param("sssssiss", 
-    $user_name, $email, $hashed_password, $address, $gender, $age, $phone_num, $verification_code
-);
+    $hashed_password = password_hash($user_password, PASSWORD_DEFAULT);
+    $verification_code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+    $stmt = $conn->prepare("
+        INSERT INTO users (user_name, email, user_password, household_size, verification_code, is_verified, two_factor_enabled)
+        VALUES (?, ?, ?, ?, ?, 0, 0)
+    ");
+
+    if ($stmt === false) {
+        die("❌ SQL error: " . $conn->error);
+    }
+
+    $stmt->bind_param("sssss", $user_name, $email, $hashed_password, $household_size, $verification_code);
 
     if ($stmt->execute()) {
-        // ✅ Send verification email
         $mail = new PHPMailer(true);
         try {
-            //Server settings
             $mail->isSMTP();
-            $mail->Host       = 'smtp.gmail.com';
-            $mail->SMTPAuth   = true;
-            $mail->Username   = 'pxypxy12@gmail.com';      // your Gmail
-            $mail->Password   = 'fqpr niqh uspd vhaw';        // your Gmail app password
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'pxypxy12@gmail.com';
+            $mail->Password = 'fqpr niqh uspd vhaw';
             $mail->SMTPSecure = 'tls';
-            $mail->Port       = 587;
+            $mail->Port = 587;
 
-            //Recipients
             $mail->setFrom('pxypxy12@gmail.com', 'SayangFood');
             $mail->addAddress($email, $user_name);
-
-            // Content
             $mail->isHTML(true);
-            $mail->Subject = 'Welcome to SayangFood - Verify Your Account';
-           // build base URL dynamically
-            $base_url = "http://localhost/" . basename(__DIR__);
-            $verify_link = "http://localhost/SayangFood/verify.php?email=$email&code=$verification_code";
+            $mail->Subject = 'SayangFood - Verify Your Account';
+            $verify_link = "http://localhost/SayangFood/verify.html?email=$email";
 
-
-// email body
             $mail->Body = "
                 <h2>Welcome to SayangFood, $user_name!</h2>
-                <p>Thank you for registering.</p>
+                <p>Thank you for registering your household account.</p>
                 <p>Your 6-digit verification code is: <b>$verification_code</b></p>
-                <p>Please go to the verification page and enter your code:</p>
-                <a href='http://localhost/SayangFood/verify.html'>Verify My Account</a>
+                <p>Click the link below to verify your account and complete setup:</p>
+                <a href='$verify_link'>Verify My Account</a>
             ";
 
-
-
             $mail->send();
-            echo "✅ Registration successful! Please check your email to verify your account.";
+            echo "✅ Registration successful! Please check your email for the verification link.";
         } catch (Exception $e) {
-            echo "❌ Email could not be sent. Mailer Error: {$mail->ErrorInfo}";
+            echo "❌ Email could not be sent. Error: {$mail->ErrorInfo}";
         }
     } else {
         echo "❌ Error: " . $stmt->error;
@@ -87,6 +67,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->close();
     $conn->close();
 } else {
-    echo "⚠️ Please submit the form.";
+    echo "⚠️ Please submit the form properly.";
 }
 ?>

@@ -3,68 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Account Verification</title>
+  <title>Email Verification - SayangFood</title>
+  <link rel="stylesheet" href="verify_page.css">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f9;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .verify-box {
-      background: #fff;
-      padding: 25px;
-      border-radius: 10px;
-      box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
-      width: 350px;
-    }
-    .verify-box h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .verify-box label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    .verify-box input {
-      width: 90%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    .verify-box button {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 6px;
-      background: #28a745;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .verify-box button:hover {
-      background: #218838;
+    /* Add this if not already in your CSS */
+    .form-group span {
+      color: red;
     }
   </style>
 </head>
 <body>
+  <div class="verify-container">
+    <div class="verify-box">
+      <h2>Email Verification</h2>
+      <p>Please enter the 6-digit verification code sent to your email and set your password again to activate 2FA.</p>
 
-  <div class="verify-box">
-    <h2>Verify Your Account</h2>
-    <form method="POST" action="verify.php">
-      <label for="email">Email</label>
-      <input type="email" name="email" id="email" placeholder="Enter your email" required>
+      <form action="verify.php" method="POST">
+        <!-- Hidden email field (auto-filled using JS) -->
+        <input type="hidden" name="email" id="emailField">
 
-      <label for="code">Verification Code</label>
-      <input type="text" name="code" id="code" maxlength="6" placeholder="Enter 6-digit code" required>
+        <div class="form-group">
+          <label>Verification Code <span>*</span></label>
+          <input type="text" name="verification_code" maxlength="6" required>
+        </div>
 
-      <button type="submit">Verify</button>
-    </form>
+        <div class="form-group">
+          <label>New Password <span>*</span></label>
+          <input type="password" name="new_password" required>
+        </div>
+
+        <button type="submit" class="verify-btn">Verify Account</button>
+      </form>
+    </div>
   </div>
 
+  <!-- JavaScript to auto-fill email -->
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const email = urlParams.get('email');
+    if (email) {
+      document.getElementById('emailField').value = email;
+    } else {
+      console.warn("⚠️ No email found in URL.");
+    }
+  </script>
 </body>
 </html>
