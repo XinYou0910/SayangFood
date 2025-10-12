@@ -1,0 +1,158 @@
+<?php
+include 'db_connect.php';
+$query = "SELECT d.*, f.item_name, f.quantity, f.expiry_date 
+          FROM donation d
+          JOIN food_item_inventory f ON d.item_id = f.item_id
+          ORDER BY d.donation_id DESC";
+$result = mysqli_query($conn, $query);
+
+if (!$result) {
+  die('Query failed: ' . mysqli_error($conn));
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SayangFood - Donation List</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="inventory_list.css">
+</head>
+<body>
+
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo-container">
+      <img src="pic/logo.png" alt="SayangFood Logo" class="logo-img">
+      <div class="logo-text">
+        <span class="brand">SayangFood</span><br>
+        <small>Food Management System</small>
+      </div>
+    </div>
+
+    <button class="menu-item"><img src="pic/home.png" class="icon"> Home</button>
+    <button class="menu-item dropdown-btn"><img src="pic/search.png" class="icon"> Browse Food Items</button>
+
+    <div class="dropdown-container">
+      <button onclick="window.location.href='inventory_list.php'">Inventory</button>
+      <button onclick="window.location.href='donation_list.php'">Donations</button>
+    </div>
+
+    <button class="menu-item"><img src="pic/data-analytics.png" class="icon"> Food Analytics</button>
+    <button class="menu-item"><img src="pic/notification.png" class="icon"> Notification</button>
+
+    <div class="profile">
+      <img src="pic/user.png" alt="User" class="profile-img">
+      <div class="profile-info">
+        <p class="username">ZhiLim</p>
+        <p class="role">User Profile</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="header">
+      <h1>Donation Listing</h1>
+    </div>
+
+    <div class="controls">
+      <select>
+        <option value="all">View All</option>
+        <option value="donated">Donated</option>
+        <option value="available">Available</option>
+      </select>
+      <input type="text" placeholder="Search donation item...">
+    </div>
+
+    <table>
+      <tr>
+        <th>Item Name</th>
+        <th>Quantity</th>
+        <th>Expiry Date</th>
+        <th>Pickup Location</th>
+        <th>Status</th>
+        <th>Remark</th>
+        <th>Actions</th>
+      </tr>
+
+      <?php while($row = mysqli_fetch_assoc($result)) { ?>
+      <tr>
+        <td><?= htmlspecialchars($row['item_name']) ?></td>
+        <td><?= htmlspecialchars($row['quantity']) ?></td>
+        <td><?= htmlspecialchars(date('Y-m-d', strtotime($row['expiry_date']))) ?></td>
+        <td><?= htmlspecialchars($row['pickup_location']) ?></td>
+        <td class="<?= strtolower($row['donation_status']) === 'donated' ? 'status-available' : 'status-expired' ?>">
+          <?= htmlspecialchars($row['donation_status']) ?>
+        </td>
+        <td><?= htmlspecialchars($row['donation_remark']) ?></td>
+        <td>
+          <button class="action-btn edit-btn" onclick='openEditDonatePopup(<?= json_encode($row) ?>)'>Edit</button>
+        </td>
+      </tr>
+      <?php } ?>
+    </table>
+  </div>
+
+  <!-- Edit Donation Popup -->
+  <div class="popup" id="editDonatePopup">
+    <div class="popup-content">
+      <h2>Edit Donation Item</h2>
+      <form id="editDonateForm" method="POST" action="update_donation.php">
+        <input type="hidden" name="donation_id" id="editDonationId">
+
+        <div class="inline-name">
+          <label>Item Name:</label>
+          <span id="editDonateItemName"></span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Pickup Location</label>
+            <input type="text" id="editPickup" name="pickup_location" required>
+          </div>
+
+          <div class="form-group">
+            <label>Status</label>
+            <select id="editDonateStatus" name="donation_status" required>
+              <option value="Available">Available</option>
+              <option value="Donated">Donated</option>
+            </select>
+          </div>
+        </div>
+
+        <label>Remark</label>
+        <textarea id="editDonateRemark" name="donation_remark"></textarea>
+
+        <div class="form-buttons">
+          <button type="submit" class="save">Save</button>
+          <button type="button" class="cancel" onclick="closeEditDonatePopup()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script src="script.js"></script>
+
+<!-- JS for Edit Popup -->
+<script>
+function openEditDonatePopup(item) {
+  document.getElementById("editDonationId").value = item.donation_id;
+  document.getElementById("editDonateItemName").textContent = item.item_name;
+  document.getElementById("editPickup").value = item.pickup_location;
+  document.getElementById("editDonateRemark").value = item.donation_remark;
+  document.getElementById("editDonateStatus").value = item.donation_status;
+  document.getElementById("editDonatePopup").style.display = "flex";
+}
+
+function closeEditDonatePopup() {
+  document.getElementById("editDonatePopup").style.display = "none";
+}
+</script>
+
+</body>
+</html>

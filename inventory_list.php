@@ -103,7 +103,8 @@ if (!$result) {
         <td>
           <button class="action-btn edit-btn" 
             onclick='openEditPopup(<?= json_encode($row) ?>)'>Edit</button>
-          <button class="action-btn donate-btn">Donate</button>
+          <button class="action-btn donate-btn" 
+            onclick='openDonatePopup(<?= json_encode($row) ?>)'>Donate</button>
         </td>
       </tr>
       <?php } ?>
@@ -256,6 +257,32 @@ if (!$result) {
     </div>
   </div>
 
+  <!-- Donate Confirmation Popup -->
+  <div class="popup" id="donatePopup">
+    <div class="popup-content">
+      <h2>Confirm Donation</h2>
+      <form id="donateForm" action="donate_food.php" method="POST">
+        <input type="hidden" name="item_id" id="donateItemId">
+        <input type="hidden" name="user_id" value="1"> <!-- Temporary user_id for demo -->
+
+        <p><strong>Item Name:</strong> <span id="donateItemName"></span></p>
+        <p><strong>Quantity:</strong> <span id="donateQuantity"></span></p>
+        <p><strong>Expiry Date:</strong> <span id="donateExpiry"></span></p>
+
+        <label for="pickup_location">Pickup Location:</label>
+        <input type="text" name="pickup_location" id="pickup_location" placeholder="Enter pickup point" required>
+
+        <label for="donation_remark">Remark (Optional):</label>
+        <textarea name="donation_remark" id="donation_remark" placeholder="Any notes..."></textarea>
+
+        <div class="form-buttons">
+          <button type="submit" class="save">Confirm</button>
+          <button type="button" class="cancel" onclick="closeDonatePopup()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 <script src="script.js"></script>
 
 <!-- Edit Popup Logic -->
@@ -358,6 +385,18 @@ function restoreEditStorageDropdown(customValue) {
     select.appendChild(opt);
     select.value = customValue.trim();
   }
+}
+
+function openDonatePopup(item) {
+  document.getElementById("donateItemId").value = item.item_id;
+  document.getElementById("donateItemName").textContent = item.item_name;
+  document.getElementById("donateQuantity").textContent = item.quantity;
+  document.getElementById("donateExpiry").textContent = item.expiry_date;
+  document.getElementById("donatePopup").style.display = "flex";
+}
+
+function closeDonatePopup() {
+  document.getElementById("donatePopup").style.display = "none";
 }
 </script>
 
