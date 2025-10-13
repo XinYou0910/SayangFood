@@ -97,8 +97,12 @@ if (!$result) {
           $status = $row['item_status'];
           $expiryDate = strtotime($row['expiry_date']);
           $today = strtotime(date('Y-m-d'));
-          if (strtolower($status) !== "used") {
-            $status = ($expiryDate < $today) ? "Expired" : "Available";
+
+          // Only automatically mark Expired items if not Used, Donated, or Planned for Meal
+          if (!in_array(strtolower($status), ['used', 'donated', 'expired', 'planned for meal'])) {
+            if ($expiryDate < $today) {
+              $status = "Expired";
+            }
           }
         ?>
         <tr>
@@ -112,8 +116,21 @@ if (!$result) {
               <?= htmlspecialchars($row['item_remark']) ?>
             </div>
           </td>
-          <td class="<?= strtolower($status) === 'expired' ? 'status-expired' : 'status-available' ?>">
-            <?= htmlspecialchars($status) ?>
+          <?php
+            // Determine display version and color class
+            $displayStatus = ($status === 'Planned for Meal') ? 'Meal' : $status;
+            $statusClass = 'status-available';
+
+            if (strtolower($status) === 'expired') {
+              $statusClass = 'status-expired';
+            } elseif (strtolower($status) === 'used') {
+              $statusClass = 'status-used';
+            } elseif (strtolower($status) === 'planned for meal') {
+              $statusClass = 'status-planned-for-meal';
+            }
+          ?>
+          <td class="<?= $statusClass ?>">
+            <?= htmlspecialchars($displayStatus) ?>
           </td>
           <td>
             <button class="action-btn view-btn" onclick='openViewPopup(<?= json_encode($row) ?>)'>View</button>
@@ -131,7 +148,7 @@ if (!$result) {
       <h2>Edit Food Item</h2>
       <button class="close-btn" onclick="closeEditPopup()">×</button>
 
-      <form id="editForm">
+      <form id="editForm" action="update_food.php" method="POST">
         <input type="hidden" name="item_id" id="editId">
 
         <div class="inline-name">
@@ -202,6 +219,7 @@ if (!$result) {
         <select id="editStatus" name="item_status" required>
           <option value="Available">Available</option>
           <option value="Used">Used</option>
+          <option value="Planned for Meal">Planned for Meal</option>
         </select>
 
         <div class="form-buttons">
@@ -260,6 +278,140 @@ if (!$result) {
           <button type="button" class="donate-btn" id="viewDonateBtn" onclick="confirmDonation()">Donate</button>
           <button type="button" class="edit-btn" onclick="openEditFromView()">Edit</button>
         </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Popup -->
+  <div class="popup" id="popupForm">
+    <div class="popup-content">
+      <span class="close-btn" onclick="closePopup()">×</span>
+      <h2>Add New Food Item</h2>
+
+      <form action="add_food.php" method="POST">
+        
+        <!-- Item Name -->
+        <label for="itemName">Item Name</label>
+        <input 
+          type="text" 
+          name="item_name" 
+          id="itemName" 
+          placeholder="e.g. Chicken Breast, Milk, Pasta" 
+          required
+        >
+
+        <!-- Quantity + Unit + Expiry Date -->
+        <div class="form-row">
+          
+          <!-- Quantity -->
+          <div class="form-group quantity">
+            <label for="quantityValue">Quantity</label>
+            <input 
+              type="number" 
+              id="quantityValue" 
+              name="quantityValue" 
+              min="1" 
+              value="1" 
+              required
+            >
+          </div>
+
+          <!-- Unit -->
+          <div class="form-group unit">
+            <label for="quantityUnit">Unit</label>
+            <div id="unitWrapper">
+              <select 
+                id="quantityUnit" 
+                name="quantityUnit" 
+                onchange="switchUnitInput()" 
+                required
+              >
+                <option value="">-- Select Unit --</option>
+                <option value="pcs">pcs</option>
+                <option value="packs">packs</option>
+                <option value="kg">kg</option>
+                <option value="g">g</option>
+                <option value="litres">litres</option>
+                <option value="ml">ml</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Expiry Date -->
+          <div class="form-group expiry">
+            <label for="expiryDate">Expiry Date</label>
+            <input 
+              type="date" 
+              name="expiry_date" 
+              id="expiryDate" 
+              required
+            >
+          </div>
+        </div>
+
+        <!-- Category + Storage Place -->
+        <div class="form-row">
+          
+          <!-- Category -->
+          <div class="form-group category">
+            <label for="category">Category</label>
+            <div id="categoryWrapper" class="dual-input-wrapper">
+              <select 
+                name="item_category" 
+                id="category" 
+                onchange="switchCategoryInput()" 
+                required
+              >
+                <option value="">-- Select Category --</option>
+                <option value="Meat">Meat</option>
+                <option value="Vegetable">Vegetable</option>
+                <option value="Seafood">Seafood</option>
+                <option value="Dairy">Dairy</option>
+                <option value="Grains">Grains</option>
+                <option value="Beverage">Beverage</option>
+                <option value="Snacks">Snacks</option>
+                <option value="Condiment">Condiment</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Storage Place -->
+          <div class="form-group storage">
+            <label for="storagePlace">Storage Place</label>
+            <div id="storageWrapper">
+              <select 
+                name="storage_place" 
+                id="storagePlace" 
+                onchange="switchStorageInput()" 
+                required
+              >
+                <option value="">-- Select Storage Place --</option>
+                <option value="Refrigerator">Refrigerator</option>
+                <option value="Freezer">Freezer</option>
+                <option value="Pantry">Pantry</option>
+                <option value="Cabinet">Cabinet</option>
+                <option value="Storage Box">Storage Box</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Remark -->
+        <label for="remark">Remark</label>
+        <textarea 
+          name="item_remark" 
+          id="remark" 
+          placeholder="Optional: e.g. Use soon, almost expired, for donation..."
+        ></textarea>
+
+        <!-- Buttons -->
+        <div class="form-buttons">
+          <button type="submit" class="save">Save</button>
+        </div>
+
       </form>
     </div>
   </div>
