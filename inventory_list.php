@@ -106,9 +106,14 @@ if (!$result) {
     </div>
 
     <div class="controls">
-          <!-- ...existing controls... -->
-          <button class="action-btn edit-btn" style="min-width:110px;max-width:110px;" onclick="openFilterPopup()">Filter</button>
-    </div>    <table>
+          <div class="controls-left">
+            <button class="action-btn edit-btn" style="min-width:110px;max-width:110px;" onclick="openFilterPopup()">Filter</button>
+          </div>
+          <div class="controls-right">
+            <button class="action-btn add-btn" onclick="openPopup()">Add New Food</button>
+          </div>
+    </div>
+    <table>
       <tr>
         <th>Item Name</th>
         <th>Category</th>
@@ -156,8 +161,6 @@ if (!$result) {
       </tr>
       <?php } ?>
     </table>
-
-    <button class="add-btn" onclick="openPopup()">Add New Food</button>
 
     <!-- Filter Popup -->
     <div class="popup" id="filterPopup" style="display:none;">
