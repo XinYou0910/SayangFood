@@ -1,22 +1,12 @@
 /* ============================
-   General Styles
+   Base & Background
 ============================ */
 body {
-  font-family: Arial, sans-serif;
   margin: 0;
-  padding: 0;
-  background: #fefffd;
-  transition: opacity 0.5s ease, transform 0.5s ease; /* ✨ added animation transition */
-}
-
-body.fade-out {
-  opacity: 0;
-  transform: translateX(-40px);
-}
-
-/* Animation transition for smooth page switch */
-body {
+  font-family: "Poppins", sans-serif;
+  background-color: #f9f9f9;
   transition: opacity 0.5s ease, transform 0.5s ease;
+  overflow: hidden;
 }
 
 body.fade-out {
@@ -24,9 +14,20 @@ body.fade-out {
   transform: translateX(-40px);
 }
 
+/* Background Image */
+.background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url("pic/backgound_1.jpg") center/cover no-repeat;
+  filter: brightness(0.6) blur(2px);
+  z-index: -1;
+}
 
 /* ============================
-   Main Container
+   Layout
 ============================ */
 .container {
   display: flex;
@@ -37,45 +38,60 @@ body.fade-out {
 
 .register-box {
   display: flex;
-  width: 800px;
-  background: #fff;
-  border-radius: 8px;
+  width: 900px;
+  height: 690px;
+  background: #f4f4f4; /* ✅ light gray-white tone */
+  border-radius: 18px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
   overflow: hidden;
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+  animation: fadeInUp 0.6s ease;
 }
+
+
 
 /* ============================
-   Left Form Section
+   Left Section (Form)
 ============================ */
 .form-section {
-  flex: 2;
-  padding: 40px 30px;
+  flex: 1.8;
+  padding: 60px 50px;
+  color: #000;
+  background: rgba(255, 255, 255, 0.75);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
+  transform: translateY(-20px);
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.logo {
-  width: 120px;
-  margin-bottom: 15px;
-}
-
+/* Headings */
 .form-section h1 {
-  margin: 0;
-  font-size: 28px;
+  font-size: 34px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #2b2b2b;
 }
 
 .subtitle {
   color: #666;
-  margin-bottom: 25px;
+  margin-bottom: 35px;
+  font-weight: 400;
+  font-size: 15px;
 }
 
+/* ============================
+   Form Styling
+============================ */
 .form-group {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 15px;
+  margin-bottom: 22px;
 }
 
 .form-group label {
-  font-weight: bold;
-  margin-bottom: 5px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  display: block;
+  color: #333;
 }
 
 .form-group span {
@@ -83,79 +99,133 @@ body.fade-out {
 }
 
 .form-group input {
-  padding: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
   border: 1px solid #ccc;
-  border-radius: 4px;
+  background: #fff;
+  outline: none;
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+
+.form-group input::placeholder {
+  color: #aaa;
+}
+
+.form-group input:focus {
+  border-color: #4cc94c;
+  box-shadow: 0 0 6px rgba(92, 223, 92, 0.3);
 }
 
 /* ============================
-   Button Styling
+   Buttons
 ============================ */
 .signup-btn {
-  background: #5cdf5c;
-  border: none;
-  padding: 12px;
-  font-size: 16px;
-  font-weight: bold;
-  border-radius: 4px;
-  cursor: pointer;
+  margin-top: 10px;
   width: 100%;
-  transition: background 0.3s ease;
+  background: linear-gradient(90deg, #5cdf5c, #45c54b);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
 }
 
 .signup-btn:hover {
-  background: #45c54b;
-  color: #fff;
+  background: linear-gradient(90deg, #4cc94c, #3bb73b);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(60, 200, 60, 0.25);
 }
 
 /* ============================
-   Right Side Section
+   Right Section (Welcome)
 ============================ */
 .side-section {
-  flex: 1;
-  background: #5cdf5c;
-  padding: 30px;
+  flex: 1.2;
+  background: linear-gradient(135deg, #5cdf5c, #3ec23e);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
   text-align: center;
-  border-top-right-radius: 20px;
-  border-bottom-right-radius: 20px;
+  padding: 60px 25px;
+  border-top-right-radius: 18px;
+  border-bottom-right-radius: 18px;
 }
 
-.side-section h2 {
-  margin-top: 145px;
-  font-size: 22px;
+
+/* ✅ Logo now on right side */
+.side-section .logo {
+  width: 130px;
+  margin-bottom: 25px;
+  margin-top: -20px;
+  filter: brightness(0) invert(1); /* ✅ turns dark logo to white */
 }
 
-.side-section p {
-  margin-bottom: 30px;
+
+/* ✅ Move welcome text slightly lower */
+.text-content {
+  margin-top: -120px;
+}
+
+.text-content h2 {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.text-content p {
+  font-size: 15px;
+  margin-top: 5px;
+  line-height: 1.5;
+  opacity: 0.9;
 }
 
 /* ============================
-   Login Section Button
+   Login Section
 ============================ */
 .login-section {
-  margin-top: 40px;
+  margin-bottom: 10px;
+}
+
+.login-section p {
+  margin-bottom: 8px;
+  font-weight: 500;
 }
 
 .login-btn {
   display: inline-block;
-  padding: 10px 20px;
-  border: 2px solid #000;
-  background: transparent;
-  border-radius: 4px;
+  padding: 10px 25px;
+  border: 2px solid #fff;
+  border-radius: 8px;
+  color: #fff;
   text-decoration: none;
-  font-weight: bold;
-  color: #000;
+  font-weight: 600;
   transition: all 0.3s ease;
 }
 
 .login-btn:hover {
-  background: #45c54b;
-  color: #fff;
+  background: #fff;
+  color: #3ec23e;
+  transform: translateY(-2px);
 }
 
-.already {
-  margin-top: 10px;
-  color: #000;
-  font-weight: 500;
-  font-size: small;
+/* ============================
+   Animation
+============================ */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

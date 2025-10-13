@@ -1,42 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login</title>
-  <link rel="stylesheet" href="login.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - SayangFood</title>
+  <link rel="stylesheet" href="login.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
+  <div class="background"></div>
+
   <div class="container">
-    <!-- Left Side -->
-    <div class="left">
-      <!-- Replace with your logo image -->
-      <img src="pic/Logo.png" alt="SayangFood Logo" class="logo">
-      <h2>SayangFood</h2>
-      <p>Your Smart Food Waste Management System</p>
+    <div class="login-box">
+      <!-- Left Login Form -->
+      <div class="form-section">
+        <h1>Login</h1>
+        <p class="subtitle">Welcome back! Please sign in to your account</p>
 
-      <!-- Sign Up button -->
-      <a href="register_page.html" class="signup-btn">Sign up</a>
-      <p class="small-text">Haven’t created an account?</p>
-    </div>
+        <form action="login.php" method="POST">
+          <div class="form-group">
+            <label>Email <span>*</span></label>
+            <input type="email" name="email" placeholder="example@email.com" required />
+          </div>
 
-    <!-- Right Side -->
-    <div class="right">
-      <h2>Login</h2>
-      <form action="login.php" method="POST">
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+          <div class="form-group">
+            <label>Password <span>*</span></label>
+            <input type="password" name="password" placeholder="••••••••" required />
+          </div>
 
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+          <div class="options">
+            <label><input type="checkbox" name="remember"> Remember Me</label>
+            <a href="forgot_password.html" class="forgot">Forgot Password?</a>
+          </div>
 
-        <div class="options">
-          <label><input type="checkbox" name="remember"> Remember Me</label>
-          <a href="forgot_password.html">Forgot Password?</a>
+          <button type="submit" class="login-btn">Log In</button>
+        </form>
+      </div>
+
+      <!-- Right Side -->
+      <div class="side-section">
+        <img src="pic/Logo.png" alt="SayangFood Logo" class="logo" />
+        <div class="text-content">
+          <h2>Welcome to SayangFood</h2>
+          <p>Your Smart Food Waste Management System</p>
         </div>
-
-        <button type="submit" class="login-btn">Log In</button>
-      </form>
+        <div class="signup-section">
+          <p>Don’t have an account?</p>
+          <a href="register_page.html" class="signup-btn">Sign Up</a>
+        </div>
+      </div>
     </div>
   </div>
 </body>
