@@ -107,3 +107,4 @@ function appendWeekRow(data) {
 
   // Insert above the Add Meal button row
   bod
+
