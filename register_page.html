@@ -53,5 +53,19 @@
       </div>
     </div>
   </div>
+
+  <!-- ✨ Animation Script -->
+  <script>
+    const loginBtn = document.querySelector('.login-btn');
+    if (loginBtn) {
+      loginBtn.addEventListener('click', function(event) {
+        event.preventDefault(); // Stop instant redirect
+        document.body.classList.add('fade-out'); // Trigger fade animation
+        setTimeout(() => {
+          window.location.href = this.href; // Redirect after animation
+        }, 500); // Duration matches CSS transition
+      });
+    }
+  </script>
 </body>
 </html>

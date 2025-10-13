@@ -1,11 +1,33 @@
-/* General Styles */
+/* ============================
+   General Styles
+============================ */
 body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
   background: #fefffd;
+  transition: opacity 0.5s ease, transform 0.5s ease; /* ✨ added animation transition */
 }
 
+body.fade-out {
+  opacity: 0;
+  transform: translateX(-40px);
+}
+
+/* Animation transition for smooth page switch */
+body {
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+body.fade-out {
+  opacity: 0;
+  transform: translateX(-40px);
+}
+
+
+/* ============================
+   Main Container
+============================ */
 .container {
   display: flex;
   justify-content: center;
@@ -19,10 +41,12 @@ body {
   background: #fff;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0px 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-/* Left Form Section */
+/* ============================
+   Left Form Section
+============================ */
 .form-section {
   flex: 2;
   padding: 40px 30px;
@@ -64,6 +88,9 @@ body {
   border-radius: 4px;
 }
 
+/* ============================
+   Button Styling
+============================ */
 .signup-btn {
   background: #5cdf5c;
   border: none;
@@ -81,7 +108,9 @@ body {
   color: #fff;
 }
 
-/* Right Side Section */
+/* ============================
+   Right Side Section
+============================ */
 .side-section {
   flex: 1;
   background: #5cdf5c;
@@ -100,6 +129,9 @@ body {
   margin-bottom: 30px;
 }
 
+/* ============================
+   Login Section Button
+============================ */
 .login-section {
   margin-top: 40px;
 }
