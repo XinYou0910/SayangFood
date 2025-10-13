@@ -1,123 +1,214 @@
-
+/* ============================
+   Base & Background
+============================ */
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background-color: #fefffd; /* light green background */
-}
-
-.container {
-  width: 700px;
-  height: 550px;
-  margin: 220px auto;
-  display: flex;
-  background: #fff;
-  border-radius: 8px;
+  font-family: "Poppins", sans-serif;
+  background-color: #f9f9f9;
   overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-/* Left side */
-.left {
-  flex: 1;
-  background: #5cdf5c;
+.background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url("pic/backgound_1.jpg") center/cover no-repeat;
+  filter: brightness(0.6) blur(2px);
+  z-index: -1;
+}
+
+/* ============================
+   Layout
+============================ */
+.container {
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 40px;
-  text-align: center;
+  height: 100vh;
 }
 
-.left h2 {
-  margin: 20px 0 10px;
-  font-weight: bold;
+.login-box {
+  display: flex;
+  width: 900px;
+  height: 590px;
+  background: rgba(255, 255, 255, 0.85); /* frosted look */
+  backdrop-filter: blur(10px);
+  border-radius: 18px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: fadeInUp 0.6s ease;
 }
 
-.left p {
-  color: #555;
-  font-size: 14px;
-  margin-bottom: 40px;
+/* ============================
+   Left Section (Form)
+============================ */
+.form-section {
+  flex: 1.8;
+  padding: 60px 45px 30px;
+  background: rgba(255, 255, 255, 0.9);
 }
 
-.signup-btn {
-  display: inline-block;
-  padding: 10px 25px;
-  font-size: 16px;
-  font-weight: bold;
-  border: 1px solid #000;
-  background: #fff;
-  border-radius: 5px;
-  cursor: pointer;
-  text-decoration: none; /* remove underline for <a> */
+.form-section h1 {
+  font-size: 30px;
+  margin-bottom: 10px;
   color: #000;
+}
+
+.subtitle {
+  color: #666;
+  margin-bottom: 25px;
+  font-weight: 400;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  font-weight: 500;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.form-group span {
+  color: red;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: rgba(255, 255, 255, 0.9);
+  outline: none;
+  font-size: 15px;
   transition: all 0.3s ease;
 }
 
-.signup-btn:hover {
-  background: #000;
-  color: #fff;
-}
-
-/* Right side */
-.right {
-  flex: 1.5;
-  padding: 50px;
-}
-
-.right h2 {
-  margin-bottom: 30px;
-  font-size: 26px;
-  font-weight: bold;
-}
-
-label {
-  display: block;
-  margin: 15px 0 5px;
-  font-weight: bold;
-  font-size: 14px;
-}
-
-input[type="email"],
-input[type="password"] {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 14px;
+.form-group input:focus {
+  border-color: #4cc94c;
+  box-shadow: 0 0 5px rgba(92, 223, 92, 0.4);
 }
 
 .options {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 10px 0 20px;
-  font-size: 12px;
+  font-size: 13px;
+  margin-bottom: 20px;
 }
 
 .options label {
-  font-weight: normal;
   display: flex;
   align-items: center;
+  gap: 5px;
 }
 
-.options input {
-  margin-right: 5px;
+.options a {
+  color: #45c54b;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.options a:hover {
+  text-decoration: underline;
 }
 
 .login-btn {
+  margin-top: 40px;
   width: 100%;
-  padding: 12px;
-  background: #5cdf5c; /* active green */
-  border: none;
-  border-radius: 5px;
+  background: linear-gradient(90deg, #5cdf5c, #45c54b);
   color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .login-btn:hover {
-  background: #46b346;
+  background: linear-gradient(90deg, #4cc94c, #3bb73b);
+  transform: translateY(-2px);
 }
 
+/* ============================
+   Right Section (Welcome)
+============================ */
+.side-section {
+  flex: 1.2;
+  background: linear-gradient(135deg, #5cdf5c, #3ec23e);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  padding: 60px 25px;
+}
+
+.side-section .logo {
+  width: 130px;
+  margin-bottom: 85px;
+  margin-top: -20px;
+  filter: brightness(0) invert(1); /* ✅ make logo white */
+}
+
+.text-content {
+  margin-top: -150px;
+}
+
+.text-content h2 {
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.text-content p {
+  font-size: 15px;
+  margin-top: 10px;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+.signup-section {
+  margin-bottom: 50px;
+}
+
+.signup-section p {
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.signup-btn {
+  display: inline-block;
+  padding: 10px 25px;
+  border: 2px solid #fff;
+  border-radius: 8px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.signup-btn:hover {
+  background: #fff;
+  color: #3ec23e;
+  transform: translateY(-2px);
+}
+
+/* ============================
+   Animation
+============================ */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
