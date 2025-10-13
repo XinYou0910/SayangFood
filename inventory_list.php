@@ -40,7 +40,7 @@ if (!$result) {
       </div>
     </div>
 
-    <button class="menu-item" onclick="window.location.href='home.php'">
+    <button class="menu-item" onclick="window.location.href='dashboard_page.html'">
       <img src="pic/home.png" class="icon"> Home
     </button>
 
