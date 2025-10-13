@@ -33,6 +33,16 @@ body {
   display: flex;
   color: var(--text-dark);
   line-height: 1.6;
+  min-height: 100vh;
+}
+
+.main-content {
+  margin-left: 320px;
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  height: 100vh;
+  box-sizing: border-box;
 }
 
 /*Sidebar*/
@@ -46,6 +56,11 @@ body {
   padding: 0;
   transition: all 0.3s ease;
   box-shadow: 2px 0 10px var(--shadow-light);
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow-y: auto;
+  z-index: 1000;
 }
 
 /* Align sidebar menu icons and text neatly */
@@ -874,50 +889,77 @@ button.donate-btn:disabled {
   opacity: 0.8;
 }
 
-/* Filter button style same as edit */
-.filter-btn {
-  background: linear-gradient(135deg, var(--primary-green) 0%, var(--light-green) 100%);
-  color: #fff;
+/* --- Unified Button Style for All Buttons --- */
+.edit-btn,
+.filter-btn,
+.remove-filter-btn,
+.donate-btn,
+.popup-content .save,
+.popup-content .cancel {
   border: none;
-  border-radius: 6px;
-  padding: 8px 18px;
-  font-size: 15px;
-  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 16px; /* smaller size */
   cursor: pointer;
-  box-shadow: 0 2px 8px var(--shadow-light);
-  transition: all 0.2s;
-  min-width: 110px;
-  max-width: 110px;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px var(--shadow-light);
+  display: inline-block;
+  text-align: center;
+  min-width: 100px; /* shorter button width */
 }
-.filter-btn:hover {
+
+/* --- Green Buttons (Edit, Filter, Save) --- */
+.edit-btn,
+.filter-btn,
+.popup-content .save {
+  background: linear-gradient(135deg, var(--light-green) 0%, var(--primary-green) 100%);
+  color: white;
+}
+
+.edit-btn:hover,
+.filter-btn:hover,
+.popup-content .save:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(74, 124, 89, 0.3);
   opacity: 0.95;
-  box-shadow: 0 4px 12px var(--shadow-medium);
 }
 
-/* Center popup */
-.popup {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 9999;
-  background: var(--bg-white);
-  box-shadow: 0 8px 32px var(--shadow-medium);
-  display: none;
-  width: 400px;
-  border-radius: 12px;
-  min-height: 340px;
+/* --- Orange Donate Button --- */
+.donate-btn {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  color: white;
 }
 
-/* Row by row filter fields */
-.form-row {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 18px;
+.donate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(230, 126, 34, 0.4);
+  opacity: 0.95;
 }
-.form-group {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+
+/* --- Red Remove Filter Button --- */
+.remove-filter-btn {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
 }
+
+.remove-filter-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(192, 57, 43, 0.4);
+  opacity: 0.95;
+}
+
+/* --- Gray Cancel Button --- */
+.popup-content .cancel {
+  background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+  color: white;
+}
+
+.popup-content .cancel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(127, 140, 141, 0.3);
+  opacity: 0.95;
+}
+

@@ -100,20 +100,15 @@ if (!$result) {
 
 
   <!-- Main -->
-  <div class="main">
+  <div class="main-content">
     <div class="header">
       <h1>Food Item Inventory</h1>
     </div>
 
     <div class="controls">
-            <!-- ...existing controls... -->
-            <button class="action-btn edit-btn" style="min-width:110px;max-width:110px;" onclick="openFilterPopup()">Filter</button>
-            <?php if (isset($_GET['filter'])): ?>
-              <button class="action-btn cancel" style="background-color:#e74c3c;min-width:110px;max-width:110px;" onclick="window.location.href='inventory_list.php'">Remove Filter</button>
-            <?php endif; ?>
-    </div>
-
-    <table>
+          <!-- ...existing controls... -->
+          <button class="action-btn edit-btn" style="min-width:110px;max-width:110px;" onclick="openFilterPopup()">Filter</button>
+    </div>    <table>
       <tr>
         <th>Item Name</th>
         <th>Category</th>
@@ -170,45 +165,52 @@ if (!$result) {
         <h2>Filter Food Items</h2>
         <form method="GET" action="inventory_list.php">
           <input type="hidden" name="filter" value="1">
-          <div class="form-row">
-            <div class="form-group category">
-              <label for="filterCategory">Category</label>
-              <select name="category" id="filterCategory">
-                <option value="">-- Any --</option>
-                <option value="Meat">Meat</option>
-                <option value="Vegetable">Vegetable</option>
-                <option value="Seafood">Seafood</option>
-                <option value="Dairy">Dairy</option>
-                <option value="Grains">Grains</option>
-                <option value="Beverage">Beverage</option>
-                <option value="Snacks">Snacks</option>
-                <option value="Condiment">Condiment</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div class="form-group expiry">
-              <label for="filterExpiryFrom">Expiry Date From</label>
-              <input type="date" name="expiry_date_from" id="filterExpiryFrom">
-            </div>
-            <div class="form-group expiry">
-              <label for="filterExpiryTo">Expiry Date To</label>
-              <input type="date" name="expiry_date_to" id="filterExpiryTo">
-            </div>
-            <div class="form-group storage">
-              <label for="filterStorage">Storage Place</label>
-              <select name="storage_place" id="filterStorage">
-                <option value="">-- Any --</option>
-                <option value="Refrigerator">Refrigerator</option>
-                <option value="Freezer">Freezer</option>
-                <option value="Pantry">Pantry</option>
-                <option value="Cabinet">Cabinet</option>
-                <option value="Storage Box">Storage Box</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
+          <!-- Category Filter -->
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="filterCategory">Category</label>
+            <select name="category" id="filterCategory" style="width: 100%;">
+              <option value="">-- Any --</option>
+              <option value="Meat">Meat</option>
+              <option value="Vegetable">Vegetable</option>
+              <option value="Seafood">Seafood</option>
+              <option value="Dairy">Dairy</option>
+              <option value="Grains">Grains</option>
+              <option value="Beverage">Beverage</option>
+              <option value="Snacks">Snacks</option>
+              <option value="Condiment">Condiment</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <!-- Expiry Date Filters -->
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="filterExpiryFrom">Expiry Date From</label>
+            <input type="date" name="expiry_date_from" id="filterExpiryFrom" style="width: 100%;">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="filterExpiryTo">Expiry Date To</label>
+            <input type="date" name="expiry_date_to" id="filterExpiryTo" style="width: 100%;">
+          </div>
+
+          <!-- Storage Place Filter -->
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="filterStorage">Storage Place</label>
+            <select name="storage_place" id="filterStorage" style="width: 100%;">
+              <option value="">-- Any --</option>
+              <option value="Refrigerator">Refrigerator</option>
+              <option value="Freezer">Freezer</option>
+              <option value="Pantry">Pantry</option>
+              <option value="Cabinet">Cabinet</option>
+              <option value="Storage Box">Storage Box</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
           <div class="form-buttons">
             <button type="submit" class="action-btn edit-btn" style="min-width:110px;max-width:110px;">Apply</button>
+            <?php if (isset($_GET['filter'])): ?>
+            <button type="button" class="action-btn cancel" style="background-color:#e74c3c;min-width:110px;max-width:110px;" onclick="window.location.href='inventory_list.php'">Remove</button>
+            <?php endif; ?>
             <button type="button" class="action-btn cancel" style="min-width:110px;max-width:110px;" onclick="closeFilterPopup()">Cancel</button>
           </div>
         </form>
