@@ -13,10 +13,9 @@ $query = "SELECT * FROM food_item_inventory WHERE item_status != 'Donated'";
 $result = mysqli_query($conn, $query);
 
 if (!$result) {
-  die("Query failed: " . mysqli_error($conn));
+  die('Query failed: ' . mysqli_error($conn));
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -40,29 +39,24 @@ if (!$result) {
       </div>
     </div>
 
-    <button class="menu-item" onclick="window.location.href='home.php'">
+    <button class="menu-item" onclick="window.location.href='dashboard_page.html'">
       <img src="pic/home.png" class="icon"> Home
     </button>
 
-    <!-- Dropdown main button -->
+    <!-- Dropdown -->
     <button class="menu-item dropdown-btn" onclick="toggleDropdown()">
       <img src="pic/search.png" class="icon"> Browse Food Items
       <span class="arrow" id="arrowIcon">▼</span>
     </button>
 
-    <!-- Dropdown sub-menu -->
     <div class="dropdown-container" id="dropdownMenu">
-      <button class="submenu-item" data-page="inventory_list.php" onclick="window.location.href='inventory_list.php'">Inventory</button>
-      <button class="submenu-item" data-page="weekly_meal.php" onclick="window.location.href='weekly_meal.php'">Weekly Meal</button>
-      <button class="submenu-item" data-page="donation_list.php" onclick="window.location.href='donation_list.php'">Donations</button>
+      <button class="submenu-item" onclick="window.location.href='inventory_list.php'">Inventory</button>
+      <button class="submenu-item" onclick="window.location.href='weekly_meal.php'">Weekly Meal</button>
+      <button class="submenu-item" onclick="window.location.href='donation_list.php'">Donations</button>
     </div>
 
-    <button class="menu-item">
-      <img src="pic/data-analytics.png" class="icon"> Food Analytics
-    </button>
-    <button class="menu-item">
-      <img src="pic/notification.png" class="icon"> Notification
-    </button>
+    <button class="menu-item"><img src="pic/data-analytics.png" class="icon"> Food Analytics</button>
+    <button class="menu-item"><img src="pic/notification.png" class="icon"> Notification</button>
 
     <div class="profile">
       <img src="pic/user.png" alt="User" class="profile-img">
@@ -73,12 +67,9 @@ if (!$result) {
     </div>
   </div>
 
-
   <!-- Main -->
   <div class="main">
-    <div class="header">
-      <h1>Food Item Inventory</h1>
-    </div>
+    <div class="header"><h1>Food Item Inventory</h1></div>
 
     <div class="controls">
       <select>
@@ -102,66 +93,239 @@ if (!$result) {
       </tr>
 
       <?php while($row = mysqli_fetch_assoc($result)) { ?>
-      <tr>
-        <td><?= htmlspecialchars($row['item_name']) ?></td>
-        <td><?= htmlspecialchars($row['item_category']) ?></td>
-        <td><?= htmlspecialchars($row['quantity']) ?></td>
-        <td><?= date('Y-m-d', strtotime($row['expiry_date'])) ?></td>
-        <td><?= htmlspecialchars($row['storage_place']) ?></td>
-        <td><?= htmlspecialchars($row['item_remark']) ?></td>
         <?php
           $status = $row['item_status'];
           $expiryDate = strtotime($row['expiry_date']);
           $today = strtotime(date('Y-m-d'));
-          if (strtolower($status) !== "used") {
-            $status = ($expiryDate < $today) ? "Expired" : "Available";
+
+          // Only automatically mark Expired items if not Used, Donated, or Planned for Meal
+          if (!in_array(strtolower($status), ['used', 'donated', 'expired', 'planned for meal'])) {
+            if ($expiryDate < $today) {
+              $status = "Expired";
+            }
           }
         ?>
-        <td class="<?= strtolower($status) === 'expired' ? 'status-expired' : 'status-available' ?>">
-          <?= htmlspecialchars($status) ?>
-        </td>
-        <td>
-          <button class="action-btn edit-btn" 
-            onclick='openEditPopup(<?= json_encode($row) ?>)'>Edit</button>
+        <tr>
+          <td><?= htmlspecialchars($row['item_name']) ?></td>
+          <td><?= htmlspecialchars($row['item_category']) ?></td>
+          <td><?= htmlspecialchars($row['quantity']) ?></td>
+          <td><?= date('Y-m-d', strtotime($row['expiry_date'])) ?></td>
+          <td><?= htmlspecialchars($row['storage_place']) ?></td>
+          <td class="remark-cell">
+            <div class="truncate" title="<?= htmlspecialchars($row['item_remark']) ?>">
+              <?= htmlspecialchars($row['item_remark']) ?>
+            </div>
+          </td>
           <?php
-            $isDisabled = (strtolower($status) === 'used' || strtolower($status) === 'expired');
+            // Determine display version and color class
+            $displayStatus = ($status === 'Planned for Meal') ? 'Meal' : $status;
+            $statusClass = 'status-available';
+
+            if (strtolower($status) === 'expired') {
+              $statusClass = 'status-expired';
+            } elseif (strtolower($status) === 'used') {
+              $statusClass = 'status-used';
+            } elseif (strtolower($status) === 'planned for meal') {
+              $statusClass = 'status-planned-for-meal';
+            }
           ?>
-          <?php if ($isDisabled): ?>
-            <button class="action-btn donate-btn disabled" 
-              onclick="showCannotDonateMessage('<?= ucfirst($status) ?>')">Donate</button>
-          <?php else: ?>
-            <button class="action-btn donate-btn" 
-              onclick='openDonatePopup(<?= json_encode($row) ?>)'>Donate</button>
-          <?php endif; ?>
-        </td>
-      </tr>
+          <td class="<?= $statusClass ?>">
+            <?= htmlspecialchars($displayStatus) ?>
+          </td>
+          <td>
+            <button class="action-btn view-btn" onclick='openViewPopup(<?= json_encode($row) ?>)'>View</button>
+          </td>
+        </tr>
       <?php } ?>
     </table>
 
     <button class="add-btn" onclick="openPopup()">Add New Food</button>
   </div>
 
+  <!-- Edit Popup -->
+  <div class="popup" id="editPopup">
+    <div class="popup-content">
+      <h2>Edit Food Item</h2>
+      <button class="close-btn" onclick="closeEditPopup()">×</button>
+
+      <form id="editForm" action="update_food.php" method="POST">
+        <input type="hidden" name="item_id" id="editId">
+
+        <div class="inline-name">
+          <label>Item Name:</label>
+          <span id="editItemName"></span>
+          <input type="hidden" name="item_name" id="editItemNameInput">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group quantity">
+            <label>Quantity</label>
+            <input type="number" id="editQuantityValue" name="quantityValue" min="1" required>
+          </div>
+          <div class="form-group unit">
+            <label>Unit</label>
+            <select id="editQuantityUnit" name="quantityUnit" required>
+              <option value="">-- Select Unit --</option>
+              <option value="pcs">pcs</option>
+              <option value="packs">packs</option>
+              <option value="kg">kg</option>
+              <option value="g">g</option>
+              <option value="litres">litres</option>
+              <option value="ml">ml</option>
+              <option value="loaf">loaf</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group expiry">
+            <label>Expiry Date</label>
+            <input type="date" id="editExpiryDate" name="expiry_date" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group category">
+            <label>Category</label>
+            <select name="item_category" id="editCategory" required>
+              <option value="">-- Select Category --</option>
+              <option value="Meat">Meat</option>
+              <option value="Vegetable">Vegetable</option>
+              <option value="Seafood">Seafood</option>
+              <option value="Dairy">Dairy</option>
+              <option value="Grains">Grains</option>
+              <option value="Beverage">Beverage</option>
+              <option value="Snacks">Snacks</option>
+              <option value="Condiment">Condiment</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group storage">
+            <label>Storage Place</label>
+            <select name="storage_place" id="editStorage" required>
+              <option value="">-- Select Storage Place --</option>
+              <option value="Refrigerator">Refrigerator</option>
+              <option value="Freezer">Freezer</option>
+              <option value="Pantry">Pantry</option>
+              <option value="Cabinet">Cabinet</option>
+              <option value="Storage Box">Storage Box</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <label>Remark</label>
+        <textarea id="editRemark" name="item_remark"></textarea>
+
+        <label>Status</label>
+        <select id="editStatus" name="item_status" required>
+          <option value="Available">Available</option>
+          <option value="Used">Used</option>
+          <option value="Planned for Meal">Planned for Meal</option>
+        </select>
+
+        <div class="form-buttons">
+          <button type="submit" class="save">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- View Popup -->
+  <div class="popup" id="viewPopup">
+    <div class="popup-content">
+      <button type="button" class="close-btn" onclick="closeViewPopup()">×</button>
+      <h2>View Food Item</h2>
+
+      <form id="viewForm">
+        <div class="inline-name">
+          <label>Item Name:</label>
+          <span id="viewItemName"></span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group quantity">
+            <label>Quantity</label>
+            <input type="text" id="viewQuantity" readonly>
+          </div>
+          <div class="form-group unit">
+            <label>Unit</label>
+            <input type="text" id="viewUnit" readonly>
+          </div>
+          <div class="form-group expiry">
+            <label>Expiry Date</label>
+            <input type="text" id="viewExpiryDate" readonly>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group category">
+            <label>Category</label>
+            <input type="text" id="viewCategory" readonly>
+          </div>
+          <div class="form-group storage">
+            <label>Storage Place</label>
+            <input type="text" id="viewStorage" readonly>
+          </div>
+        </div>
+
+        <label>Remark</label>
+        <textarea id="viewRemark" readonly></textarea>
+
+        <label>Status</label>
+        <input type="text" id="viewStatus" readonly>
+
+        <div class="view-buttons">
+          <button type="button" class="meal-btn" id="viewMealBtn" onclick="toggleMealStatus()">Meal</button>
+          <button type="button" class="donate-btn" id="viewDonateBtn" onclick="confirmDonation()">Donate</button>
+          <button type="button" class="edit-btn" onclick="openEditFromView()">Edit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Add Popup -->
   <div class="popup" id="popupForm">
     <div class="popup-content">
+      <span class="close-btn" onclick="closePopup()">×</span>
       <h2>Add New Food Item</h2>
-      <form action="add_food.php" method="POST">
 
+      <form action="add_food.php" method="POST">
+        
         <!-- Item Name -->
         <label for="itemName">Item Name</label>
-        <input type="text" name="item_name" id="itemName" placeholder="e.g. Chicken Breast, Milk, Pasta" required>
+        <input 
+          type="text" 
+          name="item_name" 
+          id="itemName" 
+          placeholder="e.g. Chicken Breast, Milk, Pasta" 
+          required
+        >
 
         <!-- Quantity + Unit + Expiry Date -->
         <div class="form-row">
+          
+          <!-- Quantity -->
           <div class="form-group quantity">
             <label for="quantityValue">Quantity</label>
-            <input type="number" id="quantityValue" name="quantityValue" min="1" value="1" required>
+            <input 
+              type="number" 
+              id="quantityValue" 
+              name="quantityValue" 
+              min="1" 
+              value="1" 
+              required
+            >
           </div>
 
+          <!-- Unit -->
           <div class="form-group unit">
             <label for="quantityUnit">Unit</label>
             <div id="unitWrapper">
-              <select id="quantityUnit" name="quantityUnit" onchange="switchUnitInput()" required>
+              <select 
+                id="quantityUnit" 
+                name="quantityUnit" 
+                onchange="switchUnitInput()" 
+                required
+              >
                 <option value="">-- Select Unit --</option>
                 <option value="pcs">pcs</option>
                 <option value="packs">packs</option>
@@ -174,18 +338,31 @@ if (!$result) {
             </div>
           </div>
 
+          <!-- Expiry Date -->
           <div class="form-group expiry">
             <label for="expiryDate">Expiry Date</label>
-            <input type="date" name="expiry_date" id="expiryDate" required>
+            <input 
+              type="date" 
+              name="expiry_date" 
+              id="expiryDate" 
+              required
+            >
           </div>
         </div>
 
-        <!-- Expiry Date + Storage Place -->
+        <!-- Category + Storage Place -->
         <div class="form-row">
+          
+          <!-- Category -->
           <div class="form-group category">
             <label for="category">Category</label>
             <div id="categoryWrapper" class="dual-input-wrapper">
-              <select name="item_category" id="category" onchange="switchCategoryInput()" required>
+              <select 
+                name="item_category" 
+                id="category" 
+                onchange="switchCategoryInput()" 
+                required
+              >
                 <option value="">-- Select Category --</option>
                 <option value="Meat">Meat</option>
                 <option value="Vegetable">Vegetable</option>
@@ -200,10 +377,16 @@ if (!$result) {
             </div>
           </div>
 
+          <!-- Storage Place -->
           <div class="form-group storage">
             <label for="storagePlace">Storage Place</label>
             <div id="storageWrapper">
-              <select name="storage_place" id="storagePlace" onchange="switchStorageInput()" required>
+              <select 
+                name="storage_place" 
+                id="storagePlace" 
+                onchange="switchStorageInput()" 
+                required
+              >
                 <option value="">-- Select Storage Place --</option>
                 <option value="Refrigerator">Refrigerator</option>
                 <option value="Freezer">Freezer</option>
@@ -218,139 +401,17 @@ if (!$result) {
 
         <!-- Remark -->
         <label for="remark">Remark</label>
-        <textarea name="item_remark" id="remark" placeholder="Optional: e.g. Use soon, almost expired, for donation..."></textarea>
+        <textarea 
+          name="item_remark" 
+          id="remark" 
+          placeholder="Optional: e.g. Use soon, almost expired, for donation..."
+        ></textarea>
 
         <!-- Buttons -->
         <div class="form-buttons">
           <button type="submit" class="save">Save</button>
-          <button type="button" class="cancel" onclick="closePopup()">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-
-  <!-- Edit Popup -->
-  <div class="popup" id="editPopup">
-    <div class="popup-content">
-      <h2>Edit Food Item</h2>
-      <form id="editForm" method="POST" action="update_food.php">
-        <input type="hidden" name="item_id" id="editId">
-
-        <!-- Inline Item Name -->
-        <div class="inline-name">
-          <label>Item Name:</label>
-          <span id="editItemName"></span>
-          <input type="hidden" name="item_name" id="editItemNameInput">
         </div>
 
-        <!-- Quantity + Unit + Expiry Date -->
-        <div class="form-row">
-          <div class="form-group quantity">
-            <label for="editQuantityValue">Quantity</label>
-            <input type="number" id="editQuantityValue" name="quantityValue" min="1" required>
-          </div>
-
-          <div class="form-group unit">
-            <label for="editQuantityUnit">Unit</label>
-            <select id="editQuantityUnit" name="quantityUnit" required>
-              <option value="">-- Select Unit --</option>
-              <option value="pcs">pcs</option>
-              <option value="packs">packs</option>
-              <option value="kg">kg</option>
-              <option value="g">g</option>
-              <option value="litres">litres</option>
-              <option value="ml">ml</option>
-              <option value="loaf">loaf</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-
-          <div class="form-group expiry">
-            <label for="editExpiryDate">Expiry Date</label>
-            <input type="date" id="editExpiryDate" name="expiry_date" required>
-          </div>
-        </div>
-
-        <!-- Category + Storage Place -->
-        <div class="form-row">
-          <div class="form-group category">
-            <label>Category</label>
-            <div id="editCategoryWrapper">
-              <select name="item_category" id="editCategory" onchange="switchEditCategoryInput()" required>
-                <option value="">-- Select Category --</option>
-                <option value="Meat">Meat</option>
-                <option value="Vegetable">Vegetable</option>
-                <option value="Seafood">Seafood</option>
-                <option value="Dairy">Dairy</option>
-                <option value="Grains">Grains</option>
-                <option value="Beverage">Beverage</option>
-                <option value="Snacks">Snacks</option>
-                <option value="Condiment">Condiment</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group storage">
-            <label>Storage Place</label>
-            <div id="editStorageWrapper">
-              <select name="storage_place" id="editStorage" onchange="switchEditStorageInput()" required>
-                <option value="">-- Select Storage Place --</option>
-                <option value="Refrigerator">Refrigerator</option>
-                <option value="Freezer">Freezer</option>
-                <option value="Pantry">Pantry</option>
-                <option value="Cabinet">Cabinet</option>
-                <option value="Storage Box">Storage Box</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Remark -->
-        <label for="editRemark">Remark</label>
-        <textarea id="editRemark" name="item_remark"></textarea>
-
-        <!-- Status -->
-        <label>Status</label>
-        <select id="editStatus" name="item_status" required>
-          <option value="Available">Available</option>
-          <option value="Used">Used</option>
-        </select>
-
-        <!-- Buttons -->
-        <div class="form-buttons">
-          <button type="submit" class="save">Save</button>
-          <button type="button" class="cancel" onclick="closeEditPopup()">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-
-  <!-- Donate Confirmation Popup -->
-  <div class="popup" id="donatePopup">
-    <div class="popup-content">
-      <h2>Confirm Donation</h2>
-      <form id="donateForm" action="donate_food.php" method="POST">
-        <input type="hidden" name="item_id" id="donateItemId">
-        <input type="hidden" name="user_id" value="1"> <!-- Temporary user_id for demo -->
-
-        <p><strong>Item Name:</strong> <span id="donateItemName"></span></p>
-        <p><strong>Quantity:</strong> <span id="donateQuantity"></span></p>
-        <p><strong>Expiry Date:</strong> <span id="donateExpiry"></span></p>
-
-        <label for="pickup_location">Pickup Location:</label>
-        <input type="text" name="pickup_location" id="pickup_location" placeholder="Enter pickup point" required>
-
-        <label for="donation_remark">Remark (Optional):</label>
-        <textarea name="donation_remark" id="donation_remark" placeholder="Any notes..."></textarea>
-
-        <div class="form-buttons">
-          <button type="submit" class="save">Confirm</button>
-          <button type="button" class="cancel" onclick="closeDonatePopup()">Cancel</button>
-        </div>
       </form>
     </div>
   </div>

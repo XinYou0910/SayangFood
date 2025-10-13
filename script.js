@@ -410,10 +410,49 @@ function restoreEditStorageDropdown(customValue) {
   }
 }
 
+// ------- UNIT: Inline "Other" switch (for Edit Popup) -------
+function switchEditUnitInput() {
+  const wrapper = document.getElementById("editUnitWrapper");
+  const select = document.getElementById("editQuantityUnit");
+
+  if (select && select.value === "Other") {
+    wrapper.innerHTML = `
+      <input type="text" name="quantityUnit" id="editQuantityUnitInput"
+             placeholder="Enter custom unit (e.g. bottle)" required
+             onblur="restoreEditUnitDropdown(this.value)">
+    `;
+    document.getElementById("editQuantityUnitInput").focus();
+  }
+}
+
+function restoreEditUnitDropdown(customValue) {
+  const wrapper = document.getElementById("editUnitWrapper");
+  wrapper.innerHTML = `
+    <select id="editQuantityUnit" name="quantityUnit" onchange="switchEditUnitInput()" required>
+      <option value="">-- Select Unit --</option>
+      <option value="pcs">pcs</option>
+      <option value="packs">packs</option>
+      <option value="kg">kg</option>
+      <option value="g">g</option>
+      <option value="litres">litres</option>
+      <option value="ml">ml</option>
+      <option value="Other">Other</option>
+    </select>
+  `;
+  if (customValue && customValue.trim() !== "" && customValue !== "Other") {
+    const select = document.getElementById("editQuantityUnit");
+    const opt = document.createElement("option");
+    opt.value = customValue.trim();
+    opt.textContent = customValue.trim();
+    select.appendChild(opt);
+    select.value = customValue.trim();
+  }
+}
+
 function openDonatePopup(item) {
   const status = item.item_status?.trim().toLowerCase();
 
-  if (status === "used" || status === "expired") {
+  if (status === "used" || status === "expired" || status === "planned for meal") {
     Swal.fire({
       icon: "warning",
       title: "Cannot Donate",
@@ -457,4 +496,128 @@ function showCannotDonateMessage() {
     confirmButtonColor: "#4a7c59",
     confirmButtonText: "OK"
   });
+}
+
+// --- Open the View Popup ---
+function openViewPopup(item) {
+  // Fill all fields
+  document.getElementById("viewItemName").textContent = item.item_name;
+  const [qty, unit] = (item.quantity || "").split(" ");
+  document.getElementById("viewQuantity").value = qty || "";
+  document.getElementById("viewUnit").value = unit || "";
+  document.getElementById("viewExpiryDate").value = item.expiry_date;
+  document.getElementById("viewCategory").value = item.item_category;
+  document.getElementById("viewStorage").value = item.storage_place;
+  document.getElementById("viewRemark").value = item.item_remark;
+  document.getElementById("viewStatus").value = item.item_status;
+
+  // Disable Donate if expired or planned for meal
+  const donateBtn = document.getElementById("viewDonateBtn");
+  const status = item.item_status.toLowerCase();
+  if (status === "expired" || status === "planned for meal") {
+    donateBtn.classList.add("disabled");
+    donateBtn.disabled = true;
+  } else {
+    donateBtn.classList.remove("disabled");
+    donateBtn.disabled = false;
+  }
+
+  window.currentViewItem = item; // keep global reference
+  document.getElementById("viewPopup").style.display = "flex";
+}
+
+function closeViewPopup() {
+  document.getElementById("viewPopup").style.display = "none";
+}
+
+// --- Toggle Meal Status ---
+function toggleMealStatus() {
+  const item = window.currentViewItem;
+  if (!item) return;
+
+  const statusInput = document.getElementById("viewStatus");
+  const mealBtn = document.getElementById("viewMealBtn");
+
+  if (item.item_status.toLowerCase() === "planned for meal") {
+    const today = new Date();
+    const expiry = new Date(item.expiry_date);
+    item.item_status = expiry < today ? "Expired" : "Available";
+    mealBtn.classList.remove("active");
+  } else {
+    item.item_status = "Planned for Meal";
+    mealBtn.classList.add("active");
+  }
+
+  statusInput.value = item.item_status;
+
+  // Save to DB (async update)
+  fetch("update_status.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `item_id=${item.item_id}&item_status=${encodeURIComponent(item.item_status)}`
+  });
+
+  Swal.fire({
+    icon: "success",
+    title: "Status Updated!",
+    text: `Item marked as "${item.item_status}"`,
+    timer: 1500,
+    showConfirmButton: false
+  });
+}
+
+// --- Confirm Donation ---
+function confirmDonation() {
+  const item = window.currentViewItem;
+  if (!item) return;
+
+  Swal.fire({
+    title: "Confirm Donation?",
+    text: `This item "${item.item_name}" will be moved to donation list.`,
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonColor: "#e67e22",
+    cancelButtonColor: "#7f8c8d",
+    confirmButtonText: "Yes, donate it"
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // ✅ Create a hidden POST form and submit it
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "donate_food.php";
+
+      const idInput = document.createElement("input");
+      idInput.type = "hidden";
+      idInput.name = "item_id";
+      idInput.value = item.item_id;
+      form.appendChild(idInput);
+
+      const pickupInput = document.createElement("input");
+      pickupInput.type = "hidden";
+      pickupInput.name = "pickup_location";
+      pickupInput.value = "User Home"; // or set dynamically
+      form.appendChild(pickupInput);
+
+      const remarkInput = document.createElement("input");
+      remarkInput.type = "hidden";
+      remarkInput.name = "donation_remark";
+      remarkInput.value = "Donated via system";
+      form.appendChild(remarkInput);
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+  });
+}
+
+// --- Open Edit Popup from View ---
+function openEditFromView() {
+  closeViewPopup();
+  if (window.currentViewItem) {
+    openEditPopup(window.currentViewItem);
+  }
+}
+
+function closePopup() {
+  document.getElementById('popupForm').style.display = 'none';
 }
