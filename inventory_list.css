@@ -902,7 +902,6 @@ h1 {
   width: 100%;
 }
 
-/* Disabled Donate button */
 button.donate-btn.disabled,
 button.donate-btn:disabled {
   background: #ccc !important;
@@ -911,4 +910,188 @@ button.donate-btn:disabled {
   box-shadow: none !important;
   transform: none !important;
   opacity: 0.8;
+}
+
+.view-btn {
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  color: white;
+}
+
+.view-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(39, 174, 96, 0.3);
+}
+
+/* Close “X” button */
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  font-weight: bold;
+  color: #666;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: #000;
+}
+
+/* =============================
+   VIEW + EDIT POPUP UNIFIED
+============================= */
+.view-btn {
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  color: white;
+}
+.view-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(39, 174, 96, 0.3);
+}
+
+/* Common popup box */
+#viewPopup .popup-content,
+#editPopup .popup-content {
+  width: 500px;
+  max-width: 95%;
+  padding: 35px 40px;
+  border-radius: 15px;
+  border: 2px solid var(--border-light);
+  box-shadow: 0 10px 30px var(--shadow-medium);
+  background: var(--bg-white);
+  position: relative;
+}
+
+/* Close “X” */
+#viewPopup .close-btn,
+#editPopup .close-btn {
+  position: absolute;
+  top: 12px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  font-weight: bold;
+  color: #555;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+#viewPopup .close-btn:hover,
+#editPopup .close-btn:hover {
+  color: #000;
+  transform: scale(1.1);
+}
+
+/* Headings */
+#viewPopup h2,
+#editPopup h2 {
+  text-align: center;
+  color: var(--primary-green);
+  font-weight: bold;
+  margin-bottom: 25px;
+}
+
+/* Form rows */
+#viewForm .form-row,
+#editForm .form-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+/* Inline name row */
+.inline-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8f9f9;
+  border: 2px solid var(--border-light);
+  border-radius: 8px;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  color: var(--text-dark);
+  font-size: 15px;
+}
+
+/* Inputs and textarea */
+#viewForm input,
+#editForm input,
+#editForm select,
+#viewForm textarea,
+#editForm textarea {
+  width: 100%;
+  padding: 12px 15px;
+  margin: 10px 0;
+  border: 2px solid var(--border-light);
+  border-radius: 8px;
+  font-size: 15px;
+  color: var(--text-dark);
+  box-sizing: border-box;
+}
+
+#viewForm input[readonly],
+#viewForm textarea[readonly] {
+  background-color: #f8f9f9;
+  pointer-events: none;
+}
+
+/* Textarea height */
+#viewForm textarea,
+#editForm textarea {
+  height: 80px;
+  resize: none;
+}
+
+/* Buttons below */
+.view-buttons,
+.form-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.view-buttons button,
+.form-buttons button {
+  flex: 1;
+  padding: 14px 0;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  font-size: 15px;
+  color: white;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+/* Button colors */
+.meal-btn {
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+}
+.meal-btn.active {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+}
+.donate-btn {
+  background: linear-gradient(135deg, #e67e22, #f39c12);
+}
+.donate-btn.disabled {
+  background: #ccc !important;
+  color: #666 !important;
+  cursor: not-allowed !important;
+}
+.edit-btn,
+.save {
+  background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+}
+.cancel {
+  display: none !important;
+}
+
+/* Hover */
+.view-buttons button:hover:not(.disabled),
+.form-buttons button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 10px var(--shadow-medium);
 }
