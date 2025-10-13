@@ -3,7 +3,7 @@ session_start();
 include 'db_connect.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $email = trim($_POST['email']);
+    $email = strtolower(trim($_POST['email']));
     $user_password = trim($_POST['password']);
 
     if (empty($email) || empty($user_password)) {
@@ -11,8 +11,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
-    // Find user by email
-    $stmt = $conn->prepare("SELECT * FROM users WHERE email = ? LIMIT 1");
+    $stmt = $conn->prepare("SELECT user_id, user_name, user_password, is_verified FROM users WHERE email = ? LIMIT 1");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -20,34 +19,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
 
-        // Check verification
-        if ($user['is_verified'] == 0) {
-            echo "⚠️ Your account is not verified yet.<br>
-                  Please check your email for the verification link.";
+        if ((int)$user['is_verified'] === 0) {
+            echo "⚠️ Your account has not been verified yet.<br>Please check your email.";
             exit;
         }
 
-        if (password_verify($user_password, $user['user_password'])) {
-            // ✅ Successful login
+        if ($user_password === $user['user_password']) {
             $_SESSION['user_id'] = $user['user_id'];
             $_SESSION['user_name'] = $user['user_name'];
 
-            echo "✅ Login successful! Welcome back, " . htmlspecialchars($user['user_name']) . ".";
-            // header("Location: dashboard.php");
+            // ✅ Set localStorage and redirect using JS
+            echo "
+            <script>
+              localStorage.setItem('user_name', '" . addslashes($user['user_name']) . "');
+              window.location.href = 'dashboard_page.html';
+            </script>";
             exit;
         } else {
-            // ❌ Wrong password
-            echo "❌ Incorrect password. Please try again or reset it <a href='forgot_password.html'>here</a>.";
+            echo "❌ Incorrect password. Please try again.";
         }
     } else {
-        // ❌ No account found
-        echo "⚠️ No account found with that email.<br>
-              Would you like to <a href='register_page.html'>create one?</a>";
+        echo "⚠️ No account found with that email.<br>Would you like to <a href='register_page.html'>create one?</a>";
     }
 
     $stmt->close();
     $conn->close();
 } else {
-    echo "⚠️ Please submit the form properly.";
+    echo '⚠️ Please submit the form properly.';
 }
 ?>
