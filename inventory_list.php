@@ -9,9 +9,34 @@ mysqli_query($conn, "
     AND item_status NOT IN ('Used', 'Donated', 'Expired')
 ");
 
-$query = "SELECT * FROM food_item_inventory WHERE item_status != 'Donated'";
-$result = mysqli_query($conn, $query);
 
+// Filter logic
+$where = "item_status != 'Donated'";
+if (isset($_GET['filter'])) {
+    $filters = [];
+    if (!empty($_GET['category'])) {
+        $category = mysqli_real_escape_string($conn, $_GET['category']);
+        $filters[] = "item_category = '$category'";
+    }
+  $expiry_from = !empty($_GET['expiry_date_from']) ? mysqli_real_escape_string($conn, $_GET['expiry_date_from']) : '';
+  $expiry_to = !empty($_GET['expiry_date_to']) ? mysqli_real_escape_string($conn, $_GET['expiry_date_to']) : '';
+  if ($expiry_from && $expiry_to) {
+    $filters[] = "expiry_date BETWEEN '$expiry_from' AND '$expiry_to'";
+  } elseif ($expiry_from) {
+    $filters[] = "expiry_date >= '$expiry_from'";
+  } elseif ($expiry_to) {
+    $filters[] = "expiry_date <= '$expiry_to'";
+  }
+    if (!empty($_GET['storage_place'])) {
+        $storage = mysqli_real_escape_string($conn, $_GET['storage_place']);
+        $filters[] = "storage_place = '$storage'";
+    }
+    if ($filters) {
+        $where .= ' AND ' . implode(' AND ', $filters);
+    }
+}
+$query = "SELECT * FROM food_item_inventory WHERE $where";
+$result = mysqli_query($conn, $query);
 if (!$result) {
   die("Query failed: " . mysqli_error($conn));
 }
@@ -81,12 +106,11 @@ if (!$result) {
     </div>
 
     <div class="controls">
-      <select>
-        <option value="all">View All</option>
-        <option value="item">Item Name</option>
-        <option value="category">Category</option>
-      </select>
-      <input type="text" placeholder="Search item name...">
+            <!-- ...existing controls... -->
+            <button class="action-btn edit-btn" style="min-width:110px;max-width:110px;" onclick="openFilterPopup()">Filter</button>
+            <?php if (isset($_GET['filter'])): ?>
+              <button class="action-btn cancel" style="background-color:#e74c3c;min-width:110px;max-width:110px;" onclick="window.location.href='inventory_list.php'">Remove Filter</button>
+            <?php endif; ?>
     </div>
 
     <table>
@@ -139,6 +163,57 @@ if (!$result) {
     </table>
 
     <button class="add-btn" onclick="openPopup()">Add New Food</button>
+
+    <!-- Filter Popup -->
+    <div class="popup" id="filterPopup" style="display:none;">
+      <div class="popup-content" style="max-width:400px;margin:auto;">
+        <h2>Filter Food Items</h2>
+        <form method="GET" action="inventory_list.php">
+          <input type="hidden" name="filter" value="1">
+          <div class="form-row">
+            <div class="form-group category">
+              <label for="filterCategory">Category</label>
+              <select name="category" id="filterCategory">
+                <option value="">-- Any --</option>
+                <option value="Meat">Meat</option>
+                <option value="Vegetable">Vegetable</option>
+                <option value="Seafood">Seafood</option>
+                <option value="Dairy">Dairy</option>
+                <option value="Grains">Grains</option>
+                <option value="Beverage">Beverage</option>
+                <option value="Snacks">Snacks</option>
+                <option value="Condiment">Condiment</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group expiry">
+              <label for="filterExpiryFrom">Expiry Date From</label>
+              <input type="date" name="expiry_date_from" id="filterExpiryFrom">
+            </div>
+            <div class="form-group expiry">
+              <label for="filterExpiryTo">Expiry Date To</label>
+              <input type="date" name="expiry_date_to" id="filterExpiryTo">
+            </div>
+            <div class="form-group storage">
+              <label for="filterStorage">Storage Place</label>
+              <select name="storage_place" id="filterStorage">
+                <option value="">-- Any --</option>
+                <option value="Refrigerator">Refrigerator</option>
+                <option value="Freezer">Freezer</option>
+                <option value="Pantry">Pantry</option>
+                <option value="Cabinet">Cabinet</option>
+                <option value="Storage Box">Storage Box</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-buttons">
+            <button type="submit" class="action-btn edit-btn" style="min-width:110px;max-width:110px;">Apply</button>
+            <button type="button" class="action-btn cancel" style="min-width:110px;max-width:110px;" onclick="closeFilterPopup()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
   <!-- Add Popup -->
@@ -357,5 +432,23 @@ if (!$result) {
 
 <script src="script.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+</style>
+</style>
+<script>
+function openFilterPopup() {
+  document.getElementById('filterPopup').style.display = 'block';
+}
+function closeFilterPopup() {
+  document.getElementById('filterPopup').style.display = 'none';
+}
+// Optional: close popup when clicking outside
+window.onclick = function(event) {
+  var popup = document.getElementById('filterPopup');
+  if (event.target == popup) {
+    popup.style.display = "none";
+  }
+}
+</script>
 </body>
 </html>
