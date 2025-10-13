@@ -2,7 +2,6 @@
 include 'db_connect.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // 🧹 Clean and normalize input
     $email = strtolower(trim($_POST['email']));
     $verification_code = trim($_POST['verification_code']);
     $new_password = trim($_POST['new_password']);
@@ -11,8 +10,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         die("⚠️ All fields are required.");
     }
 
-
-    // 🔍 Main query to find unverified account
+    // Find unverified user with matching email
     $stmt = $conn->prepare("SELECT verification_code FROM users WHERE email = ? AND is_verified = 0");
     $stmt->bind_param("s", $email);
     $stmt->execute();
@@ -22,24 +20,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bind_result($db_code);
         $stmt->fetch();
 
+        // Compare the entered code
         if ($verification_code === $db_code) {
-            $hashed_new_password = password_hash($new_password, PASSWORD_DEFAULT);
-
-            // ✅ Update user and clear verification code
+            // ✅ Update user as verified and save new password
             $update = $conn->prepare("
                 UPDATE users 
                 SET user_password = ?, is_verified = 1, two_factor_enabled = 1, verification_code = NULL 
                 WHERE email = ?
             ");
-            $update->bind_param("ss", $hashed_new_password, $email);
+            $update->bind_param("ss", $new_password, $email);
             $update->execute();
 
-            echo "✅ Account verified and 2FA activated! <a href='login.html'>Login now</a>.";
+            // ✅ Redirect to login page after success
+            echo "
+            <script>
+              alert('✅ Account verified successfully! Please log in.');
+              window.location.href = 'login.html';
+            </script>";
+            exit;
         } else {
-            echo "❌ Invalid verification code.";
+            echo "❌ Invalid verification code. Please try again.";
         }
     } else {
-        echo "⚠️ No pending verification found for this email.";
+        echo "⚠️ No pending verification found for this email or account already verified.";
     }
 
     $stmt->close();
