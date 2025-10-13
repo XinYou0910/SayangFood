@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>SayangFood : Intelligent Household Food Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --green:#16a34a; --green-700:#15803d;
+      --indigo:#4f46e5; --orange:#f97316;
+      --bg:#f8fafc; --card:#ffffff; --muted:#6b7280; --border:#e5e7eb;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:#111}
+    a{color:inherit;text-decoration:none}
+
+    .container{max-width:1100px;margin:0 auto;padding:24px}
+    .nav{display:flex;align-items:center;justify-content:space-between;padding:12px 0}
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--green),#22c55e)}
+    .name{font-weight:800;font-size:20px;color:var(--green-700)}
+    .menu{display:flex;gap:16px;color:var(--muted);font-size:14px}
+
+    .btn{padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;font-weight:600;cursor:pointer;display:inline-block}
+    .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+    .btn.ghost{background:#fff;color:var(--green-700);border-color:var(--green)}
+
+    .hero{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:center;padding:40px 0}
+    .h-title{font-size:42px;line-height:1.1;margin:0 0 10px}
+    .h-sub{color:var(--muted);font-size:16px;margin:0 0 18px}
+    .hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px}
+
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
+    .stat{background:#fafafa;border:1px dashed var(--border);border-radius:14px;padding:14px;text-align:center}
+    .stat .n{font-size:22px;font-weight:800}
+
+    .section{padding:26px 0}
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .feat{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
+    .feat h3{margin:0 0 6px}
+    .muted{color:var(--muted)}
+
+    .footer{padding:24px 0;color:var(--muted);font-size:13px;text-align:center}
+
+    @media (max-width: 900px){
+      .hero{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Top Nav -->
+    <div class="nav">
+      <div class="brand">
+        <img src="Logo.png" alt="SayangFood" class="logo" width="36" height="36">
+        <div class="name">SayangFood</div>
+      </div>
+      <div class="menu">
+        <a href="index.html">Home</a>
+        <a href="inventory_list.php">Inventory</a>
+        <a href="weekly_meal_plan.html">Meal Planner</a>
+        <a href="donations.php">Donations</a>
+      </div>
+      <div class="menu">
+        <!-- Swap these to your real auth pages later -->
+        <a class="btn ghost" href="inventory_list.php">Login</a>
+        <a class="btn primary" href="inventory_list.php">Register</a>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div>
+        <h1 class="h-title">Eat Smart, Waste Less.</h1>
+        <p class="h-sub">Track food inventory, plan weekly meals, get expiry alerts, and donate surplus — all in one place.</p>
+        <div class="hero-cta">
+          <a class="btn primary" href="inventory_list.php">Get Started</a>
+          <a class="btn" href="#features">See Features</a>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="n">Inventory</div>
+            <div class="muted">Add • Edit • Expiry</div>
+          </div>
+          <div class="stat">
+            <div class="n">Meal Plan</div>
+            <div class="muted">Weekly calendar</div>
+          </div>
+          <div class="stat">
+            <div class="n">Donate</div>
+            <div class="muted">Convert items</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: simple preview card -->
+      <div class="card">
+        <h3 style="margin:0 0 8px">Preview — Inventory</h3>
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr>
+              <th style="text-align:left;color:#6b7280;padding:6px 0">Item</th>
+              <th style="text-align:left;color:#6b7280">Qty</th>
+              <th style="text-align:left;color:#6b7280">Expiry</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding:6px 0">Eggs</td><td>6</td><td>2025-10-08</td></tr>
+            <tr><td style="padding:6px 0">Tomato</td><td>3</td><td>2025-10-05</td></tr>
+            <tr><td style="padding:6px 0">Rice</td><td>2</td><td>2026-01-01</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <a class="btn primary" href="inventory_list.php">Open Inventory</a>
+          <a class="btn" href="meal_planner.php">Plan Meals</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="section">
+      <h2 style="margin:0 0 10px">Why SayangFood?</h2>
+      <p class="muted" style="margin:0 0 18px">Core features you’ll use every week.</p>
+      <div class="grid3">
+        <div class="feat">
+          <h3>Inventory Management</h3>
+          <p class="muted">Add and edit items, track categories, and watch expiry dates to avoid waste.</p>
+          <a class="btn" href="inventory_list.php">Try now</a>
+        </div>
+        <div class="feat">
+          <h3>Weekly Meal Planning</h3>
+          <p class="muted">Plan breakfast, lunch, and dinner with a calendar layout—reduce last-minute stress.</p>
+          <a class="btn" href="meal_planner.php">View planner</a>
+        </div>
+        <div class="feat">
+          <h3>Donate Surplus</h3>
+          <p class="muted">Convert excess items to a donation listing and keep good food out of the bin.</p>
+          <a class="btn" href="donations.php">Convert items</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <div class="footer">
+      © <span id="year"></span> SayangFood — Built for BIT216 course project.
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

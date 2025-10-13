@@ -27,7 +27,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             exit;
         }
 
-        // Check password
         if (password_verify($user_password, $user['user_password'])) {
             // ✅ Successful login
             $_SESSION['user_id'] = $user['user_id'];
