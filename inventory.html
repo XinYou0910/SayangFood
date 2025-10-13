@@ -64,7 +64,7 @@
     <!-- Filter + Search -->
     <div class="controls">
       <select>
-        <option value="all">Filter by...</option>
+        <option value="all">View All</option>
         <option value="item">Item Name</option>
         <option value="category">Category</option>
         <option value="quantity">Quantity</option>
@@ -94,10 +94,11 @@
         <td>15/10/2025</td>
         <td>Fridge</td>
         <td>After Workout</td>
-        <td>Available</td>
+        <td>Used</td>
         <td>
+          <button class="action-btn view-btn">View</button>
           <button class="action-btn edit-btn">Edit</button>
-          <button class="action-btn donate-btn">Donate</button>
+          <button class="action-btn donate-btn" onclick="openDonatePopup()">More</button>
         </td>
       </tr>
       <tr>
@@ -109,8 +110,9 @@
         <td>-</td>
         <td>Available</td>
         <td>
+          <button class="action-btn view-btn">View</button>
           <button class="action-btn edit-btn">Edit</button>
-          <button class="action-btn donate-btn">Donate</button>
+          <button class="action-btn donate-btn" onclick="openDonatePopup()">More</button>
         </td>
       </tr>
     </table>
@@ -122,12 +124,24 @@
   <div class="popup" id="popupForm">
     <div class="popup-content">
       <h2>Add New Food Item</h2>
+      <label for="itemName">Item Name</label>
       <input type="text" id="itemName" placeholder="Item Name">
+
+      <label for="category">Category</label>
       <input type="text" id="category" placeholder="Category">
+
+      <label for="quantity">Quantity</label>
       <input type="text" id="quantity" placeholder="Quantity">
+
+      <label for="expiryDate">Expiry Date</label>
       <input type="date" id="expiryDate">
+
+      <label for="storagePlace">Storage Place</label>
       <input type="text" id="storagePlace" placeholder="Storage Place">
+
+      <label for="remark">Remark</label>
       <textarea id="remark" placeholder="Remark"></textarea>
+
       <button class="save" onclick="closePopup()">Save</button>
       <button class="cancel" onclick="closePopup()">Cancel</button>
     </div>
@@ -136,3 +150,36 @@
   <script src="inventory.js"></script>
 </body>
 </html>
+
+  <!-- Flag for Donation Popup -->
+  <div class="popup" id="flagDonationPopup">
+    <div class="popup-content">
+      <h2>Flag for Donation</h2>
+      <form id="flagDonationForm">
+        <label for="pickupLocation">Pickup Location</label>
+        <input type="text" id="pickupLocation" name="pickupLocation" placeholder="Enter pickup location" required>
+
+        <label for="pickupDate">Pickup Date</label>
+        <input type="date" id="pickupDate" name="pickupDate" required>
+
+        <label for="pickupTime">Pickup Time</label>
+        <input type="time" id="pickupTime" name="pickupTime" required>
+
+        <button class="save" type="submit">Submit</button>
+        <button class="cancel" type="button" onclick="closeFlagDonationPopup()">Cancel</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Donate Popup -->
+  <div class="popup" id="donatePopup">
+    <div class="popup-content">
+      <h2>Choose an Action</h2>
+      <div class="donate-actions">
+        <button class="save" onclick="markAsUsed()">Mark as Used</button>
+        <button class="save" onclick="planForMeal()">Plan for Meal</button>
+        <button class="save" onclick="flagForDonation()">Flag for Donation</button>
+      </div>
+      <button class="cancel donate-cancel" onclick="closeDonatePopup()">Cancel</button>
+    </div>
+  </div>
