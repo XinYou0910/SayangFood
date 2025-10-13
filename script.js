@@ -410,6 +410,45 @@ function restoreEditStorageDropdown(customValue) {
   }
 }
 
+// ------- UNIT: Inline "Other" switch (for Edit Popup) -------
+function switchEditUnitInput() {
+  const wrapper = document.getElementById("editUnitWrapper");
+  const select = document.getElementById("editQuantityUnit");
+
+  if (select && select.value === "Other") {
+    wrapper.innerHTML = `
+      <input type="text" name="quantityUnit" id="editQuantityUnitInput"
+             placeholder="Enter custom unit (e.g. bottle)" required
+             onblur="restoreEditUnitDropdown(this.value)">
+    `;
+    document.getElementById("editQuantityUnitInput").focus();
+  }
+}
+
+function restoreEditUnitDropdown(customValue) {
+  const wrapper = document.getElementById("editUnitWrapper");
+  wrapper.innerHTML = `
+    <select id="editQuantityUnit" name="quantityUnit" onchange="switchEditUnitInput()" required>
+      <option value="">-- Select Unit --</option>
+      <option value="pcs">pcs</option>
+      <option value="packs">packs</option>
+      <option value="kg">kg</option>
+      <option value="g">g</option>
+      <option value="litres">litres</option>
+      <option value="ml">ml</option>
+      <option value="Other">Other</option>
+    </select>
+  `;
+  if (customValue && customValue.trim() !== "" && customValue !== "Other") {
+    const select = document.getElementById("editQuantityUnit");
+    const opt = document.createElement("option");
+    opt.value = customValue.trim();
+    opt.textContent = customValue.trim();
+    select.appendChild(opt);
+    select.value = customValue.trim();
+  }
+}
+
 function openDonatePopup(item) {
   const status = item.item_status?.trim().toLowerCase();
 

@@ -108,7 +108,11 @@ if (!$result) {
         <td><?= htmlspecialchars($row['quantity']) ?></td>
         <td><?= date('Y-m-d', strtotime($row['expiry_date'])) ?></td>
         <td><?= htmlspecialchars($row['storage_place']) ?></td>
-        <td><?= htmlspecialchars($row['item_remark']) ?></td>
+        <td class="remark-cell">
+          <div class="truncate" title="<?= htmlspecialchars($row['item_remark']) ?>">
+            <?= htmlspecialchars($row['item_remark']) ?>
+          </div>
+        </td>
         <?php
           $status = $row['item_status'];
           $expiryDate = strtotime($row['expiry_date']);
@@ -253,17 +257,19 @@ if (!$result) {
 
           <div class="form-group unit">
             <label for="editQuantityUnit">Unit</label>
-            <select id="editQuantityUnit" name="quantityUnit" required>
-              <option value="">-- Select Unit --</option>
-              <option value="pcs">pcs</option>
-              <option value="packs">packs</option>
-              <option value="kg">kg</option>
-              <option value="g">g</option>
-              <option value="litres">litres</option>
-              <option value="ml">ml</option>
-              <option value="loaf">loaf</option>
-              <option value="Other">Other</option>
-            </select>
+            <div id="editUnitWrapper">
+              <select id="editQuantityUnit" name="quantityUnit" onchange="switchEditUnitInput()" required>
+                <option value="">-- Select Unit --</option>
+                <option value="pcs">pcs</option>
+                <option value="packs">packs</option>
+                <option value="kg">kg</option>
+                <option value="g">g</option>
+                <option value="litres">litres</option>
+                <option value="ml">ml</option>
+                <option value="loaf">loaf</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
           </div>
 
           <div class="form-group expiry">

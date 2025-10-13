@@ -339,12 +339,51 @@ table {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 6px 20px var(--shadow-light);
+  table-layout: fixed; /* ✅ keeps column widths consistent */
 }
 
 th, td {
   padding: 15px 12px;
   text-align: center;
   border-bottom: 1px solid var(--border-light);
+}
+
+/* Fix Remark column width and truncate text */
+table td:nth-child(6),
+table th:nth-child(6) {
+  width: 250px;            /* fixed width for the remark column */
+  max-width: 250px;
+  white-space: nowrap;     /* prevent line wrapping */
+  overflow: hidden;        /* hide overflowed text */
+  text-overflow: ellipsis; /* add “...” for long text */
+}
+
+/* Fix column width for REMARK (6th column) */
+table th:nth-child(6),
+table td:nth-child(6) {
+  width: 200px;
+  max-width: 200px;
+}
+
+/* Truncate text properly */
+td.remark-cell .truncate {
+  display: block;
+  width: 100%;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Optional hover to show full text */
+td.remark-cell .truncate:hover {
+  white-space: normal;
+  overflow: visible;
+  background: #fffbea;
+  position: relative;
+  z-index: 2;
+  padding: 2px 4px;
+  border-radius: 4px;
 }
 
 th {
