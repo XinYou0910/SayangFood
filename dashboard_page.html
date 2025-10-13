@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SayangFood - Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="dashboard_page.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- Hamburger Button -->
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo-container">
+      <img src="pic/logo.png" alt="SayangFood Logo" class="logo-img">
+      <div class="logo-text">
+        <span class="brand">SayangFood</span><br>
+        <small>Food Management System</small>
+      </div>
+    </div>
+
+    <button class="menu-item active" onclick="location.href='dashboard.html'">
+      <img src="pic/home.png" alt="Home Icon" class="icon"> Dashboard
+    </button>
+
+    <button class="menu-item dropdown-btn">
+      <img src="pic/search.png" alt="Browse Icon" class="icon"> Browse Food Item
+    </button>
+
+    <div class="dropdown-container">
+      <button onclick="location.href='inventory.html'">Inventory</button>
+      <button>Weekly Meal</button>
+      <button>Donations</button>
+      <button>Shopping List</button>
+    </div>
+
+    <button class="menu-item">
+      <img src="pic/data-analytics.png" alt="Analytics Icon" class="icon"> Food Analytics
+    </button>
+
+    <button class="menu-item">
+      <img src="pic/notification.png" alt="Notification Icon" class="icon"> Notification
+    </button>
+
+    <div class="profile">
+      <img src="pic/user.png" alt="User" class="profile-img">
+      <div class="profile-info">
+        <p class="username" id="username">User</p>
+        <p class="role">User Profile</p>
+        <button onclick="logout()" class="logout-btn">Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Dashboard Content -->
+  <div class="main">
+    <div class="header">
+      <h1>Dashboard Overview</h1>
+      <p>Quick insights of your food inventory and donations.</p>
+    </div>
+
+    <div class="dashboard-cards">
+      <div class="card">
+        <h2>Total Food Items</h2>
+        <p>24</p>
+      </div>
+      <div class="card">
+        <h2>Expiring Soon</h2>
+        <p>5</p>
+      </div>
+      <div class="card">
+        <h2>Donations Made</h2>
+        <p>12</p>
+      </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="charts">
+      <div class="chart-card">
+        <h3>Food Category Distribution</h3>
+        <canvas id="foodCategoryChart"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h3>Monthly Donations</h3>
+        <canvas id="donationTrendChart"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h3>Expiry Status</h3>
+        <canvas id="expiryStatusChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Check if user is logged in
+    const username = localStorage.getItem('user_name');
+    if (username) {
+      document.getElementById('username').textContent = username;
+    } else {
+      window.location.href = 'login.html';
+    }
+
+    function logout() {
+      localStorage.removeItem('user_name');
+      window.location.href = 'login.html';
+    }
+  </script>
+
+  <!-- Chart.js initialization -->
+  <script>
+    // Example chart data
+    const foodCategoryCtx = document.getElementById('foodCategoryChart').getContext('2d');
+    const foodCategoryChart = new Chart(foodCategoryCtx, {
+      type: 'pie',
+      data: {
+        labels: ['Fruits', 'Vegetables', 'Dairy', 'Meat', 'Grains'],
+        datasets: [{
+          label: 'Food Category',
+          data: [10, 5, 4, 3, 2],
+          backgroundColor: ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF']
+        }]
+      }
+    });
+
+    const donationTrendCtx = document.getElementById('donationTrendChart').getContext('2d');
+    const donationTrendChart = new Chart(donationTrendCtx, {
+      type: 'line',
+      data: {
+        labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+        datasets: [{
+          label: 'Donations',
+          data: [2,3,4,3,5,4],
+          borderColor: '#36A2EB',
+          fill: false,
+          tension: 0.3
+        }]
+      }
+    });
+
+    const expiryStatusCtx = document.getElementById('expiryStatusChart').getContext('2d');
+    const expiryStatusChart = new Chart(expiryStatusCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Fresh','Expiring Soon','Expired'],
+        datasets: [{
+          label: 'Food Status',
+          data: [15,5,4],
+          backgroundColor: ['#4BC0C0','#FFCE56','#FF6384']
+        }]
+      }
+    });
+  </script>
+
+  <script src="dashboard_page.js"></script>
+</body>
+</html>

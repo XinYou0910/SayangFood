@@ -3,7 +3,7 @@ body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  background: #fefffd; /* bright green background */
+  background: #fefffd;
 }
 
 .container {
@@ -17,7 +17,7 @@ body {
   display: flex;
   width: 800px;
   background: #fff;
-  border-radius: 5px;
+  border-radius: 8px;
   overflow: hidden;
   box-shadow: 0px 4px 12px rgba(0,0,0,0.2);
 }
@@ -25,14 +25,13 @@ body {
 /* Left Form Section */
 .form-section {
   flex: 2;
-  padding: 30px;
+  padding: 40px 30px;
 }
 
 .logo {
-  width: 120px;      /* adjust size */
+  width: 120px;
   margin-bottom: 15px;
 }
-
 
 .form-section h1 {
   margin: 0;
@@ -41,19 +40,13 @@ body {
 
 .subtitle {
   color: #666;
-  margin-bottom: 20px;
-}
-
-.form-row {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 15px;
+  margin-bottom: 25px;
 }
 
 .form-group {
-  flex: 1;
   display: flex;
   flex-direction: column;
+  margin-bottom: 15px;
 }
 
 .form-group label {
@@ -71,10 +64,6 @@ body {
   border-radius: 4px;
 }
 
-.full-width {
-  margin-bottom: 20px;
-}
-
 .signup-btn {
   background: #5cdf5c;
   border: none;
@@ -84,10 +73,12 @@ body {
   border-radius: 4px;
   cursor: pointer;
   width: 100%;
+  transition: background 0.3s ease;
 }
 
 .signup-btn:hover {
-  background: #6ce600;
+  background: #45c54b;
+  color: #fff;
 }
 
 /* Right Side Section */
@@ -98,8 +89,6 @@ body {
   text-align: center;
   border-top-right-radius: 20px;
   border-bottom-right-radius: 20px;
-  border-top-left-radius: 20px;
-  border-bottom-left-radius: 20px;
 }
 
 .side-section h2 {
@@ -107,9 +96,16 @@ body {
   font-size: 22px;
 }
 
+.side-section p {
+  margin-bottom: 30px;
+}
+
+.login-section {
+  margin-top: 40px;
+}
+
 .login-btn {
   display: inline-block;
-  margin-top: 10px;
   padding: 10px 20px;
   border: 2px solid #000;
   background: transparent;
@@ -117,9 +113,17 @@ body {
   text-decoration: none;
   font-weight: bold;
   color: #000;
+  transition: all 0.3s ease;
 }
 
 .login-btn:hover {
-  background: #000;
+  background: #45c54b;
   color: #fff;
+}
+
+.already {
+  margin-top: 10px;
+  color: #000;
+  font-weight: 500;
+  font-size: small;
 }

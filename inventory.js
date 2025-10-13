@@ -16,6 +16,44 @@ function closePopup() {
   document.getElementById("popupForm").style.display = "none";
 }
 
+// Donate Popup functions
+function openDonatePopup() {
+  document.getElementById("donatePopup").style.display = "flex";
+}
+function closeDonatePopup() {
+  document.getElementById("donatePopup").style.display = "none";
+}
+
+function markAsUsed() {
+  alert("Marked as used!");
+  closeDonatePopup();
+}
+function planForMeal() {
+  alert("Planned for meal!");
+  closeDonatePopup();
+}
+function flagForDonation() {
+  closeDonatePopup();
+  document.getElementById("flagDonationPopup").style.display = "flex";
+}
+
+function closeFlagDonationPopup() {
+  document.getElementById("flagDonationPopup").style.display = "none";
+}
+
+// Handle flag donation form submit
+document.addEventListener("DOMContentLoaded", function() {
+  var form = document.getElementById("flagDonationForm");
+  if (form) {
+    form.addEventListener("submit", function(e) {
+      e.preventDefault();
+      // You can process the form data here
+      alert("Donation flagged!\nLocation: " + form.pickupLocation.value + "\nDate: " + form.pickupDate.value + "\nTime: " + form.pickupTime.value);
+      closeFlagDonationPopup();
+    });
+  }
+});
+
 //Sidebar toggle
 function toggleSidebar() {
   document.querySelector(".sidebar").classList.toggle("active");
