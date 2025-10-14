@@ -687,18 +687,6 @@ function closeEditDonatePopup() {
   document.getElementById("editDonatePopup").style.display = "none";
 }
 
-function toggleDropdown() {
-  const dropdown = document.getElementById("dropdownMenu");
-  const arrow = document.getElementById("arrowIcon");
-  if (dropdown.style.display === "flex") {
-    dropdown.style.display = "none";
-    arrow.style.transform = "rotate(0deg)";
-  } else {
-    dropdown.style.display = "flex";
-    arrow.style.transform = "rotate(180deg)";
-  }
-}
-
 const username = localStorage.getItem('user_name');
   if (username) {
     document.getElementById('username').textContent = username;

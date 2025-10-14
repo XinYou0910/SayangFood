@@ -171,24 +171,37 @@ body {
   display: flex;
 }
 
-.dropdown-container button {
-  padding: 12px 20px;
-  font-size: 14px;
+.dropdown-container button,
+.dropdown-container .submenu-item {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  width: calc(100% - 20px);
+  padding: 14px 22px !important;
+  font-size: 15px !important;
+  font-weight: 500;
   background: none;
   border: none;
-  text-align: left;
+  border-radius: 8px;
+  color: var(--text-dark);
+  margin: 3px 10px !important;
   cursor: pointer;
-  color: var(--text-medium);
-  border-radius: 6px;
-  margin: 2px 8px;
   transition: all 0.3s ease;
-  font-weight: 500;
+  box-sizing: border-box;
 }
 
-.dropdown-container button:hover {
-  background: linear-gradient(135deg, var(--light-orange) 0%, var(--accent-orange) 100%);
+.dropdown-container button:hover,
+.dropdown-container .submenu-item:hover {
+  background: linear-gradient(135deg, var(--light-green) 0%, #7db88d 100%);
   color: white;
-  transform: translateX(3px);
+}
+
+.dropdown-container .submenu-item.active,
+.dropdown-container button.active {
+  background: linear-gradient(135deg, var(--accent-orange) 0%, var(--light-orange) 100%);
+  color: white !important;
+  box-shadow: 0 4px 12px var(--shadow-medium);
+  transform: translateX(5px);
 }
 
 /* --- Profile box --- */
@@ -1434,3 +1447,10 @@ button.donate-btn:disabled {
   color: white;
 }
 
+/* Arrow rotation animation */
+.arrow {
+  transition: transform 0.3s ease;
+}
+.arrow.open {
+  transform: rotate(180deg);
+}
