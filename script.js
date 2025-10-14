@@ -621,3 +621,17 @@ function openEditFromView() {
 function closePopup() {
   document.getElementById('popupForm').style.display = 'none';
 }
+
+function openFilterPopup() {
+  document.getElementById('filterPopup').style.display = 'block';
+}
+function closeFilterPopup() {
+  document.getElementById('filterPopup').style.display = 'none';
+}
+
+function openSortPopup() {
+  document.getElementById('sortPopup').style.display = 'block';
+}
+function closeSortPopup() {
+  document.getElementById('sortPopup').style.display = 'none';
+}
