@@ -498,6 +498,7 @@ tr:hover {
   justify-content: center;
   align-items: center;
   backdrop-filter: blur(5px);
+  z-index: 2000; /* ensures popup overlays the sidebar */
 }
 
 .popup-content {
