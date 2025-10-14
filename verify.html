@@ -6,9 +6,35 @@
   <title>Email Verification - SayangFood</title>
   <link rel="stylesheet" href="verify_page.css">
   <style>
-    /* Add this if not already in your CSS */
     .form-group span {
       color: red;
+    }
+
+    /* Resend button style */
+    .resend-btn {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      border: 2px solid #0a0a0a;
+      color: #141414;
+      font-size: 15px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+
+    .resend-btn:hover {
+      background: #a1a3a1;
+      color: white;
+    }
+
+    .message {
+      margin-top: 10px;
+      color: #333;
+      font-size: 14px;
+      text-align: center;
     }
   </style>
 </head>
@@ -34,15 +60,23 @@
 
         <button type="submit" class="verify-btn">Verify Account</button>
       </form>
+
+      <!-- ✅ Resend Code Button -->
+      <form action="resend_code.php" method="POST" id="resendForm">
+        <input type="hidden" name="email" id="resendEmail">
+        <button type="submit" class="resend-btn">Resend Code</button>
+      </form>
+
+      <p id="resendMessage" class="message"></p>
     </div>
   </div>
 
-  <!-- JavaScript to auto-fill email -->
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const email = urlParams.get('email');
     if (email) {
       document.getElementById('emailField').value = email;
+      document.getElementById('resendEmail').value = email;
     } else {
       console.warn("⚠️ No email found in URL.");
     }
