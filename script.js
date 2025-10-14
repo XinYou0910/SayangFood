@@ -611,6 +611,8 @@ function toggleMealStatus() {
     text: `Item marked as "${item.item_status}"`,
     timer: 1500,
     showConfirmButton: false
+  }).then(() => {
+    window.location.reload();
   });
 }
 
