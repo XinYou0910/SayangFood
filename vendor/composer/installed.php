@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => '__root__',
-        'pretty_version' => 'dev-register&privacy-branch',
-        'version' => 'dev-register&privacy-branch',
-        'reference' => '5ff14e75f9bbe4f2a977d12659f817804eebdedc',
+        'pretty_version' => 'dev-Main_branch',
+        'version' => 'dev-Main_branch',
+        'reference' => '8d46055b42151a0ba6129b991a85ebaf25642387',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,9 +11,9 @@
     ),
     'versions' => array(
         '__root__' => array(
-            'pretty_version' => 'dev-register&privacy-branch',
-            'version' => 'dev-register&privacy-branch',
-            'reference' => '5ff14e75f9bbe4f2a977d12659f817804eebdedc',
+            'pretty_version' => 'dev-Main_branch',
+            'version' => 'dev-Main_branch',
+            'reference' => '8d46055b42151a0ba6129b991a85ebaf25642387',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

@@ -1,33 +1,29 @@
 <?php
 include 'db_connect.php';
 
-$item_id = $_POST['item_id'];
-$item_name = $_POST['item_name'];
-$item_category = $_POST['item_category'];
-$quantityValue = $_POST['quantityValue'];
-$quantityUnit = $_POST['quantityUnit'];
-$expiry_date = $_POST['expiry_date'];
-$storage_place = $_POST['storage_place'];
-$item_remark = $_POST['item_remark'];
-$item_status = $_POST['item_status'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $item_id = $_POST['item_id'];
+  $quantity = $_POST['quantityValue'];
+  $unit = $_POST['quantityUnit'];
+  $expiry_date = $_POST['expiry_date'];
+  $category = $_POST['item_category'];
+  $storage_place = $_POST['storage_place'];
+  $remark = $_POST['item_remark'];
+  $status = $_POST['item_status'];
 
-// ✅ Combine value + unit
-$quantity = trim($quantityValue . ' ' . $quantityUnit);
+  $query = "UPDATE food_item_inventory 
+            SET quantity = '$quantity $unit',
+                expiry_date = '$expiry_date',
+                item_category = '$category',
+                storage_place = '$storage_place',
+                item_remark = '$remark',
+                item_status = '$status'
+            WHERE item_id = '$item_id'";
 
-$query = "UPDATE food_item_inventory 
-          SET item_name='$item_name',
-              item_category='$item_category',
-              quantity='$quantity',
-              expiry_date='$expiry_date',
-              storage_place='$storage_place',
-              item_remark='$item_remark',
-              item_status='$item_status'
-          WHERE item_id='$item_id'";
-
-if (mysqli_query($conn, $query)) {
-  header("Location: inventory_list.php");
-  exit;
-} else {
-  echo "Error updating record: " . mysqli_error($conn);
+  if (mysqli_query($conn, $query)) {
+    echo "<script>alert('Item updated successfully!'); window.location.href='inventory_list.php';</script>";
+  } else {
+    echo "Error updating item: " . mysqli_error($conn);
+  }
 }
 ?>

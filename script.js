@@ -410,10 +410,51 @@ function restoreEditStorageDropdown(customValue) {
   }
 }
 
+// ------- UNIT: Inline "Other" switch (for Edit Popup) -------
+function switchEditUnitInput() {
+  const wrapper = document.getElementById("editUnitWrapper");
+  const select = document.getElementById("editQuantityUnit");
+
+  if (select && select.value === "Other") {
+    wrapper.innerHTML = `
+      <input type="text" name="quantityUnit" id="editQuantityUnitInput"
+             placeholder="Enter custom unit (e.g. bottle)" required
+             onblur="restoreEditUnitDropdown(this.value)">
+    `;
+    document.getElementById("editQuantityUnitInput").focus();
+  }
+}
+
+function restoreEditUnitDropdown(customValue) {
+  const wrapper = document.getElementById("editUnitWrapper");
+  wrapper.innerHTML = `
+    <select id="editQuantityUnit" name="quantityUnit" onchange="switchEditUnitInput()" required>
+      <option value="">-- Select Unit --</option>
+      <option value="pcs">pcs</option>
+      <option value="packs">packs</option>
+      <option value="kg">kg</option>
+      <option value="g">g</option>
+      <option value="litres">litres</option>
+      <option value="ml">ml</option>
+      <option value="Other">Other</option>
+    </select>
+  `;
+  if (customValue && customValue.trim() !== "" && customValue !== "Other") {
+    const select = document.getElementById("editQuantityUnit");
+    const opt = document.createElement("option");
+    opt.value = customValue.trim();
+    opt.textContent = customValue.trim();
+    select.appendChild(opt);
+    select.value = customValue.trim();
+  }
+}
+
+// ========== DONATE POPUP ==========
 function openDonatePopup(item) {
   const status = item.item_status?.trim().toLowerCase();
 
-  if (status === "used" || status === "expired") {
+  // Block non-eligible items
+  if (["used", "expired", "planned for meal"].includes(status)) {
     Swal.fire({
       icon: "warning",
       title: "Cannot Donate",
@@ -421,14 +462,17 @@ function openDonatePopup(item) {
       confirmButtonColor: "#4a7c59",
       confirmButtonText: "OK"
     });
-    return; // Stop further execution
+    return;
   }
 
-  // Proceed with donation if Available
-  document.getElementById("donateItemId").value = item.item_id;
-  document.getElementById("donateItemName").textContent = item.item_name;
-  document.getElementById("donateQuantity").textContent = item.quantity;
-  document.getElementById("donateExpiry").textContent = item.expiry_date;
+  // ✅ For available items, show the donation form
+  document.getElementById("donateItemName").value = item.item_name;
+  document.getElementById("donateQuantity").value = item.quantity;
+  document.getElementById("donateExpiry").value = item.expiry_date;
+
+  // Store item ID globally for form submission
+  window.currentDonateItem = item.item_id;
+
   document.getElementById("donatePopup").style.display = "flex";
 }
 
@@ -436,16 +480,58 @@ function closeDonatePopup() {
   document.getElementById("donatePopup").style.display = "none";
 }
 
+// Handle submission of donation form
+function submitDonation(e) {
+  e.preventDefault();
+
+  const form = e.target;
+  if (!form.checkValidity()) {
+    form.reportValidity(); // 🔸 Triggers native HTML validation
+    return;
+  }
+
+  const pickup = document.getElementById("donatePickup").value.trim();
+  const remark = document.getElementById("donateRemark").value.trim();
+  const item_id = window.currentDonateItem;
+
+  fetch("donate_food.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `item_id=${item_id}&pickup_location=${encodeURIComponent(pickup)}&donation_remark=${encodeURIComponent(remark)}`
+  })
+  .then(res => res.text())
+  .then(() => {
+    Swal.fire({
+      icon: "success",
+      title: "Donation Successful!",
+      text: "Redirecting to your donation list...",
+      timer: 1000,
+      timerProgressBar: true,
+      showConfirmButton: false
+    }).then(() => {
+      closeDonatePopup();
+      window.location.href = "donation_list.php";
+    });
+  })
+  .catch(() => {
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Something went wrong while processing your donation."
+    });
+  });
+}
+
 function toggleDropdown() {
   const dropdown = document.getElementById("dropdownMenu");
   const arrow = document.getElementById("arrowIcon");
 
-  if (dropdown.style.display === "flex") {
+  if (dropdown.style.display === "block") {
     dropdown.style.display = "none";
-    arrow.style.transform = "rotate(0deg)";
+    arrowIcon.textContent = "▼";
   } else {
-    dropdown.style.display = "flex";
-    arrow.style.transform = "rotate(180deg)";
+    dropdown.style.display = "block";
+    arrowIcon.textContent = "▲";
   }
 }
 
@@ -458,3 +544,222 @@ function showCannotDonateMessage() {
     confirmButtonText: "OK"
   });
 }
+
+// --- Open the View Popup ---
+function openViewPopup(item) {
+  // Fill all fields
+  document.getElementById("viewItemName").textContent = item.item_name;
+  const [qty, unit] = (item.quantity || "").split(" ");
+  document.getElementById("viewQuantity").value = qty || "";
+  document.getElementById("viewUnit").value = unit || "";
+  document.getElementById("viewExpiryDate").value = item.expiry_date;
+  document.getElementById("viewCategory").value = item.item_category;
+  document.getElementById("viewStorage").value = item.storage_place;
+  document.getElementById("viewRemark").value = item.item_remark;
+  document.getElementById("viewStatus").value = item.item_status;
+
+  // Disable Donate if status is 'used', 'expired', or 'planned for meal'
+  const donateBtn = document.getElementById("viewDonateBtn");
+  const status = item.item_status ? item.item_status.toLowerCase() : "";
+
+  if (["used", "expired", "planned for meal"].includes(status)) {
+    donateBtn.classList.add("disabled");
+    donateBtn.disabled = true;
+  } else {
+    donateBtn.classList.remove("disabled");
+    donateBtn.disabled = false;
+  }
+
+  window.currentViewItem = item; // keep global reference
+  document.getElementById("viewPopup").style.display = "flex";
+}
+
+function closeViewPopup() {
+  document.getElementById("viewPopup").style.display = "none";
+}
+
+// --- Toggle Meal Status ---
+function toggleMealStatus() {
+  const item = window.currentViewItem;
+  if (!item) return;
+
+  const statusInput = document.getElementById("viewStatus");
+  const mealBtn = document.getElementById("viewMealBtn");
+
+  if (item.item_status.toLowerCase() === "planned for meal") {
+    const today = new Date();
+    const expiry = new Date(item.expiry_date);
+    item.item_status = expiry < today ? "Expired" : "Available";
+    mealBtn.classList.remove("active");
+  } else {
+    item.item_status = "Planned for Meal";
+    mealBtn.classList.add("active");
+  }
+
+  statusInput.value = item.item_status;
+
+  // Save to DB (async update)
+  fetch("update_status.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `item_id=${item.item_id}&item_status=${encodeURIComponent(item.item_status)}`
+  });
+
+  Swal.fire({
+    icon: "success",
+    title: "Status Updated!",
+    text: `Item marked as "${item.item_status}"`,
+    timer: 1500,
+    showConfirmButton: false
+  });
+}
+
+function openDonatePopup(item) {
+  const status = item.item_status?.trim().toLowerCase();
+
+  if (["used", "expired", "planned for meal"].includes(status)) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cannot Donate",
+      text: `This item cannot be donated because it is marked as "${item.item_status}".`,
+      confirmButtonColor: "#4a7c59",
+      confirmButtonText: "OK"
+    });
+    return;
+  }
+
+  document.getElementById("donateItemName").value = item.item_name;
+  document.getElementById("donateQuantity").value = item.quantity;
+  document.getElementById("donateExpiry").value = item.expiry_date;
+  window.currentDonateItem = item.item_id;
+  document.getElementById("donatePopup").style.display = "flex";
+}
+
+function closeDonatePopup() {
+  document.getElementById("donatePopup").style.display = "none";
+}
+
+// --- Open Edit Popup from View ---
+function openEditFromView() {
+  closeViewPopup();
+  if (window.currentViewItem) {
+    openEditPopup(window.currentViewItem);
+  }
+}
+
+function closePopup() {
+  document.getElementById('popupForm').style.display = 'none';
+}
+
+function openFilterPopup() {
+  document.getElementById('filterPopup').style.display = 'block';
+}
+function closeFilterPopup() {
+  document.getElementById('filterPopup').style.display = 'none';
+}
+
+function openSortPopup() {
+  document.getElementById('sortPopup').style.display = 'block';
+}
+function closeSortPopup() {
+  document.getElementById('sortPopup').style.display = 'none';
+}
+
+function openEditDonatePopup(item) {
+  document.getElementById("editDonationId").value = item.donation_id;
+  document.getElementById("editDonateItemName").value = item.item_name || 'N/A'; // <-- fixed
+  document.getElementById("editPickup").value = item.pickup_location || '';
+  document.getElementById("editDonateRemark").value = item.donation_remark || '';
+  document.getElementById("editDonateStatus").value = item.donation_status || 'Available';
+  document.getElementById("editDonatePopup").style.display = "flex";
+}
+
+function openEditDonatePopup(item) {
+  document.getElementById("editDonationId").value = item.donation_id;
+  document.getElementById("editDonateItemName").value = item.item_name || 'N/A';
+  document.getElementById("editPickup").value = item.pickup_location || '';
+  document.getElementById("editDonateRemark").value = item.donation_remark || '';
+  document.getElementById("editDonateStatus").value = item.donation_status || 'Available';
+  document.getElementById("editDonatePopup").style.display = "flex";
+}
+
+function closeEditDonatePopup() {
+  document.getElementById("editDonatePopup").style.display = "none";
+}
+
+const username = localStorage.getItem('user_name');
+  if (username) {
+    document.getElementById('username').textContent = username;
+  } else {
+    window.location.href = 'login.html';
+  }
+
+  function logout() {
+    localStorage.removeItem('user_name');
+    window.location.href = 'login.html';
+  }
+
+  function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('active');
+  }
+
+// ===========================
+// Sidebar Active Highlight + Dropdown Auto Expand
+// ===========================
+document.addEventListener("DOMContentLoaded", () => {
+  const currentPage = window.location.pathname.split("/").pop().toLowerCase();
+  const menuItems = document.querySelectorAll(".menu-item");
+  const dropdownBtn = document.querySelector(".dropdown-btn");
+  const dropdownContainer = document.getElementById("dropdownMenu");
+  const arrowIcon = document.getElementById("arrowIcon");
+
+  // Step 1: Reset all active states
+  menuItems.forEach(btn => btn.classList.remove("active"));
+
+  // Step 2: Apply highlight based on current page
+  menuItems.forEach(btn => {
+    const text = btn.innerText.trim().toLowerCase();
+
+    // Dashboard page
+    if (currentPage.includes("dashboard") && text.includes("dashboard")) {
+      btn.classList.add("active");
+    }
+
+    // Browse Food Item dropdown (Inventory, Weekly Meal, Donations)
+    else if (
+      (currentPage.includes("inventory") ||
+       currentPage.includes("weekly_meal") ||
+       currentPage.includes("donation")) &&
+      text.includes("browse")
+    ) {
+      btn.classList.add("active");
+
+      // Auto expand dropdown
+      if (dropdownContainer) {
+        dropdownContainer.style.display = "block";
+        arrowIcon.textContent = "▲";
+      }
+
+      // Highlight current submenu item
+      const submenuItems = document.querySelectorAll(".submenu-item");
+      submenuItems.forEach(sub => {
+        const page = sub.getAttribute("data-page").toLowerCase();
+        if (currentPage === page) {
+          sub.classList.add("active");
+        } else {
+          sub.classList.remove("active");
+        }
+      });
+    }
+
+    // Food Analytics page
+    else if (currentPage.includes("analytics") && text.includes("analytics")) {
+      btn.classList.add("active");
+    }
+
+    // Notification page
+    else if (currentPage.includes("notification") && text.includes("notification")) {
+      btn.classList.add("active");
+    }
+  });
+});
