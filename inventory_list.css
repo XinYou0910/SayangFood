@@ -506,7 +506,8 @@ tr:hover {
   background: var(--bg-white);
   padding: 35px 40px;
   border-radius: 15px;
-  width: 400px;
+  width: 500px;          /* same width as edit popup */
+  max-width: 95%;
   box-shadow: 0 10px 30px var(--shadow-medium);
   border: 2px solid var(--border-light);
 }
@@ -538,16 +539,25 @@ tr:hover {
   box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
 }
 
-.popup-content .save {
-  background: linear-gradient(135deg, var(--primary-green) 0%, var(--light-green) 100%);
+#popupForm .save {
+  background: linear-gradient(135deg, var(--primary-green), var(--light-green));
   color: white;
-  padding: 12px 25px;
   border: none;
   border-radius: 8px;
-  margin: 10px 5px;
-  cursor: pointer;
   font-weight: bold;
+  font-size: 15px;
+  text-transform: uppercase;
+  padding: 14px 25px;
+  cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 8px var(--shadow-medium);
+  min-width: 110px;
+  max-width: 110px;
+  text-align: center;
+}
+#popupForm .save:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 10px var(--shadow-medium);
 }
 
 .popup-content .cancel {
@@ -1048,7 +1058,8 @@ button.donate-btn:disabled {
 /* Close “X” */
 #viewPopup .close-btn,
 #editPopup .close-btn,
-#popupForm .close-btn {
+#popupForm .close-btn,
+#donatePopup .close-btn {
   position: absolute;
   top: 12px;
   right: 15px;
@@ -1062,7 +1073,8 @@ button.donate-btn:disabled {
 }
 #viewPopup .close-btn:hover,
 #editPopup .close-btn:hover,
-#popupForm .close-btn:hover {
+#popupForm .close-btn:hover，
+#donatePopup .close-btn {
   color: #000;
   transform: scale(1.1);
 }
@@ -1070,7 +1082,8 @@ button.donate-btn:disabled {
 /* Headings */
 #viewPopup h2,
 #editPopup h2,
-#popupForm h2 {
+#popupForm h2,
+#donatePopup h2 {
   text-align: center;
   color: var(--primary-green);
   font-weight: bold;
@@ -1080,7 +1093,8 @@ button.donate-btn:disabled {
 /* Form rows */
 #viewForm .form-row,
 #editForm .form-row,
-popupForm .form-row {
+#popupForm .form-row,
+#donateForm .form-row {
   display: flex;
   justify-content: space-between;
   gap: 15px;
@@ -1274,4 +1288,53 @@ popupForm .form-row {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(127, 140, 141, 0.3);
   opacity: 0.95;
+}
+
+#donatePopup .popup-content {
+  width: 500px;
+  max-width: 95%;
+}
+
+.swal2-container {
+  z-index: 3000 !important;
+}
+
+/* Donate button style (same as others) */
+#donatePopup .save {
+  background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 15px;
+  text-transform: uppercase;
+  padding: 14px 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px var(--shadow-medium);
+  min-width: 120px;
+  text-align: center;
+}
+
+#donatePopup .save:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(74, 124, 89, 0.35);
+  opacity: 0.95;
+}
+
+/* Cancel button (matches your other popups) */
+#donatePopup .cancel {
+  background: #ccc;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 15px;
+  padding: 14px 25px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+#donatePopup .cancel:hover {
+  background: #bbb;
 }

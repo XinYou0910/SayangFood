@@ -422,7 +422,7 @@ if (!$result) {
 
           <div class="view-buttons">
             <button type="button" class="meal-btn" id="viewMealBtn" onclick="toggleMealStatus()">Meal</button>
-            <button type="button" class="donate-btn" id="viewDonateBtn" onclick="confirmDonation()">Donate</button>
+            <button type="button" class="donate-btn" id="viewDonateBtn" onclick="openDonatePopup(window.currentViewItem)">Donate</button>
             <button type="button" class="edit-btn" onclick="openEditFromView()">Edit</button>
           </div>
         </form>
@@ -558,9 +558,49 @@ if (!$result) {
           <div class="form-buttons">
             <button type="submit" class="save">Save</button>
           </div>
-
         </form>
       </div>
+    </div>
+
+    <!-- Donate Popup -->
+    <div id="donatePopup" class="popup" style="display: none;">
+      <div class="popup-content">
+        <button class="close-btn" onclick="closeDonatePopup()">×</button>
+         <h2>Donate Food Item</h2>
+
+         <form id="donateForm" onsubmit="submitDonation(event)">
+           <div class="form-group">
+             <label>Item Name</label>
+             <input type="text" id="donateItemName" readonly>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Quantity</label>
+              <input type="text" id="donateQuantity" readonly>
+            </div>
+            <div class="form-group">
+              <label>Expiry Date</label>
+              <input type="date" id="donateExpiry" readonly>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Pickup Location <span style="color:red">*</span></label>
+            <input type="text" id="donatePickup" placeholder="e.g., HELP University Cafeteria, Block E" required>
+          </div>
+
+          <div class="form-group">
+            <label>Remarks</label>
+            <textarea id="donateRemark" placeholder="Optional: e.g., Keep chilled, contact before pickup..."></textarea>
+          </div>
+
+          <div class="form-buttons">
+            <button type="submit" class="save">Donate</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
 <script src="script.js"></script>

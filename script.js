@@ -449,10 +449,12 @@ function restoreEditUnitDropdown(customValue) {
   }
 }
 
+// ========== DONATE POPUP ==========
 function openDonatePopup(item) {
   const status = item.item_status?.trim().toLowerCase();
 
-  if (status === "used" || status === "expired" || status === "planned for meal") {
+  // Block non-eligible items
+  if (["used", "expired", "planned for meal"].includes(status)) {
     Swal.fire({
       icon: "warning",
       title: "Cannot Donate",
@@ -460,19 +462,64 @@ function openDonatePopup(item) {
       confirmButtonColor: "#4a7c59",
       confirmButtonText: "OK"
     });
-    return; // Stop further execution
+    return;
   }
 
-  // Proceed with donation if Available
-  document.getElementById("donateItemId").value = item.item_id;
-  document.getElementById("donateItemName").textContent = item.item_name;
-  document.getElementById("donateQuantity").textContent = item.quantity;
-  document.getElementById("donateExpiry").textContent = item.expiry_date;
+  // ✅ For available items, show the donation form
+  document.getElementById("donateItemName").value = item.item_name;
+  document.getElementById("donateQuantity").value = item.quantity;
+  document.getElementById("donateExpiry").value = item.expiry_date;
+
+  // Store item ID globally for form submission
+  window.currentDonateItem = item.item_id;
+
   document.getElementById("donatePopup").style.display = "flex";
 }
 
 function closeDonatePopup() {
   document.getElementById("donatePopup").style.display = "none";
+}
+
+// Handle submission of donation form
+function submitDonation(e) {
+  e.preventDefault();
+
+  const form = e.target;
+  if (!form.checkValidity()) {
+    form.reportValidity(); // 🔸 Triggers native HTML validation
+    return;
+  }
+
+  const pickup = document.getElementById("donatePickup").value.trim();
+  const remark = document.getElementById("donateRemark").value.trim();
+  const item_id = window.currentDonateItem;
+
+  fetch("donate_food.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `item_id=${item_id}&pickup_location=${encodeURIComponent(pickup)}&donation_remark=${encodeURIComponent(remark)}`
+  })
+  .then(res => res.text())
+  .then(() => {
+    Swal.fire({
+      icon: "success",
+      title: "Donation Successful!",
+      text: "Redirecting to your donation list...",
+      timer: 1000,
+      timerProgressBar: true,
+      showConfirmButton: false
+    }).then(() => {
+      closeDonatePopup();
+      window.location.href = "donation_list.php";
+    });
+  })
+  .catch(() => {
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Something went wrong while processing your donation."
+    });
+  });
 }
 
 function toggleDropdown() {
@@ -511,10 +558,11 @@ function openViewPopup(item) {
   document.getElementById("viewRemark").value = item.item_remark;
   document.getElementById("viewStatus").value = item.item_status;
 
-  // Disable Donate if expired or planned for meal
+  // Disable Donate if status is 'used', 'expired', or 'planned for meal'
   const donateBtn = document.getElementById("viewDonateBtn");
-  const status = item.item_status.toLowerCase();
-  if (status === "expired" || status === "planned for meal") {
+  const status = item.item_status ? item.item_status.toLowerCase() : "";
+
+  if (["used", "expired", "planned for meal"].includes(status)) {
     donateBtn.classList.add("disabled");
     donateBtn.disabled = true;
   } else {
@@ -566,48 +614,29 @@ function toggleMealStatus() {
   });
 }
 
-// --- Confirm Donation ---
-function confirmDonation() {
-  const item = window.currentViewItem;
-  if (!item) return;
+function openDonatePopup(item) {
+  const status = item.item_status?.trim().toLowerCase();
 
-  Swal.fire({
-    title: "Confirm Donation?",
-    text: `This item "${item.item_name}" will be moved to donation list.`,
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonColor: "#e67e22",
-    cancelButtonColor: "#7f8c8d",
-    confirmButtonText: "Yes, donate it"
-  }).then((result) => {
-    if (result.isConfirmed) {
-      // ✅ Create a hidden POST form and submit it
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = "donate_food.php";
+  if (["used", "expired", "planned for meal"].includes(status)) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cannot Donate",
+      text: `This item cannot be donated because it is marked as "${item.item_status}".`,
+      confirmButtonColor: "#4a7c59",
+      confirmButtonText: "OK"
+    });
+    return;
+  }
 
-      const idInput = document.createElement("input");
-      idInput.type = "hidden";
-      idInput.name = "item_id";
-      idInput.value = item.item_id;
-      form.appendChild(idInput);
+  document.getElementById("donateItemName").value = item.item_name;
+  document.getElementById("donateQuantity").value = item.quantity;
+  document.getElementById("donateExpiry").value = item.expiry_date;
+  window.currentDonateItem = item.item_id;
+  document.getElementById("donatePopup").style.display = "flex";
+}
 
-      const pickupInput = document.createElement("input");
-      pickupInput.type = "hidden";
-      pickupInput.name = "pickup_location";
-      pickupInput.value = "User Home"; // or set dynamically
-      form.appendChild(pickupInput);
-
-      const remarkInput = document.createElement("input");
-      remarkInput.type = "hidden";
-      remarkInput.name = "donation_remark";
-      remarkInput.value = "Donated via system";
-      form.appendChild(remarkInput);
-
-      document.body.appendChild(form);
-      form.submit();
-    }
-  });
+function closeDonatePopup() {
+  document.getElementById("donatePopup").style.display = "none";
 }
 
 // --- Open Edit Popup from View ---

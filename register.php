@@ -1,10 +1,11 @@
 <?php
 include 'db_connect.php';
 
+require __DIR__ . '/vendor/autoload.php';
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require 'vendor/autoload.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $user_name = trim($_POST['user_name']);
@@ -21,9 +22,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Insert user (unverified)
     $stmt = $conn->prepare("
-        INSERT INTO users (user_name, email, user_password, household_size, verification_code, is_verified, two_factor_enabled)
+    INSERT INTO users (user_name, email, user_password, household_size, verification_code, is_verified, two_factor_enabled)
         VALUES (?, ?, ?, ?, ?, 0, 0)
     ");
+
 
     if ($stmt === false) {
         die("❌ SQL error: " . $conn->error);
