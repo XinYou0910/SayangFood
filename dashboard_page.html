@@ -63,18 +63,19 @@
       <p>Quick insights of your food inventory and donations.</p>
     </div>
 
+    <!-- Dashboard Cards -->
     <div class="dashboard-cards">
       <div class="card">
         <h2>Total Food Items</h2>
-        <p>24</p>
+        <p id="totalFoodItems">0</p>
       </div>
       <div class="card">
         <h2>Expiring Soon</h2>
-        <p>5</p>
+        <p id="expiringSoon">0</p>
       </div>
       <div class="card">
         <h2>Donations Made</h2>
-        <p>12</p>
+        <p id="donationsMade">0</p>
       </div>
     </div>
 
@@ -98,8 +99,8 @@
   </div>
   </div>
 
+  <!-- User Script -->
   <script>
-    // Check if user is logged in
     const username = localStorage.getItem('user_name');
     if (username) {
       document.getElementById('username').textContent = username;
@@ -111,53 +112,13 @@
       localStorage.removeItem('user_name');
       window.location.href = 'login.html';
     }
+
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('active');
+    }
   </script>
 
-  <!-- Chart.js initialization -->
-  <script>
-    // Example chart data
-    const foodCategoryCtx = document.getElementById('foodCategoryChart').getContext('2d');
-    const foodCategoryChart = new Chart(foodCategoryCtx, {
-      type: 'pie',
-      data: {
-        labels: ['Fruits', 'Vegetables', 'Dairy', 'Meat', 'Grains'],
-        datasets: [{
-          label: 'Food Category',
-          data: [10, 5, 4, 3, 2],
-          backgroundColor: ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF']
-        }]
-      }
-    });
-
-    const donationTrendCtx = document.getElementById('donationTrendChart').getContext('2d');
-    const donationTrendChart = new Chart(donationTrendCtx, {
-      type: 'line',
-      data: {
-        labels: ['Jan','Feb','Mar','Apr','May','Jun'],
-        datasets: [{
-          label: 'Donations',
-          data: [2,3,4,3,5,4],
-          borderColor: '#36A2EB',
-          fill: false,
-          tension: 0.3
-        }]
-      }
-    });
-
-    const expiryStatusCtx = document.getElementById('expiryStatusChart').getContext('2d');
-    const expiryStatusChart = new Chart(expiryStatusCtx, {
-      type: 'bar',
-      data: {
-        labels: ['Fresh','Expiring Soon','Expired'],
-        datasets: [{
-          label: 'Food Status',
-          data: [15,5,4],
-          backgroundColor: ['#4BC0C0','#FFCE56','#FF6384']
-        }]
-      }
-    });
-  </script>
-
+  <!-- Dashboard JS -->
   <script src="dashboard_page.js"></script>
 </body>
 </html>
