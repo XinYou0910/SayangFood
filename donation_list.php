@@ -239,25 +239,24 @@ if (!$result) {
   </script>
 
   <!-- Edit Donation Popup -->
-  <div class="popup" id="editDonatePopup">
-    <div class="popup-content">
+  <div class="popup" id="editDonatePopup" style="display:none;">
+    <div class="popup-content" style="max-width:500px;">
+      <button class="close-btn" onclick="closeEditDonatePopup()">×</button>
       <h2>Edit Donation Item</h2>
+
       <form id="editDonateForm" method="POST" action="edit_donation.php">
         <input type="hidden" name="donation_id" id="editDonationId">
 
-        <div class="inline-name">
-          <label>Item Name:</label>
-          <span id="editDonateItemName"></span>
-        </div>
+        <label for="editDonateItemName">Item Name</label>
+        <input type="text" id="editDonateItemName" name="item_name" readonly>
 
         <div class="form-row">
           <div class="form-group">
-            <label>Pickup Location</label>
+            <label for="editPickup">Pickup Location <span style="color:red;">*</span></label>
             <input type="text" id="editPickup" name="pickup_location" required>
           </div>
-
           <div class="form-group">
-            <label>Status</label>
+            <label for="editDonateStatus">Status</label>
             <select id="editDonateStatus" name="donation_status" required>
               <option value="Available">Available</option>
               <option value="Donated">Donated</option>
@@ -265,46 +264,17 @@ if (!$result) {
           </div>
         </div>
 
-        <label>Remark</label>
-        <textarea id="editDonateRemark" name="donation_remark"></textarea>
+        <label for="editDonateRemark">Remark</label>
+        <textarea id="editDonateRemark" name="donation_remark" placeholder="Optional: add any notes..."></textarea>
 
         <div class="form-buttons">
           <button type="submit" class="save">Save</button>
-          <button type="button" class="cancel" onclick="closeEditDonatePopup()">Cancel</button>
         </div>
       </form>
     </div>
   </div>
 
 <script src="script.js"></script>
-
-<!-- JS for Edit Popup -->
-<script>
-function openEditDonatePopup(item) {
-  document.getElementById("editDonationId").value = item.donation_id;
-  document.getElementById("editDonateItemName").textContent = item.item_name || 'N/A';
-  document.getElementById("editPickup").value = item.pickup_location || '';
-  document.getElementById("editDonateRemark").value = item.donation_remark || '';
-  document.getElementById("editDonateStatus").value = item.donation_status || 'Available';
-  document.getElementById("editDonatePopup").style.display = "flex";
-}
-
-function closeEditDonatePopup() {
-  document.getElementById("editDonatePopup").style.display = "none";
-}
-
-function toggleDropdown() {
-  const dropdown = document.getElementById("dropdownMenu");
-  const arrow = document.getElementById("arrowIcon");
-  if (dropdown.style.display === "flex") {
-    dropdown.style.display = "none";
-    arrow.style.transform = "rotate(0deg)";
-  } else {
-    dropdown.style.display = "flex";
-    arrow.style.transform = "rotate(180deg)";
-  }
-}
-</script>
 
 </body>
 </html>

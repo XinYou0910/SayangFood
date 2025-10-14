@@ -664,3 +664,37 @@ function openSortPopup() {
 function closeSortPopup() {
   document.getElementById('sortPopup').style.display = 'none';
 }
+
+function openEditDonatePopup(item) {
+  document.getElementById("editDonationId").value = item.donation_id;
+  document.getElementById("editDonateItemName").value = item.item_name || 'N/A'; // <-- fixed
+  document.getElementById("editPickup").value = item.pickup_location || '';
+  document.getElementById("editDonateRemark").value = item.donation_remark || '';
+  document.getElementById("editDonateStatus").value = item.donation_status || 'Available';
+  document.getElementById("editDonatePopup").style.display = "flex";
+}
+
+function openEditDonatePopup(item) {
+  document.getElementById("editDonationId").value = item.donation_id;
+  document.getElementById("editDonateItemName").value = item.item_name || 'N/A';
+  document.getElementById("editPickup").value = item.pickup_location || '';
+  document.getElementById("editDonateRemark").value = item.donation_remark || '';
+  document.getElementById("editDonateStatus").value = item.donation_status || 'Available';
+  document.getElementById("editDonatePopup").style.display = "flex";
+}
+
+function closeEditDonatePopup() {
+  document.getElementById("editDonatePopup").style.display = "none";
+}
+
+function toggleDropdown() {
+  const dropdown = document.getElementById("dropdownMenu");
+  const arrow = document.getElementById("arrowIcon");
+  if (dropdown.style.display === "flex") {
+    dropdown.style.display = "none";
+    arrow.style.transform = "rotate(0deg)";
+  } else {
+    dropdown.style.display = "flex";
+    arrow.style.transform = "rotate(180deg)";
+  }
+}
