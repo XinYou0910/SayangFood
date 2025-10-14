@@ -105,6 +105,7 @@ if (!$result) {
       <div class="profile-info">
         <p class="username">ZhiLim</p>
         <p class="role">User Profile</p>
+        <button onclick="logout()" class="logout-btn">Logout</button>
       </div>
     </div>
   </div>
