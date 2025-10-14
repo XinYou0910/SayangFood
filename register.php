@@ -1,11 +1,9 @@
 <?php
 include 'db_connect.php';
-
 require __DIR__ . '/vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $user_name = trim($_POST['user_name']);
@@ -13,20 +11,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $user_password = trim($_POST['password']);
     $household_size = !empty($_POST['household_size']) ? $_POST['household_size'] : null;
 
+    // ⚠️ Basic validation
     if (empty($user_name) || empty($email) || empty($user_password)) {
-        die("⚠️ Please fill in all required fields.");
+        echo "<script>alert('⚠️ Please fill in all required fields.'); window.history.back();</script>";
+        exit;
     }
 
-    // Generate a plain 6-digit verification code (no encoding)
+    // ⚠️ Validate email format
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo "<script>alert('❌ Invalid email address format. Please enter a valid email.'); window.history.back();</script>";
+        exit;
+    }
+
+    // 🧩 Check if email already exists
+    $check_stmt = $conn->prepare("SELECT email FROM users WHERE email = ?");
+    $check_stmt->bind_param("s", $email);
+    $check_stmt->execute();
+    $check_stmt->store_result();
+
+    if ($check_stmt->num_rows > 0) {
+        echo "<script>alert('⚠️ This email address is already registered. Please use another email or log in.'); window.history.back();</script>";
+        $check_stmt->close();
+        $conn->close();
+        exit;
+    }
+    $check_stmt->close();
+
+    // ✅ Generate 6-digit verification code
     $verification_code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
 
-    // Insert user (unverified)
+    // ✅ Insert user (unverified)
     $stmt = $conn->prepare("
-    INSERT INTO users (user_name, email, user_password, household_size, verification_code, is_verified, two_factor_enabled)
+        INSERT INTO users (user_name, email, user_password, household_size, verification_code, is_verified, two_factor_enabled)
         VALUES (?, ?, ?, ?, ?, 0, 0)
     ");
-
-
     if ($stmt === false) {
         die("❌ SQL error: " . $conn->error);
     }
@@ -41,7 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $mail->Host = 'smtp.gmail.com';
             $mail->SMTPAuth = true;
             $mail->Username = 'pxypxy12@gmail.com';
-            $mail->Password = 'fqpr niqh uspd vhaw'; // your app password
+            $mail->Password = 'fqpr niqh uspd vhaw'; // app password
             $mail->SMTPSecure = 'tls';
             $mail->Port = 587;
 
@@ -62,7 +80,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             $mail->send();
 
-            // ✅ Redirect to verify page with success message
             echo "
             <script>
               alert('✅ Registration successful! Please check your email for the verification code.');
@@ -70,15 +87,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </script>";
             exit;
         } catch (Exception $e) {
-            echo "❌ Email could not be sent. Error: {$mail->ErrorInfo}";
+            echo "<script>alert('❌ Email could not be sent. Error: {$mail->ErrorInfo}'); window.history.back();</script>";
         }
     } else {
-        echo "❌ Error: " . $stmt->error;
+        echo "<script>alert('❌ Database error: " . addslashes($stmt->error) . "'); window.history.back();</script>";
     }
 
     $stmt->close();
     $conn->close();
 } else {
-    echo "⚠️ Please submit the form properly.";
+    echo "<script>alert('⚠️ Please submit the form properly.'); window.history.back();</script>";
 }
 ?>
