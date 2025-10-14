@@ -18,15 +18,15 @@ if (isset($_GET['filter'])) {
         $category = mysqli_real_escape_string($conn, $_GET['category']);
         $filters[] = "item_category = '$category'";
     }
-  $expiry_from = !empty($_GET['expiry_date_from']) ? mysqli_real_escape_string($conn, $_GET['expiry_date_from']) : '';
-  $expiry_to = !empty($_GET['expiry_date_to']) ? mysqli_real_escape_string($conn, $_GET['expiry_date_to']) : '';
-  if ($expiry_from && $expiry_to) {
-    $filters[] = "expiry_date BETWEEN '$expiry_from' AND '$expiry_to'";
-  } elseif ($expiry_from) {
-    $filters[] = "expiry_date >= '$expiry_from'";
-  } elseif ($expiry_to) {
-    $filters[] = "expiry_date <= '$expiry_to'";
-  }
+    $expiry_from = !empty($_GET['expiry_date_from']) ? mysqli_real_escape_string($conn, $_GET['expiry_date_from']) : '';
+    $expiry_to = !empty($_GET['expiry_date_to']) ? mysqli_real_escape_string($conn, $_GET['expiry_date_to']) : '';
+    if ($expiry_from && $expiry_to) {
+        $filters[] = "expiry_date BETWEEN '$expiry_from' AND '$expiry_to'";
+    } elseif ($expiry_from) {
+        $filters[] = "expiry_date >= '$expiry_from'";
+    } elseif ($expiry_to) {
+        $filters[] = "expiry_date <= '$expiry_to'";
+    }
     if (!empty($_GET['storage_place'])) {
         $storage = mysqli_real_escape_string($conn, $_GET['storage_place']);
         $filters[] = "storage_place = '$storage'";
@@ -36,6 +36,15 @@ if (isset($_GET['filter'])) {
     }
 }
 $query = "SELECT * FROM food_item_inventory WHERE $where";
+// Add sorting if requested
+if (isset($_GET['sort']) && !empty($_GET['sort_field'])) {
+    $sort_field = mysqli_real_escape_string($conn, $_GET['sort_field']);
+    $sort_order = (isset($_GET['sort_order']) && strtolower($_GET['sort_order']) === 'desc') ? 'DESC' : 'ASC';
+    $allowed_fields = ['item_name','item_category','quantity','expiry_date','storage_place','item_remark','item_status'];
+    if (in_array($sort_field, $allowed_fields)) {
+        $query .= " ORDER BY $sort_field $sort_order";
+    }
+}
 $result = mysqli_query($conn, $query);
 if (!$result) {
   die('Query failed: ' . mysqli_error($conn));
@@ -99,8 +108,9 @@ if (!$result) {
     </div>
 
     <div class="controls">
-          <div class="controls-left">
+          <div class="controls-left" style="display:flex;gap:10px;">
             <button class="action-btn edit-btn" style="min-width:110px;max-width:110px;" onclick="openFilterPopup()">Filter</button>
+            <button class="action-btn edit-btn" style="min-width:110px;max-width:110px;" onclick="openSortPopup()">Sort By</button>
           </div>
           <div class="controls-right">
             <button class="action-btn add-btn" onclick="openPopup()">Add New Food</button>
@@ -216,6 +226,40 @@ if (!$result) {
             <button type="submit" class="action-btn edit-btn" style="min-width:110px;max-width:110px;">Apply</button>
             <button type="button" class="action-btn" style="min-width:110px;max-width:110px;background:linear-gradient(135deg, #e74c3c, #c0392b);" onclick="window.location.href='inventory_list.php'">Remove Filter</button>
             <button type="button" class="action-btn" style="min-width:110px;max-width:110px;background:linear-gradient(135deg, #95a5a6, #7f8c8d);" onclick="closeFilterPopup()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Sort Popup -->
+    <div class="popup" id="sortPopup" style="display:none;">
+      <div class="popup-content" style="max-width:400px;margin:auto;">
+        <h2>Sort Inventory</h2>
+        <form method="GET" action="inventory_list.php">
+          <input type="hidden" name="sort" value="1">
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="sortField">Sort By</label>
+            <select name="sort_field" id="sortField" style="width:100%;">
+              <option value="item_name">Item Name</option>
+              <option value="item_category">Category</option>
+              <option value="quantity">Quantity</option>
+              <option value="expiry_date">Expiry Date</option>
+              <option value="storage_place">Storage Place</option>
+              <option value="item_remark">Remark</option>
+              <option value="item_status">Status</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="sortOrder">Order</label>
+            <select name="sort_order" id="sortOrder" style="width:100%;">
+              <option value="asc">A-Z / Earliest</option>
+              <option value="desc">Z-A / Latest</option>
+            </select>
+          </div>
+          <div class="form-buttons">
+            <button type="submit" class="action-btn edit-btn" style="min-width:110px;max-width:110px;">Apply</button>
+            <button type="button" class="action-btn" style="min-width:110px;max-width:110px;background:linear-gradient(135deg, #e74c3c, #c0392b);" onclick="window.location.href='inventory_list.php'">Remove Sort</button>
+            <button type="button" class="action-btn" style="min-width:110px;max-width:110px;background:linear-gradient(135deg, #95a5a6, #7f8c8d);" onclick="closeSortPopup()">Cancel</button>
           </div>
         </form>
       </div>
@@ -511,6 +555,20 @@ function closeFilterPopup() {
 // Optional: close popup when clicking outside
 window.onclick = function(event) {
   var popup = document.getElementById('filterPopup');
+  if (event.target == popup) {
+    popup.style.display = "none";
+  }
+}
+
+function openSortPopup() {
+  document.getElementById('sortPopup').style.display = 'block';
+}
+function closeSortPopup() {
+  document.getElementById('sortPopup').style.display = 'none';
+}
+// Optional: close popup when clicking outside
+window.onclick = function(event) {
+  var popup = document.getElementById('sortPopup');
   if (event.target == popup) {
     popup.style.display = "none";
   }

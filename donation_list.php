@@ -3,7 +3,7 @@ include 'db_connect.php';
 
 // ✅ Query joins donation + food_item_inventory
 // It works safely even when items are still present with status 'Donated'
-// Base query
+// Query base
 $query = "SELECT d.*, 
                 (SELECT item_name FROM food_item_inventory WHERE item_id = d.item_id) AS item_name,
                 (SELECT quantity FROM food_item_inventory WHERE item_id = d.item_id) AS quantity,
@@ -11,12 +11,10 @@ $query = "SELECT d.*,
           FROM donation d";
 
 // Add filter conditions if set
+$where = [];
 if (isset($_GET['filter'])) {
-    $where = [];
-    
     $expiry_from = !empty($_GET['expiry_date_from']) ? mysqli_real_escape_string($conn, $_GET['expiry_date_from']) : '';
     $expiry_to = !empty($_GET['expiry_date_to']) ? mysqli_real_escape_string($conn, $_GET['expiry_date_to']) : '';
-    
     if ($expiry_from && $expiry_to) {
         $where[] = "(SELECT expiry_date FROM food_item_inventory WHERE item_id = d.item_id) BETWEEN '$expiry_from' AND '$expiry_to'";
     } elseif ($expiry_from) {
@@ -24,13 +22,22 @@ if (isset($_GET['filter'])) {
     } elseif ($expiry_to) {
         $where[] = "(SELECT expiry_date FROM food_item_inventory WHERE item_id = d.item_id) <= '$expiry_to'";
     }
-
-    if (!empty($where)) {
-        $query .= " WHERE " . implode(' AND ', $where);
-    }
+}
+if (!empty($where)) {
+    $query .= " WHERE " . implode(' AND ', $where);
 }
 
-$query .= " ORDER BY d.donation_id DESC";
+// Add sorting if requested
+$orderBy = " ORDER BY d.donation_id DESC";
+if (isset($_GET['sort']) && !empty($_GET['sort_field'])) {
+    $sort_field = mysqli_real_escape_string($conn, $_GET['sort_field']);
+    $sort_order = (isset($_GET['sort_order']) && strtolower($_GET['sort_order']) === 'desc') ? 'DESC' : 'ASC';
+    $allowed_fields = ['item_name','quantity','expiry_date','pickup_location','donation_status','donation_remark'];
+    if (in_array($sort_field, $allowed_fields)) {
+        $orderBy = " ORDER BY $sort_field $sort_order";
+    }
+}
+$query .= $orderBy;
 
 $result = mysqli_query($conn, $query);
 if (!$result) {
@@ -101,8 +108,9 @@ if (!$result) {
     </div>
 
     <div class="controls">
-      <div class="controls-left">
+      <div class="controls-left" style="display:flex;gap:10px;">
         <button class="action-btn edit-btn" style="min-width:110px;max-width:110px;" onclick="openFilterPopup()">Filter</button>
+        <button class="action-btn edit-btn" style="min-width:110px;max-width:110px;" onclick="openSortPopup()">Sort By</button>
       </div>
     </div>
 
@@ -130,6 +138,39 @@ if (!$result) {
             <button type="submit" class="action-btn edit-btn" style="min-width:110px;max-width:110px;">Apply</button>
             <button type="button" class="action-btn" style="min-width:110px;max-width:110px;background:linear-gradient(135deg, #e74c3c, #c0392b);" onclick="window.location.href='donation_list.php'">Remove Filter</button>
             <button type="button" class="action-btn" style="min-width:110px;max-width:110px;background:linear-gradient(135deg, #95a5a6, #7f8c8d);" onclick="closeFilterPopup()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Sort Popup -->
+    <div class="popup" id="sortPopup" style="display:none;">
+      <div class="popup-content" style="max-width:400px;margin:auto;">
+        <h2>Sort Donations</h2>
+        <form method="GET" action="donation_list.php">
+          <input type="hidden" name="sort" value="1">
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="sortField">Sort By</label>
+            <select name="sort_field" id="sortField" style="width:100%;">
+              <option value="item_name">Item Name</option>
+              <option value="quantity">Quantity</option>
+              <option value="expiry_date">Expiry Date</option>
+              <option value="pickup_location">Pickup Location</option>
+              <option value="donation_status">Status</option>
+              <option value="donation_remark">Remark</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="sortOrder">Order</label>
+            <select name="sort_order" id="sortOrder" style="width:100%;">
+              <option value="asc">A-Z / Earliest</option>
+              <option value="desc">Z-A / Latest</option>
+            </select>
+          </div>
+          <div class="form-buttons">
+            <button type="submit" class="action-btn edit-btn" style="min-width:110px;max-width:110px;">Apply</button>
+            <button type="button" class="action-btn" style="min-width:110px;max-width:110px;background:linear-gradient(135deg, #e74c3c, #c0392b);" onclick="window.location.href='donation_list.php'">Remove Sort</button>
+            <button type="button" class="action-btn" style="min-width:110px;max-width:110px;background:linear-gradient(135deg, #95a5a6, #7f8c8d);" onclick="closeSortPopup()">Cancel</button>
           </div>
         </form>
       </div>
@@ -178,6 +219,14 @@ if (!$result) {
 
     function closeFilterPopup() {
       document.getElementById('filterPopup').style.display = 'none';
+    }
+
+    function openSortPopup() {
+      document.getElementById('sortPopup').style.display = 'block';
+    }
+
+    function closeSortPopup() {
+      document.getElementById('sortPopup').style.display = 'none';
     }
   </script>
 
