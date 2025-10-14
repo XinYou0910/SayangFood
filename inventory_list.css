@@ -1170,6 +1170,30 @@ button.donate-btn:disabled {
   text-align: center;
 }
 
+/* --- Make SAVE button same as MEAL / EDIT buttons --- */
+#editPopup .form-buttons .save {
+  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 25px;
+  font-weight: bold;
+  font-size: 15px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(39, 174, 96, 0.3);
+  min-width: 110px;
+  max-width: 110px;
+  text-align: center;
+}
+
+#editPopup .form-buttons .save:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 10px rgba(39, 174, 96, 0.35);
+  opacity: 0.95;
+}
+
 /* Button colors */
 .meal-btn {
   background: linear-gradient(135deg, #27ae60, #2ecc71);
