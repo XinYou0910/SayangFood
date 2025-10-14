@@ -783,5 +783,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function logout() {
   localStorage.removeItem("user_name");
-  window.location.href = "login.html";
+  window.location.href = "Homepage.html";
 }
+
+
