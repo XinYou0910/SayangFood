@@ -870,6 +870,11 @@ h1 {
   font-weight: bold;
 }
 
+.status-used {
+  color: rgb(72, 72, 72);
+  font-weight: bold;
+}
+
 .status-expired {
   color: red;
   font-weight: bold;
