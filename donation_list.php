@@ -27,6 +27,25 @@ if (!empty($where)) {
     $query .= " WHERE " . implode(' AND ', $where);
 }
 
+// Search handling: if search provided, include item_name match (from inventory)
+// Search handling: if search provided, include item_name match (from inventory)
+$search_error = '';
+if (isset($_GET['search'])) {
+  $raw_search = trim($_GET['search']);
+  if ($raw_search !== '') {
+    if (preg_match('/^[A-Za-z\s]+$/', $raw_search)) {
+      $searchTerm = mysqli_real_escape_string($conn, $raw_search);
+      if (!empty($where)) {
+        $query .= " AND (SELECT item_name FROM food_item_inventory WHERE item_id = d.item_id) LIKE '%$searchTerm%'";
+      } else {
+        $query .= " WHERE (SELECT item_name FROM food_item_inventory WHERE item_id = d.item_id) LIKE '%$searchTerm%'";
+      }
+    } else {
+      $search_error = 'Search may only contain alphabet characters and spaces.';
+    }
+  }
+}
+
 // Add sorting if requested
 $orderBy = " ORDER BY d.donation_id DESC";
 if (isset($_GET['sort']) && !empty($_GET['sort_field'])) {
@@ -117,7 +136,24 @@ if (!$result) {
     </div>
 
     <div class="controls">
-      <div class="controls-left" style="display:flex;gap:10px;">
+      <div class="controls-left" style="display:flex;gap:10px;align-items:center;">
+        <!-- Search form (top-left) -->
+        <form method="GET" action="donation_list.php" style="display:flex;gap:8px;align-items:center;" onsubmit="return validateSearchInput(this)">
+          <input type="text" id="searchInput" name="search" placeholder="Search item name..." style="padding:6px 8px;border-radius:4px;border:1px solid #ccc;" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+          <input type="hidden" name="filter" value="<?php echo isset($_GET['filter']) ? '1' : ''; ?>">
+          <?php if(isset($_GET['filter'])): ?>
+            <?php if(isset($_GET['expiry_date_from'])): ?><input type="hidden" name="expiry_date_from" value="<?php echo htmlspecialchars($_GET['expiry_date_from']); ?>"><?php endif; ?>
+            <?php if(isset($_GET['expiry_date_to'])): ?><input type="hidden" name="expiry_date_to" value="<?php echo htmlspecialchars($_GET['expiry_date_to']); ?>"><?php endif; ?>
+          <?php endif; ?>
+          <?php if(isset($_GET['sort']) && isset($_GET['sort_field'])): ?>
+            <input type="hidden" name="sort" value="1">
+            <input type="hidden" name="sort_field" value="<?php echo htmlspecialchars($_GET['sort_field']); ?>">
+            <input type="hidden" name="sort_order" value="<?php echo isset($_GET['sort_order']) ? htmlspecialchars($_GET['sort_order']) : 'asc'; ?>">
+          <?php endif; ?>
+          <button type="submit" class="action-btn search-btn" style="padding:6px 10px;">Search</button>
+        </form>
+        </form>
+
         <button class="action-btn edit-btn" style="min-width:110px;max-width:110px;" onclick="openFilterPopup()">Filter</button>
         <button class="action-btn edit-btn" style="min-width:110px;max-width:110px;" onclick="openSortPopup()">Sort By</button>
       </div>
@@ -129,6 +165,9 @@ if (!$result) {
         <h2>Filter Donations</h2>
         <form method="GET" action="donation_list.php">
           <input type="hidden" name="filter" value="1">
+          <?php if(isset($_GET['search'])): ?>
+          <input type="hidden" name="search" value="<?php echo htmlspecialchars($_GET['search']); ?>">
+          <?php endif; ?>
           
           <!-- Expiry Date Filters -->
           <div class="form-group" style="margin-bottom: 15px;">
@@ -158,6 +197,9 @@ if (!$result) {
         <h2>Sort Donations</h2>
         <form method="GET" action="donation_list.php">
           <input type="hidden" name="sort" value="1">
+          <?php if(isset($_GET['search'])): ?>
+          <input type="hidden" name="search" value="<?php echo htmlspecialchars($_GET['search']); ?>">
+          <?php endif; ?>
           <div class="form-group" style="margin-bottom: 15px;">
             <label for="sortField">Sort By</label>
             <select name="sort_field" id="sortField" style="width:100%;">
@@ -196,13 +238,16 @@ if (!$result) {
         <th>Actions</th>
       </tr>
 
-      <?php while($row = mysqli_fetch_assoc($result)) { ?>
+      <?php
+      $hasRows = false;
+      while($row = mysqli_fetch_assoc($result)) {
+        $hasRows = true;
+      ?>
       <tr>
         <td><?= htmlspecialchars($row['item_name'] ?? 'N/A') ?></td>
         <td><?= htmlspecialchars($row['quantity'] ?? 'N/A') ?></td>
         <td><?= $row['expiry_date'] ? htmlspecialchars(date('Y-m-d', strtotime($row['expiry_date']))) : 'N/A' ?></td>
         <td><?= htmlspecialchars($row['pickup_location']) ?></td>
-
         <?php
           $statusClass = strtolower($row['donation_status']) === 'donated'
                          ? 'status-available'
@@ -211,12 +256,15 @@ if (!$result) {
         <td class="<?= $statusClass ?>">
           <?= htmlspecialchars($row['donation_status']) ?>
         </td> 
-
         <td><?= htmlspecialchars($row['donation_remark']) ?></td>
         <td>
           <button class="action-btn edit-btn" onclick='openEditDonatePopup(<?= json_encode($row) ?>)'>Edit</button>
         </td>
       </tr>
+      <?php }
+      if (!$hasRows) {
+      ?>
+        <tr><td colspan="7" style="text-align:center;color:#b00020;font-weight:500;">No item found</td></tr>
       <?php } ?>
     </table>
   </div>
@@ -237,7 +285,32 @@ if (!$result) {
     function closeSortPopup() {
       document.getElementById('sortPopup').style.display = 'none';
     }
+    
+    // Validate search input: only alphabet chars and spaces allowed
+    function validateSearchInput(form) {
+      var input = form.querySelector('input[name="search"]');
+      if (!input) return true;
+      var val = input.value.trim();
+      if (val === '') return true;
+      var re = /^[A-Za-z\s]+$/;
+      if (!re.test(val)) {
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Invalid search',
+            text: 'Search may only contain alphabet characters and spaces.',
+            timer: 2500,
+            showConfirmButton: false
+          });
+        } else {
+          alert('Search may only contain alphabet characters and spaces.');
+        }
+        return false;
+      }
+      return true;
+    }
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <!-- Edit Donation Popup -->
   <div class="popup" id="editDonatePopup" style="display:none;">
