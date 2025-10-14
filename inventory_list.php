@@ -98,10 +98,10 @@ if (!$result) {
         <span class="arrow" id="arrowIcon">▼</span>
       </button>
 
-      <div class="dropdown-container">
-        <button onclick="location.href='inventory_list.php'">Inventory</button>
-        <button onclick="location.href='weekly_meal.php'">Weekly Meal</button>
-        <button onclick="location.href='donation_list.php'">Donations</button>
+      <div class="dropdown-container" id="dropdownMenu">
+        <button class="submenu-item" data-page="inventory_list.php" onclick="window.location.href='inventory_list.php'">Inventory</button>
+        <button class="submenu-item" data-page="weekly_meal.php" onclick="window.location.href='weekly_meal.php'">Weekly Meal</button>
+        <button class="submenu-item" data-page="donation_list.php" onclick="window.location.href='donation_list.php'">Donations</button>
       </div>
 
       <button class="menu-item">
