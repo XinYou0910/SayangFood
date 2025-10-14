@@ -3,12 +3,34 @@ include 'db_connect.php';
 
 // ✅ Query joins donation + food_item_inventory
 // It works safely even when items are still present with status 'Donated'
+// Base query
 $query = "SELECT d.*, 
                 (SELECT item_name FROM food_item_inventory WHERE item_id = d.item_id) AS item_name,
                 (SELECT quantity FROM food_item_inventory WHERE item_id = d.item_id) AS quantity,
                 (SELECT expiry_date FROM food_item_inventory WHERE item_id = d.item_id) AS expiry_date
-          FROM donation d
-          ORDER BY d.donation_id DESC";
+          FROM donation d";
+
+// Add filter conditions if set
+if (isset($_GET['filter'])) {
+    $where = [];
+    
+    $expiry_from = !empty($_GET['expiry_date_from']) ? mysqli_real_escape_string($conn, $_GET['expiry_date_from']) : '';
+    $expiry_to = !empty($_GET['expiry_date_to']) ? mysqli_real_escape_string($conn, $_GET['expiry_date_to']) : '';
+    
+    if ($expiry_from && $expiry_to) {
+        $where[] = "(SELECT expiry_date FROM food_item_inventory WHERE item_id = d.item_id) BETWEEN '$expiry_from' AND '$expiry_to'";
+    } elseif ($expiry_from) {
+        $where[] = "(SELECT expiry_date FROM food_item_inventory WHERE item_id = d.item_id) >= '$expiry_from'";
+    } elseif ($expiry_to) {
+        $where[] = "(SELECT expiry_date FROM food_item_inventory WHERE item_id = d.item_id) <= '$expiry_to'";
+    }
+
+    if (!empty($where)) {
+        $query .= " WHERE " . implode(' AND ', $where);
+    }
+}
+
+$query .= " ORDER BY d.donation_id DESC";
 
 $result = mysqli_query($conn, $query);
 if (!$result) {
@@ -79,12 +101,38 @@ if (!$result) {
     </div>
 
     <div class="controls">
-      <select>
-        <option value="all">View All</option>
-        <option value="donated">Donated</option>
-        <option value="available">Available</option>
-      </select>
-      <input type="text" placeholder="Search donation item...">
+      <div class="controls-left">
+        <button class="action-btn edit-btn" style="min-width:110px;max-width:110px;" onclick="openFilterPopup()">Filter</button>
+      </div>
+    </div>
+
+    <!-- Filter Popup -->
+    <div class="popup" id="filterPopup" style="display:none;">
+      <div class="popup-content" style="max-width:400px;margin:auto;">
+        <h2>Filter Donations</h2>
+        <form method="GET" action="donation_list.php">
+          <input type="hidden" name="filter" value="1">
+          
+          <!-- Expiry Date Filters -->
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="filterExpiryFrom">Expiry Date From</label>
+            <input type="date" name="expiry_date_from" id="filterExpiryFrom" style="width: 100%;" 
+              value="<?php echo isset($_GET['expiry_date_from']) ? htmlspecialchars($_GET['expiry_date_from']) : ''; ?>">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="filterExpiryTo">Expiry Date To</label>
+            <input type="date" name="expiry_date_to" id="filterExpiryTo" style="width: 100%;" 
+              value="<?php echo isset($_GET['expiry_date_to']) ? htmlspecialchars($_GET['expiry_date_to']) : ''; ?>">
+          </div>
+
+          <div class="form-buttons">
+            <button type="submit" class="action-btn edit-btn" style="min-width:110px;max-width:110px;">Apply</button>
+            <button type="button" class="action-btn" style="min-width:110px;max-width:110px;background:linear-gradient(135deg, #e74c3c, #c0392b);" onclick="window.location.href='donation_list.php'">Remove Filter</button>
+            <button type="button" class="action-btn" style="min-width:110px;max-width:110px;background:linear-gradient(135deg, #95a5a6, #7f8c8d);" onclick="closeFilterPopup()">Cancel</button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <table>
@@ -122,6 +170,16 @@ if (!$result) {
       <?php } ?>
     </table>
   </div>
+
+  <script>
+    function openFilterPopup() {
+      document.getElementById('filterPopup').style.display = 'block';
+    }
+
+    function closeFilterPopup() {
+      document.getElementById('filterPopup').style.display = 'none';
+    }
+  </script>
 
   <!-- Edit Donation Popup -->
   <div class="popup" id="editDonatePopup">
