@@ -526,12 +526,12 @@ function toggleDropdown() {
   const dropdown = document.getElementById("dropdownMenu");
   const arrow = document.getElementById("arrowIcon");
 
-  if (dropdown.style.display === "flex") {
+  if (dropdown.style.display === "block") {
     dropdown.style.display = "none";
-    arrow.style.transform = "rotate(0deg)";
+    arrowIcon.textContent = "▼";
   } else {
-    dropdown.style.display = "flex";
-    arrow.style.transform = "rotate(180deg)";
+    dropdown.style.display = "block";
+    arrowIcon.textContent = "▲";
   }
 }
 
@@ -698,3 +698,80 @@ function toggleDropdown() {
     arrow.style.transform = "rotate(180deg)";
   }
 }
+
+const username = localStorage.getItem('user_name');
+  if (username) {
+    document.getElementById('username').textContent = username;
+  } else {
+    window.location.href = 'login.html';
+  }
+
+  function logout() {
+    localStorage.removeItem('user_name');
+    window.location.href = 'login.html';
+  }
+
+  function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('active');
+  }
+
+// ===========================
+// Sidebar Active Highlight + Dropdown Auto Expand
+// ===========================
+document.addEventListener("DOMContentLoaded", () => {
+  const currentPage = window.location.pathname.split("/").pop().toLowerCase();
+  const menuItems = document.querySelectorAll(".menu-item");
+  const dropdownBtn = document.querySelector(".dropdown-btn");
+  const dropdownContainer = document.getElementById("dropdownMenu");
+  const arrowIcon = document.getElementById("arrowIcon");
+
+  // Step 1: Reset all active states
+  menuItems.forEach(btn => btn.classList.remove("active"));
+
+  // Step 2: Apply highlight based on current page
+  menuItems.forEach(btn => {
+    const text = btn.innerText.trim().toLowerCase();
+
+    // Dashboard page
+    if (currentPage.includes("dashboard") && text.includes("dashboard")) {
+      btn.classList.add("active");
+    }
+
+    // Browse Food Item dropdown (Inventory, Weekly Meal, Donations)
+    else if (
+      (currentPage.includes("inventory") ||
+       currentPage.includes("weekly_meal") ||
+       currentPage.includes("donation")) &&
+      text.includes("browse")
+    ) {
+      btn.classList.add("active");
+
+      // Auto expand dropdown
+      if (dropdownContainer) {
+        dropdownContainer.style.display = "block";
+        arrowIcon.textContent = "▲";
+      }
+
+      // Highlight current submenu item
+      const submenuItems = document.querySelectorAll(".submenu-item");
+      submenuItems.forEach(sub => {
+        const page = sub.getAttribute("data-page").toLowerCase();
+        if (currentPage === page) {
+          sub.classList.add("active");
+        } else {
+          sub.classList.remove("active");
+        }
+      });
+    }
+
+    // Food Analytics page
+    else if (currentPage.includes("analytics") && text.includes("analytics")) {
+      btn.classList.add("active");
+    }
+
+    // Notification page
+    else if (currentPage.includes("notification") && text.includes("notification")) {
+      btn.classList.add("active");
+    }
+  });
+});

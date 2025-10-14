@@ -75,30 +75,35 @@ if (!$result) {
         </div>
       </div>
 
-      <button class="menu-item" onclick="window.location.href='dashboard_page.html'">
-        <img src="pic/home.png" class="icon"> Home
+      <button class="menu-item" onclick="location.href='dashboard_page.html'">
+        <img src="pic/home.png" alt="Home Icon" class="icon"> Dashboard
       </button>
 
-      <!-- Dropdown -->
       <button class="menu-item dropdown-btn" onclick="toggleDropdown()">
         <img src="pic/search.png" class="icon"> Browse Food Items
         <span class="arrow" id="arrowIcon">▼</span>
       </button>
 
-      <div class="dropdown-container" id="dropdownMenu">
-        <button class="submenu-item" onclick="window.location.href='inventory_list.php'">Inventory</button>
-        <button class="submenu-item" onclick="window.location.href='weekly_meal.php'">Weekly Meal</button>
-        <button class="submenu-item" onclick="window.location.href='donation_list.php'">Donations</button>
+      <div class="dropdown-container">
+        <button onclick="location.href='inventory_list.php'">Inventory</button>
+        <button onclick="location.href='weekly_meal.php'">Weekly Meal</button>
+        <button onclick="location.href='donation_list.php'">Donations</button>
       </div>
 
-      <button class="menu-item"><img src="pic/data-analytics.png" class="icon"> Food Analytics</button>
-      <button class="menu-item"><img src="pic/notification.png" class="icon"> Notification</button>
+      <button class="menu-item">
+        <img src="pic/data-analytics.png" alt="Analytics Icon" class="icon"> Food Analytics
+      </button>
+
+      <button class="menu-item">
+        <img src="pic/notification.png" alt="Notification Icon" class="icon"> Notification
+      </button>
 
       <div class="profile">
         <img src="pic/user.png" alt="User" class="profile-img">
         <div class="profile-info">
-          <p class="username">ZhiLim</p>
+          <p class="username" id="username">User</p>
           <p class="role">User Profile</p>
+          <button onclick="logout()" class="logout-btn">Logout</button>
         </div>
       </div>
     </div>
