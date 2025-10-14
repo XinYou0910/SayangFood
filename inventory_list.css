@@ -345,6 +345,33 @@ body {
   box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
 }
 
+/* Search button styling to make it obvious */
+.search-btn {
+  background: #ececec; /* light grey */
+  color: #222;
+  border: 1px solid #d0d0d0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+.search-btn:hover {
+  background: #e0e0e0; /* slightly darker grey */
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+}
+
+/* Inline search error message */
+.search-error {
+  color: #b00020;
+  background: rgba(176,0,32,0.05);
+  border: 1px solid rgba(176,0,32,0.08);
+  padding: 6px 8px;
+  border-radius: 6px;
+  margin-left: 8px;
+  font-size: 13px;
+}
+
 /*Table*/
 table {
   width: 100%;

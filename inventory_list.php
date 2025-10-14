@@ -12,6 +12,20 @@ mysqli_query($conn, "
 
 // Filter logic
 $where = "item_status != 'Donated'";
+// Search handling: search by item_name (only letters and spaces allowed)
+$search_error = '';
+if (isset($_GET['search'])) {
+  $raw_search = trim($_GET['search']);
+  if ($raw_search !== '') {
+    // allow only alphabet characters and spaces
+    if (preg_match('/^[A-Za-z\s]+$/', $raw_search)) {
+      $searchTerm = mysqli_real_escape_string($conn, $raw_search);
+      $where .= " AND item_name LIKE '%$searchTerm%'";
+    } else {
+      $search_error = 'Search may only contain alphabet characters and spaces.';
+    }
+  }
+}
 if (isset($_GET['filter'])) {
     $filters = [];
     if (!empty($_GET['category'])) {
@@ -115,7 +129,26 @@ if (!$result) {
       </div>
 
       <div class="controls">
-            <div class="controls-left" style="display:flex;gap:10px;">
+            <div class="controls-left" style="display:flex;gap:10px;align-items:center;">
+              <!-- Search form (top-left) -->
+              <form method="GET" action="inventory_list.php" style="display:flex;gap:8px;align-items:center;" onsubmit="return validateSearchInput(this)">
+                <input type="text" id="searchInput" name="search" placeholder="Search item name..." style="padding:6px 8px;border-radius:4px;border:1px solid #ccc;" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                <input type="hidden" name="filter" value="<?php echo isset($_GET['filter']) ? '1' : ''; ?>">
+                <?php if(isset($_GET['filter'])): ?>
+                  <?php if(isset($_GET['category'])): ?><input type="hidden" name="category" value="<?php echo htmlspecialchars($_GET['category']); ?>"><?php endif; ?>
+                  <?php if(isset($_GET['expiry_date_from'])): ?><input type="hidden" name="expiry_date_from" value="<?php echo htmlspecialchars($_GET['expiry_date_from']); ?>"><?php endif; ?>
+                  <?php if(isset($_GET['expiry_date_to'])): ?><input type="hidden" name="expiry_date_to" value="<?php echo htmlspecialchars($_GET['expiry_date_to']); ?>"><?php endif; ?>
+                  <?php if(isset($_GET['storage_place'])): ?><input type="hidden" name="storage_place" value="<?php echo htmlspecialchars($_GET['storage_place']); ?>"><?php endif; ?>
+                <?php endif; ?>
+                <?php if(isset($_GET['sort']) && isset($_GET['sort_field'])): ?>
+                  <input type="hidden" name="sort" value="1">
+                  <input type="hidden" name="sort_field" value="<?php echo htmlspecialchars($_GET['sort_field']); ?>">
+                  <input type="hidden" name="sort_order" value="<?php echo isset($_GET['sort_order']) ? htmlspecialchars($_GET['sort_order']) : 'asc'; ?>">
+                <?php endif; ?>
+                <button type="submit" class="action-btn search-btn" style="padding:6px 10px;">Search</button>
+              </form>
+              </form>
+
               <button class="action-btn edit-btn" style="min-width:110px;max-width:110px;" onclick="openFilterPopup()">Filter</button>
               <button class="action-btn edit-btn" style="min-width:110px;max-width:110px;" onclick="openSortPopup()">Sort By</button>
             </div>
@@ -135,19 +168,20 @@ if (!$result) {
           <th>Actions</th>
         </tr>
 
-        <?php while($row = mysqli_fetch_assoc($result)) { ?>
-          <?php
-            $status = $row['item_status'];
-            $expiryDate = strtotime($row['expiry_date']);
-            $today = strtotime(date('Y-m-d'));
-
-            // Only automatically mark Expired items if not Used, Donated, or Planned for Meal
-            if (!in_array(strtolower($status), ['used', 'donated', 'expired', 'planned for meal'])) {
-              if ($expiryDate < $today) {
-                $status = "Expired";
-              }
+        <?php
+        $hasRows = false;
+        while($row = mysqli_fetch_assoc($result)) {
+          $hasRows = true;
+          $status = $row['item_status'];
+          $expiryDate = strtotime($row['expiry_date']);
+          $today = strtotime(date('Y-m-d'));
+          // Only automatically mark Expired items if not Used, Donated, or Planned for Meal
+          if (!in_array(strtolower($status), ['used', 'donated', 'expired', 'planned for meal'])) {
+            if ($expiryDate < $today) {
+              $status = "Expired";
             }
-          ?>
+          }
+        ?>
           <tr>
             <td><?= htmlspecialchars($row['item_name']) ?></td>
             <td><?= htmlspecialchars($row['item_category']) ?></td>
@@ -163,7 +197,6 @@ if (!$result) {
               // Determine display version and color class
               $displayStatus = ($status === 'Planned for Meal') ? 'Meal' : $status;
               $statusClass = 'status-available';
-
               if (strtolower($status) === 'expired') {
                 $statusClass = 'status-expired';
               } elseif (strtolower($status) === 'used') {
@@ -179,6 +212,10 @@ if (!$result) {
               <button class="action-btn view-btn" onclick='openViewPopup(<?= json_encode($row) ?>)'>View</button>
             </td>
           </tr>
+        <?php }
+        if (!$hasRows) {
+        ?>
+          <tr><td colspan="8" style="text-align:center;color:#b00020;font-weight:500;">No item found</td></tr>
         <?php } ?>
       </table>
 
@@ -188,6 +225,9 @@ if (!$result) {
           <h2>Filter Food Items</h2>
           <form method="GET" action="inventory_list.php">
             <input type="hidden" name="filter" value="1">
+            <?php if(isset($_GET['search'])): ?>
+            <input type="hidden" name="search" value="<?php echo htmlspecialchars($_GET['search']); ?>">
+            <?php endif; ?>
             <?php if(isset($_GET['sort']) && isset($_GET['sort_field'])): ?>
             <input type="hidden" name="sort" value="1">
             <input type="hidden" name="sort_field" value="<?php echo htmlspecialchars($_GET['sort_field']); ?>">
@@ -251,6 +291,9 @@ if (!$result) {
             <input type="hidden" name="sort" value="1">
             <?php if(isset($_GET['filter'])): ?>
             <input type="hidden" name="filter" value="1">
+            <?php if(isset($_GET['search'])): ?>
+            <input type="hidden" name="search" value="<?php echo htmlspecialchars($_GET['search']); ?>">
+            <?php endif; ?>
             <?php if(isset($_GET['category'])): ?>
             <input type="hidden" name="category" value="<?php echo htmlspecialchars($_GET['category']); ?>">
             <?php endif; ?>
@@ -610,5 +653,30 @@ if (!$result) {
 
 <script src="script.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  // Validate search input: only alphabet chars and spaces allowed
+  function validateSearchInput(form) {
+    var input = form.querySelector('input[name="search"]');
+    if (!input) return true;
+    var val = input.value.trim();
+    if (val === '') return true;
+    var re = /^[A-Za-z\s]+$/;
+    if (!re.test(val)) {
+      if (window.Swal) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Invalid search',
+          text: 'Search may only contain alphabet characters and spaces.',
+          timer: 2500,
+          showConfirmButton: false
+        });
+      } else {
+        alert('Search may only contain alphabet characters and spaces.');
+      }
+      return false;
+    }
+    return true;
+  }
+</script>
 </body>
 </html>
