@@ -20,6 +20,16 @@ body {
   display: flex;
   color: var(--text-dark);
   line-height: 1.6;
+  min-height: 100vh;
+}
+
+.main-content {
+  margin-left: 260px;
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  height: 100vh;
+  box-sizing: border-box;
 }
 
 /* Sidebar */
@@ -33,6 +43,10 @@ body {
   padding: 0;
   transition: all 0.3s ease;
   box-shadow: 2px 0 10px var(--shadow-light);
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow-y: auto;
 }
 
 .sidebar:hover {

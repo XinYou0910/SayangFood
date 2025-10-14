@@ -9,9 +9,34 @@ mysqli_query($conn, "
     AND item_status NOT IN ('Used', 'Donated', 'Expired')
 ");
 
-$query = "SELECT * FROM food_item_inventory WHERE item_status != 'Donated'";
-$result = mysqli_query($conn, $query);
 
+// Filter logic
+$where = "item_status != 'Donated'";
+if (isset($_GET['filter'])) {
+    $filters = [];
+    if (!empty($_GET['category'])) {
+        $category = mysqli_real_escape_string($conn, $_GET['category']);
+        $filters[] = "item_category = '$category'";
+    }
+  $expiry_from = !empty($_GET['expiry_date_from']) ? mysqli_real_escape_string($conn, $_GET['expiry_date_from']) : '';
+  $expiry_to = !empty($_GET['expiry_date_to']) ? mysqli_real_escape_string($conn, $_GET['expiry_date_to']) : '';
+  if ($expiry_from && $expiry_to) {
+    $filters[] = "expiry_date BETWEEN '$expiry_from' AND '$expiry_to'";
+  } elseif ($expiry_from) {
+    $filters[] = "expiry_date >= '$expiry_from'";
+  } elseif ($expiry_to) {
+    $filters[] = "expiry_date <= '$expiry_to'";
+  }
+    if (!empty($_GET['storage_place'])) {
+        $storage = mysqli_real_escape_string($conn, $_GET['storage_place']);
+        $filters[] = "storage_place = '$storage'";
+    }
+    if ($filters) {
+        $where .= ' AND ' . implode(' AND ', $filters);
+    }
+}
+$query = "SELECT * FROM food_item_inventory WHERE $where";
+$result = mysqli_query($conn, $query);
 if (!$result) {
   die('Query failed: ' . mysqli_error($conn));
 }
@@ -68,18 +93,19 @@ if (!$result) {
   </div>
 
   <!-- Main -->
-  <div class="main">
-    <div class="header"><h1>Food Item Inventory</h1></div>
-
-    <div class="controls">
-      <select>
-        <option value="all">View All</option>
-        <option value="item">Item Name</option>
-        <option value="category">Category</option>
-      </select>
-      <input type="text" placeholder="Search item name...">
+  <div class="main-content">
+    <div class="header">
+      <h1>Food Item Inventory</h1>
     </div>
 
+    <div class="controls">
+          <div class="controls-left">
+            <button class="action-btn edit-btn" style="min-width:110px;max-width:110px;" onclick="openFilterPopup()">Filter</button>
+          </div>
+          <div class="controls-right">
+            <button class="action-btn add-btn" onclick="openPopup()">Add New Food</button>
+          </div>
+    </div>
     <table>
       <tr>
         <th>Item Name</th>
@@ -139,7 +165,61 @@ if (!$result) {
       <?php } ?>
     </table>
 
-    <button class="add-btn" onclick="openPopup()">Add New Food</button>
+    <!-- Filter Popup -->
+    <div class="popup" id="filterPopup" style="display:none;">
+      <div class="popup-content" style="max-width:400px;margin:auto;">
+        <h2>Filter Food Items</h2>
+        <form method="GET" action="inventory_list.php">
+          <input type="hidden" name="filter" value="1">
+          <!-- Category Filter -->
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="filterCategory">Category</label>
+            <select name="category" id="filterCategory" style="width: 100%;">
+              <option value="">-- Any --</option>
+              <option value="Meat" <?php echo (isset($_GET['category']) && $_GET['category'] === 'Meat') ? 'selected' : ''; ?>>Meat</option>
+              <option value="Vegetable" <?php echo (isset($_GET['category']) && $_GET['category'] === 'Vegetable') ? 'selected' : ''; ?>>Vegetable</option>
+              <option value="Seafood" <?php echo (isset($_GET['category']) && $_GET['category'] === 'Seafood') ? 'selected' : ''; ?>>Seafood</option>
+              <option value="Dairy" <?php echo (isset($_GET['category']) && $_GET['category'] === 'Dairy') ? 'selected' : ''; ?>>Dairy</option>
+              <option value="Grains" <?php echo (isset($_GET['category']) && $_GET['category'] === 'Grains') ? 'selected' : ''; ?>>Grains</option>
+              <option value="Beverage" <?php echo (isset($_GET['category']) && $_GET['category'] === 'Beverage') ? 'selected' : ''; ?>>Beverage</option>
+              <option value="Snacks" <?php echo (isset($_GET['category']) && $_GET['category'] === 'Snacks') ? 'selected' : ''; ?>>Snacks</option>
+              <option value="Condiment" <?php echo (isset($_GET['category']) && $_GET['category'] === 'Condiment') ? 'selected' : ''; ?>>Condiment</option>
+              <option value="Other" <?php echo (isset($_GET['category']) && $_GET['category'] === 'Other') ? 'selected' : ''; ?>>Other</option>
+            </select>
+          </div>
+
+          <!-- Expiry Date Filters -->
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="filterExpiryFrom">Expiry Date From</label>
+            <input type="date" name="expiry_date_from" id="filterExpiryFrom" style="width: 100%;" value="<?php echo isset($_GET['expiry_date_from']) ? htmlspecialchars($_GET['expiry_date_from']) : ''; ?>">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="filterExpiryTo">Expiry Date To</label>
+            <input type="date" name="expiry_date_to" id="filterExpiryTo" style="width: 100%;" value="<?php echo isset($_GET['expiry_date_to']) ? htmlspecialchars($_GET['expiry_date_to']) : ''; ?>">
+          </div>
+
+          <!-- Storage Place Filter -->
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="filterStorage">Storage Place</label>
+            <select name="storage_place" id="filterStorage" style="width: 100%;">
+              <option value="">-- Any --</option>
+              <option value="Refrigerator" <?php echo (isset($_GET['storage_place']) && $_GET['storage_place'] === 'Refrigerator') ? 'selected' : ''; ?>>Refrigerator</option>
+              <option value="Freezer" <?php echo (isset($_GET['storage_place']) && $_GET['storage_place'] === 'Freezer') ? 'selected' : ''; ?>>Freezer</option>
+              <option value="Pantry" <?php echo (isset($_GET['storage_place']) && $_GET['storage_place'] === 'Pantry') ? 'selected' : ''; ?>>Pantry</option>
+              <option value="Cabinet" <?php echo (isset($_GET['storage_place']) && $_GET['storage_place'] === 'Cabinet') ? 'selected' : ''; ?>>Cabinet</option>
+              <option value="Storage Box" <?php echo (isset($_GET['storage_place']) && $_GET['storage_place'] === 'Storage Box') ? 'selected' : ''; ?>>Storage Box</option>
+              <option value="Other" <?php echo (isset($_GET['storage_place']) && $_GET['storage_place'] === 'Other') ? 'selected' : ''; ?>>Other</option>
+            </select>
+          </div>
+          <div class="form-buttons">
+            <button type="submit" class="action-btn edit-btn" style="min-width:110px;max-width:110px;">Apply</button>
+            <button type="button" class="action-btn" style="min-width:110px;max-width:110px;background:linear-gradient(135deg, #e74c3c, #c0392b);" onclick="window.location.href='inventory_list.php'">Remove Filter</button>
+            <button type="button" class="action-btn" style="min-width:110px;max-width:110px;background:linear-gradient(135deg, #95a5a6, #7f8c8d);" onclick="closeFilterPopup()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
   <!-- Edit Popup -->
@@ -418,5 +498,23 @@ if (!$result) {
 
 <script src="script.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+</style>
+</style>
+<script>
+function openFilterPopup() {
+  document.getElementById('filterPopup').style.display = 'block';
+}
+function closeFilterPopup() {
+  document.getElementById('filterPopup').style.display = 'none';
+}
+// Optional: close popup when clicking outside
+window.onclick = function(event) {
+  var popup = document.getElementById('filterPopup');
+  if (event.target == popup) {
+    popup.style.display = "none";
+  }
+}
+</script>
 </body>
 </html>

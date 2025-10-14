@@ -73,7 +73,7 @@ if (!$result) {
   </div>
 
   <!-- Main -->
-  <div class="main">
+  <div class="main-content">
     <div class="header">
       <h1>Donation Listing</h1>
     </div>

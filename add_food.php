@@ -1,5 +1,12 @@
 <?php
+session_start();
 include 'db_connect.php';
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    echo "<script>alert('Please log in first.'); window.location.href='login.php';</script>";
+    exit();
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ------------------------------
@@ -34,8 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Handle remark
     $item_remark = trim($_POST['item_remark']);
 
-    // Default values
-    $user_id = 1; // demo user
+    // Get user_id from session
+    $user_id = $_SESSION['user_id'];
     $item_status = 'Available';
 
     // ------------------------------
