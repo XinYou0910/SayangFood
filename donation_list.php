@@ -34,7 +34,15 @@ if (isset($_GET['sort']) && !empty($_GET['sort_field'])) {
     $sort_order = (isset($_GET['sort_order']) && strtolower($_GET['sort_order']) === 'desc') ? 'DESC' : 'ASC';
     $allowed_fields = ['item_name','quantity','expiry_date','pickup_location','donation_status','donation_remark'];
     if (in_array($sort_field, $allowed_fields)) {
-        $orderBy = " ORDER BY $sort_field $sort_order";
+        if ($sort_field === 'item_name') {
+            $orderBy = " ORDER BY (SELECT item_name FROM food_item_inventory WHERE item_id = d.item_id) $sort_order";
+        } elseif ($sort_field === 'quantity') {
+            $orderBy = " ORDER BY (SELECT quantity FROM food_item_inventory WHERE item_id = d.item_id) $sort_order";
+        } elseif ($sort_field === 'expiry_date') {
+            $orderBy = " ORDER BY (SELECT expiry_date FROM food_item_inventory WHERE item_id = d.item_id) $sort_order";
+        } else {
+            $orderBy = " ORDER BY d.$sort_field $sort_order";
+        }
     }
 }
 $query .= $orderBy;

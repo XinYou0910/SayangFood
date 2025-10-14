@@ -37,14 +37,16 @@ if (isset($_GET['filter'])) {
 }
 $query = "SELECT * FROM food_item_inventory WHERE $where";
 // Add sorting if requested
+$orderBy = " ORDER BY item_id DESC";
 if (isset($_GET['sort']) && !empty($_GET['sort_field'])) {
     $sort_field = mysqli_real_escape_string($conn, $_GET['sort_field']);
     $sort_order = (isset($_GET['sort_order']) && strtolower($_GET['sort_order']) === 'desc') ? 'DESC' : 'ASC';
-    $allowed_fields = ['item_name','item_category','quantity','expiry_date','storage_place','item_remark','item_status'];
+    $allowed_fields = ['item_name', 'item_category', 'quantity', 'expiry_date', 'storage_place', 'item_status', 'item_remark'];
     if (in_array($sort_field, $allowed_fields)) {
-        $query .= " ORDER BY $sort_field $sort_order";
+        $orderBy = " ORDER BY $sort_field $sort_order";
     }
 }
+$query .= $orderBy;
 $result = mysqli_query($conn, $query);
 if (!$result) {
   die('Query failed: ' . mysqli_error($conn));
@@ -181,6 +183,11 @@ if (!$result) {
         <h2>Filter Food Items</h2>
         <form method="GET" action="inventory_list.php">
           <input type="hidden" name="filter" value="1">
+          <?php if(isset($_GET['sort']) && isset($_GET['sort_field'])): ?>
+          <input type="hidden" name="sort" value="1">
+          <input type="hidden" name="sort_field" value="<?php echo htmlspecialchars($_GET['sort_field']); ?>">
+          <input type="hidden" name="sort_order" value="<?php echo isset($_GET['sort_order']) ? htmlspecialchars($_GET['sort_order']) : 'asc'; ?>">
+          <?php endif; ?>
           <!-- Category Filter -->
           <div class="form-group" style="margin-bottom: 15px;">
             <label for="filterCategory">Category</label>
@@ -236,6 +243,22 @@ if (!$result) {
       <div class="popup-content" style="max-width:400px;margin:auto;">
         <h2>Sort Inventory</h2>
         <form method="GET" action="inventory_list.php">
+          <input type="hidden" name="sort" value="1">
+          <?php if(isset($_GET['filter'])): ?>
+          <input type="hidden" name="filter" value="1">
+          <?php if(isset($_GET['category'])): ?>
+          <input type="hidden" name="category" value="<?php echo htmlspecialchars($_GET['category']); ?>">
+          <?php endif; ?>
+          <?php if(isset($_GET['expiry_date_from'])): ?>
+          <input type="hidden" name="expiry_date_from" value="<?php echo htmlspecialchars($_GET['expiry_date_from']); ?>">
+          <?php endif; ?>
+          <?php if(isset($_GET['expiry_date_to'])): ?>
+          <input type="hidden" name="expiry_date_to" value="<?php echo htmlspecialchars($_GET['expiry_date_to']); ?>">
+          <?php endif; ?>
+          <?php if(isset($_GET['storage_place'])): ?>
+          <input type="hidden" name="storage_place" value="<?php echo htmlspecialchars($_GET['storage_place']); ?>">
+          <?php endif; ?>
+          <?php endif; ?>
           <input type="hidden" name="sort" value="1">
           <div class="form-group" style="margin-bottom: 15px;">
             <label for="sortField">Sort By</label>
