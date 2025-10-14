@@ -122,7 +122,7 @@ if (!$result) {
     <div class="profile">
       <img src="pic/user.png" alt="User" class="profile-img">
       <div class="profile-info">
-        <p class="username">ZhiLim</p>
+        <p class="username" id="username"></p>
         <p class="role">User Profile</p>
         <button onclick="logout()" class="logout-btn">Logout</button>
       </div>
@@ -349,6 +349,7 @@ if (!$result) {
   </div>
 
 <script src="script.js"></script>
+
 
 </body>
 </html>

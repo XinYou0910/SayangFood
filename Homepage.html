@@ -105,5 +105,26 @@
   </footer>
 
   <script src="script.js"></script>
+  <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const userName = localStorage.getItem("user_name");
+  const signupBtn = document.querySelector(".signup-btn");
+  const loginBtn = document.querySelector(".login-btn");
+
+  if (userName) {
+    // If logged in
+    signupBtn.textContent = "Dashboard";
+    signupBtn.href = "dashboard_page.html";
+    loginBtn.textContent = "Logout";
+    loginBtn.href = "#";
+
+    loginBtn.addEventListener("click", () => {
+      localStorage.removeItem("user_name");
+      window.location.href = "Homepage.html";
+    });
+  }
+});
+</script>
+
 </body>
 </html>

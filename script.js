@@ -687,16 +687,28 @@ function closeEditDonatePopup() {
   document.getElementById("editDonatePopup").style.display = "none";
 }
 
-const username = localStorage.getItem('user_name');
+// Get the current page file name
+const currentPage = window.location.pathname.split("/").pop();
+
+// List of pages that should only be accessed after login
+const protectedPages = ["dashboard.html", "inventory.html", "weekly_meal.html", "donation.html"];
+
+// Only check login for protected pages (not homepage)
+if (protectedPages.includes(currentPage)) {
+  const username = localStorage.getItem("user_name");
+
   if (username) {
-    document.getElementById('username').textContent = username;
+    document.getElementById("username").textContent = username;
   } else {
-    window.location.href = 'login.html';
+    // Redirect only if not logged in
+    window.location.href = "login.html";
   }
+}
+
 
   function logout() {
     localStorage.removeItem('user_name');
-    window.location.href = 'login.html';
+    window.location.href = 'Homepage.html';
   }
 
   function toggleSidebar() {
@@ -763,3 +775,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+  const storedName = localStorage.getItem("user_name");
+  document.getElementById("username").textContent = storedName ? storedName : "User";
+});
+
+function logout() {
+  localStorage.removeItem("user_name");
+  window.location.href = "login.html";
+}

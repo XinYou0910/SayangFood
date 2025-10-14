@@ -678,5 +678,17 @@ if (!$result) {
     return true;
   }
 </script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const username = localStorage.getItem("user_name");
+    if (username) {
+      document.getElementById("username").textContent = username;
+    } else {
+      // Optional: redirect if not logged in
+      window.location.href = "login.html";
+    }
+  });
+</script>
+
 </body>
 </html>
