@@ -23,6 +23,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
+    // ⚠️ Validate password length
+    if (strlen($user_password) < 8) {
+        echo "<script>alert('⚠️ Password must be at least 8 characters long.'); window.history.back();</script>";
+        exit;
+    }
+
     // 🧩 Check if email already exists
     $check_stmt = $conn->prepare("SELECT email FROM users WHERE email = ?");
     $check_stmt->bind_param("s", $email);
@@ -59,7 +65,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $mail->Host = 'smtp.gmail.com';
             $mail->SMTPAuth = true;
             $mail->Username = 'pxypxy12@gmail.com';
-            $mail->Password = 'fqpr niqh uspd vhaw'; // app password
+            $mail->Password = 'fqpr niqh uspd vhaw'; // Gmail app password
             $mail->SMTPSecure = 'tls';
             $mail->Port = 587;
 
