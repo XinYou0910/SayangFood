@@ -1,70 +1,85 @@
 <?php
-include 'db_connect.php'; // connect to database
+include 'db_connect.php';
+session_start();
+if (!isset($_SESSION['user_id'])) {
+  header('Location: dashboar_page.html'); // or login.php
+  exit;
+}
+$currentUserId = (int)$_SESSION['user_id'];
 
-// Automatically mark expired items in the database
-mysqli_query($conn, "
+// (Optional) keep your global "mark expired" job
+$conn->query("
   UPDATE food_item_inventory
   SET item_status = 'Expired'
   WHERE expiry_date < CURDATE()
-    AND item_status NOT IN ('Used', 'Donated', 'Expired')
+    AND item_status NOT IN ('Used','Donated','Expired')
 ");
 
+// ---------- Build dynamic WHERE + params safely ----------
+$where  = "user_id = ? AND item_status != 'Donated'";
+$types  = "i";
+$params = [$currentUserId];
 
-// Filter logic
-$where = "item_status != 'Donated'";
-// Search handling: search by item_name (only letters and spaces allowed)
+// Search
 $search_error = '';
 if (isset($_GET['search'])) {
   $raw_search = trim($_GET['search']);
   if ($raw_search !== '') {
-    // allow only alphabet characters and spaces
     if (preg_match('/^[A-Za-z\s]+$/', $raw_search)) {
-      $searchTerm = mysqli_real_escape_string($conn, $raw_search);
-      $where .= " AND item_name LIKE '%$searchTerm%'";
+      $where  .= " AND item_name LIKE CONCAT('%', ?, '%')";
+      $types  .= "s";
+      $params[] = $raw_search;
     } else {
       $search_error = 'Search may only contain alphabet characters and spaces.';
     }
   }
 }
+
+// Filters
 if (isset($_GET['filter'])) {
-    $filters = [];
-    if (!empty($_GET['category'])) {
-        $category = mysqli_real_escape_string($conn, $_GET['category']);
-        $filters[] = "item_category = '$category'";
-    }
-    $expiry_from = !empty($_GET['expiry_date_from']) ? mysqli_real_escape_string($conn, $_GET['expiry_date_from']) : '';
-    $expiry_to = !empty($_GET['expiry_date_to']) ? mysqli_real_escape_string($conn, $_GET['expiry_date_to']) : '';
-    if ($expiry_from && $expiry_to) {
-        $filters[] = "expiry_date BETWEEN '$expiry_from' AND '$expiry_to'";
-    } elseif ($expiry_from) {
-        $filters[] = "expiry_date >= '$expiry_from'";
-    } elseif ($expiry_to) {
-        $filters[] = "expiry_date <= '$expiry_to'";
-    }
-    if (!empty($_GET['storage_place'])) {
-        $storage = mysqli_real_escape_string($conn, $_GET['storage_place']);
-        $filters[] = "storage_place = '$storage'";
-    }
-    if ($filters) {
-        $where .= ' AND ' . implode(' AND ', $filters);
-    }
+  if (!empty($_GET['category'])) {
+    $where  .= " AND item_category = ?";
+    $types  .= "s";
+    $params[] = $_GET['category'];
+  }
+  $from = $_GET['expiry_date_from'] ?? '';
+  $to   = $_GET['expiry_date_to']   ?? '';
+  if ($from && $to) {
+    $where  .= " AND expiry_date BETWEEN ? AND ?";
+    $types  .= "ss";
+    $params[] = $from; $params[] = $to;
+  } elseif ($from) {
+    $where  .= " AND expiry_date >= ?";
+    $types  .= "s";
+    $params[] = $from;
+  } elseif ($to) {
+    $where  .= " AND expiry_date <= ?";
+    $types  .= "s";
+    $params[] = $to;
+  }
+  if (!empty($_GET['storage_place'])) {
+    $where  .= " AND storage_place = ?";
+    $types  .= "s";
+    $params[] = $_GET['storage_place'];
+  }
 }
-$query = "SELECT * FROM food_item_inventory WHERE $where";
-// Add sorting if requested
+
+// Sort (whitelist the column, cannot be bound)
+$allowed_fields = ['item_name','item_category','quantity','expiry_date','storage_place','item_status','item_remark'];
 $orderBy = " ORDER BY item_id DESC";
 if (isset($_GET['sort']) && !empty($_GET['sort_field'])) {
-    $sort_field = mysqli_real_escape_string($conn, $_GET['sort_field']);
-    $sort_order = (isset($_GET['sort_order']) && strtolower($_GET['sort_order']) === 'desc') ? 'DESC' : 'ASC';
-    $allowed_fields = ['item_name', 'item_category', 'quantity', 'expiry_date', 'storage_place', 'item_status', 'item_remark'];
-    if (in_array($sort_field, $allowed_fields)) {
-        $orderBy = " ORDER BY $sort_field $sort_order";
-    }
+  $sf = $_GET['sort_field'];
+  $so = (isset($_GET['sort_order']) && strtolower($_GET['sort_order']) === 'desc') ? 'DESC' : 'ASC';
+  if (in_array($sf, $allowed_fields, true)) {
+    $orderBy = " ORDER BY $sf $so";
+  }
 }
-$query .= $orderBy;
-$result = mysqli_query($conn, $query);
-if (!$result) {
-  die('Query failed: ' . mysqli_error($conn));
-}
+
+$sql = "SELECT * FROM food_item_inventory WHERE $where $orderBy";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param($types, ...$params);
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="en">

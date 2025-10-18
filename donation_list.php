@@ -1,75 +1,110 @@
 <?php
 include 'db_connect.php';
+session_start();
 
-// ✅ Query joins donation + food_item_inventory
-// It works safely even when items are still present with status 'Donated'
-// Query base
-$query = "SELECT d.*, 
-                (SELECT item_name FROM food_item_inventory WHERE item_id = d.item_id) AS item_name,
-                (SELECT quantity FROM food_item_inventory WHERE item_id = d.item_id) AS quantity,
-                (SELECT expiry_date FROM food_item_inventory WHERE item_id = d.item_id) AS expiry_date
-          FROM donation d";
-
-// Add filter conditions if set
-$where = [];
-if (isset($_GET['filter'])) {
-    $expiry_from = !empty($_GET['expiry_date_from']) ? mysqli_real_escape_string($conn, $_GET['expiry_date_from']) : '';
-    $expiry_to = !empty($_GET['expiry_date_to']) ? mysqli_real_escape_string($conn, $_GET['expiry_date_to']) : '';
-    if ($expiry_from && $expiry_to) {
-        $where[] = "(SELECT expiry_date FROM food_item_inventory WHERE item_id = d.item_id) BETWEEN '$expiry_from' AND '$expiry_to'";
-    } elseif ($expiry_from) {
-        $where[] = "(SELECT expiry_date FROM food_item_inventory WHERE item_id = d.item_id) >= '$expiry_from'";
-    } elseif ($expiry_to) {
-        $where[] = "(SELECT expiry_date FROM food_item_inventory WHERE item_id = d.item_id) <= '$expiry_to'";
-    }
+if (!isset($_SESSION['user_id'])) {
+  header('Location: dashboard_page.html'); // or login.php
+  exit;
 }
-if (!empty($where)) {
-    $query .= " WHERE " . implode(' AND ', $where);
-}
+$currentUserId = (int)$_SESSION['user_id'];
 
-// Search handling: if search provided, include item_name match (from inventory)
-// Search handling: if search provided, include item_name match (from inventory)
+/*
+  Base query: only this user's donations.
+  We join inventory to expose item_name, quantity, expiry_date cleanly.
+*/
+$baseSql = "
+  SELECT
+    d.donation_id,
+    d.item_id,
+    d.user_id,
+    d.pickup_location,
+    d.donation_status,
+    d.donation_remark,
+    d.donation_date,
+    f.item_name,
+    f.quantity,
+    f.expiry_date
+  FROM donation d
+  JOIN food_item_inventory f ON f.item_id = d.item_id
+  WHERE d.user_id = ?
+";
+
+$whereParts = [];
+$types  = "i";                 // starts with user_id
+$params = [$currentUserId];
+
+// ---------- Filters ----------
 $search_error = '';
+if (isset($_GET['filter'])) {
+  $expiry_from = !empty($_GET['expiry_date_from']) ? trim($_GET['expiry_date_from']) : '';
+  $expiry_to   = !empty($_GET['expiry_date_to'])   ? trim($_GET['expiry_date_to'])   : '';
+
+  if ($expiry_from && $expiry_to) {
+    $whereParts[] = "f.expiry_date BETWEEN ? AND ?";
+    $types .= "ss";
+    $params[] = $expiry_from;
+    $params[] = $expiry_to;
+  } elseif ($expiry_from) {
+    $whereParts[] = "f.expiry_date >= ?";
+    $types .= "s";
+    $params[] = $expiry_from;
+  } elseif ($expiry_to) {
+    $whereParts[] = "f.expiry_date <= ?";
+    $types .= "s";
+    $params[] = $expiry_to;
+  }
+}
+
+// ---------- Search by item_name (letters + spaces only) ----------
 if (isset($_GET['search'])) {
   $raw_search = trim($_GET['search']);
   if ($raw_search !== '') {
     if (preg_match('/^[A-Za-z\s]+$/', $raw_search)) {
-      $searchTerm = mysqli_real_escape_string($conn, $raw_search);
-      if (!empty($where)) {
-        $query .= " AND (SELECT item_name FROM food_item_inventory WHERE item_id = d.item_id) LIKE '%$searchTerm%'";
-      } else {
-        $query .= " WHERE (SELECT item_name FROM food_item_inventory WHERE item_id = d.item_id) LIKE '%$searchTerm%'";
-      }
+      $whereParts[] = "f.item_name LIKE CONCAT('%', ?, '%')";
+      $types .= "s";
+      $params[] = $raw_search;
     } else {
       $search_error = 'Search may only contain alphabet characters and spaces.';
     }
   }
 }
 
-// Add sorting if requested
+// Attach WHERE parts
+$sql = $baseSql;
+if (!empty($whereParts)) {
+  $sql .= " AND " . implode(" AND ", $whereParts);
+}
+
+// ---------- Sorting ----------
+$allowed_fields = [
+  'item_name'       => 'f.item_name',
+  'quantity'        => 'f.quantity',
+  'expiry_date'     => 'f.expiry_date',
+  'pickup_location' => 'd.pickup_location',
+  'donation_status' => 'd.donation_status',
+  'donation_remark' => 'd.donation_remark'
+];
+
 $orderBy = " ORDER BY d.donation_id DESC";
 if (isset($_GET['sort']) && !empty($_GET['sort_field'])) {
-    $sort_field = mysqli_real_escape_string($conn, $_GET['sort_field']);
-    $sort_order = (isset($_GET['sort_order']) && strtolower($_GET['sort_order']) === 'desc') ? 'DESC' : 'ASC';
-    $allowed_fields = ['item_name','quantity','expiry_date','pickup_location','donation_status','donation_remark'];
-    if (in_array($sort_field, $allowed_fields)) {
-        if ($sort_field === 'item_name') {
-            $orderBy = " ORDER BY (SELECT item_name FROM food_item_inventory WHERE item_id = d.item_id) $sort_order";
-        } elseif ($sort_field === 'quantity') {
-            $orderBy = " ORDER BY (SELECT quantity FROM food_item_inventory WHERE item_id = d.item_id) $sort_order";
-        } elseif ($sort_field === 'expiry_date') {
-            $orderBy = " ORDER BY (SELECT expiry_date FROM food_item_inventory WHERE item_id = d.item_id) $sort_order";
-        } else {
-            $orderBy = " ORDER BY d.$sort_field $sort_order";
-        }
-    }
+  $sf = $_GET['sort_field'];
+  $so = (isset($_GET['sort_order']) && strtolower($_GET['sort_order']) === 'desc') ? 'DESC' : 'ASC';
+  if (isset($allowed_fields[$sf])) {
+    $orderBy = " ORDER BY {$allowed_fields[$sf]} $so";
+  }
 }
-$query .= $orderBy;
+$sql .= $orderBy;
 
-$result = mysqli_query($conn, $query);
-if (!$result) {
-  die('Query failed: ' . mysqli_error($conn));
+// ---------- Execute ----------
+$stmt = $conn->prepare($sql);
+if ($types && $params) {
+  $stmt->bind_param($types, ...$params);
 }
+$stmt->execute();
+$result = $stmt->get_result();
+
+// $result now holds only THIS user's donations with item fields available.
+// Render your HTML table using $result as you already do.
 ?>
 
 <!DOCTYPE html>
