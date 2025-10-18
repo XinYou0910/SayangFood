@@ -649,10 +649,6 @@ function openEditFromView() {
   }
 }
 
-function closePopup() {
-  document.getElementById('popupForm').style.display = 'none';
-}
-
 function openFilterPopup() {
   document.getElementById('filterPopup').style.display = 'block';
 }
