@@ -344,8 +344,10 @@ $result = $stmt->get_result();
             </div>
             <div class="form-buttons">
               <button type="submit" class="action-btn edit-btn" style="min-width:110px;max-width:110px;">Apply</button>
-              <button type="button" class="action-btn" style="min-width:110px;max-width:110px;background:linear-gradient(135deg, #e74c3c, #c0392b);" onclick="window.location.href='inventory_list.php'">Remove Sort</button>
-              <button type="button" class="action-btn" style="min-width:110px;max-width:110px;background:linear-gradient(135deg, #95a5a6, #7f8c8d);" onclick="closeSortPopup()">Cancel</button>
+              <button type="button" class="action-btn" style="min-width:110px;max-width:110px;background:linear-gradient
+              (135deg, #e74c3c, #c0392b);" onclick="window.location.href='inventory_list.php'">Remove Sort</button>
+              <button type="button" class="action-btn" style="min-width:110px;max-width:110px;background:linear-gradient
+              (135deg, #95a5a6, #7f8c8d);" onclick="closeSortPopup()">Cancel</button>
             </div>
           </form>
         </div>
