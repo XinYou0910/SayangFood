@@ -1,9 +1,7 @@
 <?php
 /**
  * food_analytics_data.php
- * Returns JSON with basic analytics. Adjusted to actual schema:
- * - uses `item_status`, `expiry_date`, `item_category` and counts items
- * - added error handling and JSON header so front-end can parse reliably
+ * Fixed version with proper error handling and data counting
  */
 header('Content-Type: application/json; charset=utf-8');
 include 'db_connect.php';
@@ -11,80 +9,125 @@ include 'db_connect.php';
 $type = isset($_GET['type']) ? $_GET['type'] : 'trend';
 $range = isset($_GET['range']) ? intval($_GET['range']) : 30;
 
-// Defensive: ensure $conn exists
+// Check database connection
 if (!isset($conn) || $conn->connect_error) {
     http_response_code(500);
-    echo json_encode(['error' => 'Database connection not available', 'details' => $conn->connect_error ?? null]);
+    echo json_encode([
+        'error' => 'Database connection failed', 
+        'details' => $conn->connect_error ?? 'No connection'
+    ]);
     exit;
 }
 
-// Summary counts mapped to keys expected by the front-end
+// Calculate the date range
+$startDate = date('Y-m-d', strtotime("-$range days"));
+
+// Summary counts - count items by status
 $summaryQuery = "
   SELECT
-    SUM(CASE WHEN item_status LIKE 'Available' OR item_status LIKE 'Planned%' OR item_status LIKE 'Planned for Meal' THEN 1 ELSE 0 END) AS total_saved,
-    SUM(CASE WHEN item_status LIKE 'Expired' THEN 1 ELSE 0 END) AS total_waste,
-    SUM(CASE WHEN item_status LIKE 'Used' THEN 1 ELSE 0 END) AS total_used,
-    SUM(CASE WHEN item_status LIKE 'Donated' THEN 1 ELSE 0 END) AS total_donation
+    COUNT(CASE WHEN item_status IN ('Available', 'Planned for Meal') THEN 1 END) AS total_saved,
+    COUNT(CASE WHEN item_status = 'Expired' THEN 1 END) AS total_waste,
+    COUNT(CASE WHEN item_status = 'Used' THEN 1 END) AS total_used,
+    COUNT(CASE WHEN item_status = 'Donated' THEN 1 END) AS total_donation
   FROM food_item_inventory
-  WHERE expiry_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+  WHERE expiry_date >= ?
 ";
+
 $stmt = $conn->prepare($summaryQuery);
 if (!$stmt) {
     http_response_code(500);
     echo json_encode(['error' => 'Prepare failed', 'details' => $conn->error]);
     exit;
 }
-$stmt->bind_param("i", $range);
+
+$stmt->bind_param("s", $startDate);
 $stmt->execute();
 $summaryRes = $stmt->get_result();
-$summary = $summaryRes ? $summaryRes->fetch_assoc() : ['total_saved' => 0, 'total_waste' => 0, 'total_used' => 0, 'total_donation' => 0];
+$summary = $summaryRes->fetch_assoc();
 
-// Trend by expiry_date (since there is no date_added column in schema)
+// Set defaults if null
+$summary = [
+    'total_saved' => (int)($summary['total_saved'] ?? 0),
+    'total_waste' => (int)($summary['total_waste'] ?? 0),
+    'total_used' => (int)($summary['total_used'] ?? 0),
+    'total_donation' => (int)($summary['total_donation'] ?? 0)
+];
+
+// Trend by expiry_date - group by date
 $trendQuery = "
-  SELECT expiry_date AS date,
-    SUM(CASE WHEN item_status NOT LIKE 'Expired' AND item_status NOT LIKE 'Donated' THEN 1 ELSE 0 END) AS saved,
-    SUM(CASE WHEN item_status LIKE 'Expired' THEN 1 ELSE 0 END) AS wasted
+  SELECT 
+    DATE(expiry_date) AS date,
+    COUNT(CASE WHEN item_status IN ('Available', 'Planned for Meal', 'Used') THEN 1 END) AS saved,
+    COUNT(CASE WHEN item_status = 'Expired' THEN 1 END) AS wasted
   FROM food_item_inventory
-  WHERE expiry_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
-  GROUP BY expiry_date
+  WHERE expiry_date >= ?
+  GROUP BY DATE(expiry_date)
   ORDER BY date ASC
 ";
+
 $stmt2 = $conn->prepare($trendQuery);
 if (!$stmt2) {
     http_response_code(500);
     echo json_encode(['error' => 'Prepare failed (trend)', 'details' => $conn->error]);
     exit;
 }
-$stmt2->bind_param("i", $range);
+
+$stmt2->bind_param("s", $startDate);
 $stmt2->execute();
 $trendRes = $stmt2->get_result();
-$trend = $trendRes ? $trendRes->fetch_all(MYSQLI_ASSOC) : [];
+$trend = [];
+while ($row = $trendRes->fetch_assoc()) {
+    $trend[] = [
+        'date' => $row['date'],
+        'saved' => (int)$row['saved'],
+        'wasted' => (int)$row['wasted']
+    ];
+}
 
-// Category distribution (percentage)
+// Category distribution - count items per category
 $categoryQuery = "
-  SELECT item_category AS category,
-    ROUND(COUNT(*) / (SELECT GREATEST(COUNT(*),1) FROM food_item_inventory WHERE expiry_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)) * 100, 1) AS percentage
+  SELECT 
+    item_category AS category,
+    COUNT(*) AS count,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM food_item_inventory WHERE expiry_date >= ?), 1) AS percentage
   FROM food_item_inventory
-  WHERE expiry_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+  WHERE expiry_date >= ?
   GROUP BY item_category
+  ORDER BY count DESC
 ";
+
 $stmt3 = $conn->prepare($categoryQuery);
 if (!$stmt3) {
     http_response_code(500);
     echo json_encode(['error' => 'Prepare failed (category)', 'details' => $conn->error]);
     exit;
 }
-$stmt3->bind_param("i", $range);
+
+$stmt3->bind_param("ss", $startDate, $startDate);
 $stmt3->execute();
 $categoryRes = $stmt3->get_result();
-$category = $categoryRes ? $categoryRes->fetch_all(MYSQLI_ASSOC) : [];
+$category = [];
+while ($row = $categoryRes->fetch_assoc()) {
+    $category[] = [
+        'category' => $row['category'],
+        'percentage' => (float)$row['percentage'],
+        'count' => (int)$row['count']
+    ];
+}
 
+// Return JSON response
 echo json_encode([
-  'total_saved' => (int)($summary['total_saved'] ?? 0),
-  'total_waste' => (int)($summary['total_waste'] ?? 0),
-  'total_used' => (int)($summary['total_used'] ?? 0),
-  'total_donation' => (int)($summary['total_donation'] ?? 0),
-  'trend' => $trend,
-  'category' => $category
-]);
+    'total_saved' => $summary['total_saved'],
+    'total_waste' => $summary['total_waste'],
+    'total_used' => $summary['total_used'],
+    'total_donation' => $summary['total_donation'],
+    'trend' => $trend,
+    'category' => $category,
+    'debug' => [
+        'start_date' => $startDate,
+        'range_days' => $range
+    ]
+], JSON_PRETTY_PRINT);
+
+$conn->close();
 ?>
