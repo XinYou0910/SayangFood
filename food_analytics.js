@@ -261,7 +261,7 @@ function drawCategory(categoryData) {
             boxWidth: 10,         // smaller legend box
             boxHeight: 10,
             font: {
-              size: 10,          // slightly smaller legend text
+              size: 15,          // slightly smaller legend text
               weight: '500'
             }
           }
@@ -272,7 +272,7 @@ function drawCategory(categoryData) {
           borderColor: 'rgba(255, 255, 255, 0.2)',
           borderWidth: 1,
           titleFont: {
-            size: 12,
+            size: 20,
             weight: 'bold'
           },
           bodyFont: {
