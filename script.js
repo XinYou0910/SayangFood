@@ -784,4 +784,115 @@ function logout() {
   window.location.href = "Homepage.html";
 }
 
+// hydrate username like your inventory page
+    document.addEventListener("DOMContentLoaded", () => {
+      const username = localStorage.getItem("user_name");
+      if (username) document.getElementById("username").textContent = username;
+    });
 
+    // ------- Row building + collection ----------
+    function addNewMealRow(){
+      const body = document.getElementById('weekBody');
+      const addRow = document.getElementById('addRow');
+      const tr = document.createElement('tr');
+
+      const col = (field, html) => {
+        const td = document.createElement('td'); td.dataset.field = field; td.innerHTML = html; return td;
+      };
+
+      tr.appendChild(col('date', `<input type="date" value="<?php echo htmlspecialchars($weekStart->format('Y-m-d')) ?>">`));
+      tr.appendChild(col('slot', `<select><option>Breakfast</option><option>Lunch</option><option>Dinner</option></select>`));
+      tr.appendChild(col('meal', `<input type="text" placeholder="Meal name…">`));
+      tr.appendChild(col('item', `<input type="text" placeholder="Item name…">`));
+      tr.appendChild(col('qty',  `<input type="text" placeholder="Qty (e.g., 1 can, 800g)">`));
+      tr.appendChild(col('remark', `<input type="text" placeholder="Remark">`));
+      tr.appendChild((() => { const td = document.createElement('td'); td.innerHTML = `<span class="status-chip">—</span>`; return td; })());
+
+      body.insertBefore(tr, addRow);
+    }
+
+    function rowToObj(tr){
+      const val = (f) => {
+        const el = tr.querySelector(`[data-field="${f}"] input, [data-field="${f}"] select`);
+        return (el ? el.value : tr.querySelector(`[data-field="${f}"]`).textContent).trim();
+      };
+      return { date:val('date'), slot:val('slot'), meal:val('meal'),
+               item:val('item'), qty:val('qty'), remark:val('remark') };
+    }
+
+    function collectWeekData(){
+      const trs = Array.from(document.querySelectorAll('#weekBody tr')).filter(r => r.id !== 'addRow');
+      return trs.map(rowToObj).filter(r => r.date && r.slot && r.meal);
+    }
+
+    // ------- Save to backend (uses meal_plan_save.php) ----------
+    async function savePlan(){
+      const payload = { rows: collectWeekData() };
+      if (!payload.rows.length){ alert('Nothing to save.'); return; }
+
+      const res = await fetch('meal_plan_save.php', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (!data.ok){ alert(data.error || 'Save failed'); return; }
+
+      // update status badges from backend result
+      const chips = document.querySelectorAll('#weekBody tr:not(#addRow) td:last-child .status-chip');
+      data.statuses.forEach((s,i)=>{
+        if (!chips[i]) return;
+        chips[i].className = 'status-chip ' + (s==='Available' ? 'status-ok' : 'status-warn');
+        chips[i].textContent = s;
+      });
+
+      // mark related inventory rows as "Planned for Meal" (optional UX feedback handled server-side too)
+      alert('Weekly plan saved.');
+    }
+
+    // ------- Suggestion accept/reject (uses suggestion_action.php) ----------
+    async function acceptSuggestion(){
+      const tds = document.querySelectorAll('#suggestRow td');
+      const body = {
+        action:'accept',
+        date: tds[0].textContent.trim(),
+        slot: tds[1].textContent.trim(),
+        meal: tds[2].textContent.trim(),
+        item: tds[3].textContent.trim(),
+        qty : tds[4].textContent.trim(),
+        remark: tds[5].textContent.trim()
+      };
+
+      const res = await fetch('suggestion_action.php', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!data.ok){ alert(data.error || 'Failed to accept'); return; }
+
+      // append to week table
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td data-field="date">${body.date}</td>
+        <td data-field="slot">${body.slot}</td>
+        <td data-field="meal">${body.meal}</td>
+        <td data-field="item">${body.item}</td>
+        <td data-field="qty">${body.qty}</td>
+        <td data-field="remark">${body.remark}</td>
+        <td><span class="status-chip ${data.status==='Available'?'status-ok':'status-warn'}">${data.status}</span></td>`;
+      document.getElementById('weekBody').insertBefore(tr, document.getElementById('addRow'));
+
+      document.getElementById('suggestRow').style.opacity = .45;
+    }
+
+    async function rejectSuggestion(){
+      const res = await fetch('suggestion_action.php', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({action:'reject'})
+      });
+      const data = await res.json();
+      if (!data.ok){ alert(data.error || 'Failed to reject'); return; }
+      const chip = document.querySelector('#suggestRow .status-chip');
+      chip.className = 'status-chip'; chip.textContent = 'Rejected';
+      document.getElementById('suggestRow').style.opacity = .35;
+    }
