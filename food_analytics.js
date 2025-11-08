@@ -1,7 +1,6 @@
 const ctx = document.getElementById("foodChart").getContext("2d");
 let currentChart = null;
 
-// Load initial data
 document.addEventListener("DOMContentLoaded", () => {
   loadAnalytics();
   document.getElementById("filterBtn").addEventListener("click", applyFilter);
@@ -15,23 +14,23 @@ function applyFilter() {
 }
 
 function loadAnalytics(range = 30) {
-  fetch(`analytics_data.php?range=${range}`)
+  fetch(`food_analytics_data.php?range=${range}`)
     .then(res => res.json())
     .then(data => {
-      updateSummaryCards(data);
-      drawTrendChart(data.trend);
+      updateSummary(data);
+      drawTrend(data.trend);
     })
     .catch(err => console.error("Error loading analytics:", err));
 }
 
-function updateSummaryCards(data) {
-  document.getElementById("total-saving").innerText = `${data.total_saved} KG`;
-  document.getElementById("total-waste").innerText = `${data.total_waste} KG`;
-  document.getElementById("total-donation").innerText = data.total_donation;
-  document.getElementById("total-usage").innerText = `${data.total_used} KG`;
+function updateSummary(data) {
+  document.getElementById("total-saving").textContent = `${data.total_saved} KG`;
+  document.getElementById("total-waste").textContent = `${data.total_waste} KG`;
+  document.getElementById("total-donation").textContent = data.total_donation;
+  document.getElementById("total-usage").textContent = `${data.total_used} KG`;
 }
 
-function drawTrendChart(trendData) {
+function drawTrend(trendData) {
   if (currentChart) currentChart.destroy();
   currentChart = new Chart(ctx, {
     type: "line",
@@ -41,14 +40,14 @@ function drawTrendChart(trendData) {
         {
           label: "Food Saved (KG)",
           data: trendData.map(d => d.saved),
-          borderColor: "#4caf50",
-          fill: false
+          borderColor: "#4a7c59",
+          fill: false,
         },
         {
           label: "Food Wasted (KG)",
           data: trendData.map(d => d.wasted),
-          borderColor: "#f44336",
-          fill: false
+          borderColor: "#e67e22",
+          fill: false,
         }
       ]
     },
@@ -60,19 +59,16 @@ function drawTrendChart(trendData) {
   });
 }
 
-function drawCategoryChart(categoryData) {
+function drawCategory(categoryData) {
   if (currentChart) currentChart.destroy();
   currentChart = new Chart(ctx, {
     type: "pie",
     data: {
-      labels: categoryData.map(d => d.category),
-      datasets: [
-        {
-          label: "Food Category Breakdown",
-          data: categoryData.map(d => d.percentage),
-          backgroundColor: ["#4caf50", "#ff9800", "#2196f3", "#9c27b0"]
-        }
-      ]
+      labels: categoryData.map(c => c.category),
+      datasets: [{
+        data: categoryData.map(c => c.percentage),
+        backgroundColor: ["#4a7c59", "#e67e22", "#f39c12", "#6b9b7a"]
+      }]
     },
     options: {
       responsive: true,
@@ -84,15 +80,15 @@ function drawCategoryChart(categoryData) {
 function showTrend() {
   document.getElementById("trendBtn").classList.add("active");
   document.getElementById("categoryBtn").classList.remove("active");
-  fetch("analytics_data.php?type=trend")
+  fetch("food_analytics_data.php?type=trend")
     .then(res => res.json())
-    .then(data => drawTrendChart(data.trend));
+    .then(data => drawTrend(data.trend));
 }
 
 function showCategory() {
   document.getElementById("categoryBtn").classList.add("active");
   document.getElementById("trendBtn").classList.remove("active");
-  fetch("analytics_data.php?type=category")
+  fetch("food_analytics_data.php?type=category")
     .then(res => res.json())
-    .then(data => drawCategoryChart(data.category));
+    .then(data => drawCategory(data.category));
 }
