@@ -73,6 +73,47 @@ if (!isset($_SESSION['user_id'])) {
           <button class="action-btn edit-btn" style="min-width:140px;max-width:140px;" onclick="deleteReadMessages()">Delete Read Messages</button>
         </div>
       </div>
+
+      <div class="notification-list">
+        <div class="notification-card">
+          <div class="notification-content">
+            <div class="notification-title">Donation Alert</div>
+            <div class="notification-message">Donation confirmed (5 food items).</div>
+            <div class="notification-actions">
+              <a href="#">View</a>
+              <a href="#">Mark As Read</a>
+              <a href="#">Delete</a>
+            </div>
+          </div>
+          <div class="notification-time">20:12</div>
+        </div>
+
+        <div class="notification-card">
+          <div class="notification-content">
+            <div class="notification-title">Weekly Meal Plan Alert</div>
+            <div class="notification-message">It is time for your planned meal!</div>
+            <div class="notification-actions">
+              <a href="#">View</a>
+              <a href="#">Mark As Read</a>
+              <a href="#">Delete</a>
+            </div>
+          </div>
+          <div class="notification-time">19:17</div>
+        </div>
+
+        <div class="notification-card">
+          <div class="notification-content">
+            <div class="notification-title">Expiry Alert</div>
+            <div class="notification-message">A food item is expiring soon — please check your inventory.</div>
+            <div class="notification-actions">
+              <a href="#">View</a>
+              <a href="#">Mark As Read</a>
+              <a href="#">Delete</a>
+            </div>
+          </div>
+          <div class="notification-time">14:55</div>
+        </div>
+      </div>
       <!-- We'll add notification content here later -->
     </div>
   </div>
