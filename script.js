@@ -776,7 +776,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
 document.addEventListener("DOMContentLoaded", () => {
   const storedName = localStorage.getItem("user_name");
-  document.getElementById("username").textContent = storedName ? storedName : "User";
+  const usernameEl = document.getElementById("username");
+  if (storedName) {
+    usernameEl.textContent = storedName;
+  } else {
+    // Fallback: try to fetch server-side session user (useful for PHP logins)
+    fetch('get_current_user.php')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.user_name) {
+          localStorage.setItem('user_name', data.user_name);
+          usernameEl.textContent = data.user_name;
+        } else {
+          usernameEl.textContent = 'User';
+        }
+      })
+      .catch(() => {
+        usernameEl.textContent = 'User';
+      });
+  }
 });
 
 function logout() {
