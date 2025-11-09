@@ -23,6 +23,11 @@ body {
   min-height: 100vh;
 }
 
+.page-wrapper, #pageContent {
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .main-content {
   margin-left: 260px;
   flex: 1;
@@ -30,6 +35,8 @@ body {
   overflow-y: auto;
   height: 100vh;
   box-sizing: border-box;
+  /* fill remaining horizontal space to the right of the fixed sidebar */
+  width: calc(100% - 260px);
 }
 
 /* --------------------------
