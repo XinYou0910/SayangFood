@@ -169,18 +169,127 @@
   color: #1f2937;
 }
 
-/* Responsive adjustments */
-@media (max-width: 1400px) {
-  .category-sidebar {
-    position: static;
-    width: 100%;
-    margin-top: 20px;
+/* ==============================
+   CATEGORY CHART & LEGEND LAYOUT
+   ============================== */
+
+/* Container holding the chart and legend */
+.food-analytics-container {
+  display: flex;
+  gap: 300px;          /* space between chart and legend */
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;    /* wrap on smaller screens */
+  padding: 15px;
+}
+
+.chart-box{
+  flex: 1 1 300px;   /* grow/shrink with minimum width */
+  max-width: 450px;  /* prevent too big on large screens */
+  min-width: 250px;  /* prevent too small on small screens */
+  height: 450px;     /* fixed height for chart */
+  background: #fff;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+.legend-box{
+  flex: 1 1 300px;   /* grow/shrink with minimum width */
+  max-width: 600px;  /* prevent too big on large screens */
+  min-width: 250px;  /* prevent too small on small screens */
+  height: 450px;     /* fixed height for chart */
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+/* Make chart fill its container nicely */
+.chart-box canvas {
+  width: 450px !important;
+  height: 380px !important;
+}
+
+.chart-box:hover,
+.legend-box:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+}
+
+/* Chart title */
+.chart-title {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 20px;
+}
+
+/* Legend box styling */
+.legend-box {
+  flex: 1 1 200px;
+  max-width: 250px;
+  min-width: 180px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+.legend-title {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 15px;
+}
+
+#foodLegend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+/* Each legend item spacing */
+.legend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.legend-color {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+}
+
+.legend-label {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.legend-value {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Make layout responsive */
+@media (max-width: 768px) {
+  .food-analytics-container {
+    flex-direction: column;
+    align-items: center;
   }
-  
-  .charts {
-    grid-template-columns: 1fr;
+
+  .chart-box,
+  .legend-box {
+    width: 90%;
+    max-width: none;
   }
 }
+
 
 @media (max-width: 768px) {
   .dashboard-cards {

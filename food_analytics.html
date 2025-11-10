@@ -100,12 +100,29 @@
     </div>
 
  <!-- Chart Section -->
-<div class="charts">
+<div class="charts" id="trendSection">
   <div class="chart-card">
-    <h3 id="chartTitle">Food Trend (Last 1 Month)</h3>
+    <h3 id="chartTitle">Food Trend</h3>
     <canvas id="foodChart"></canvas>
   </div>
 </div>
+
+<!-- Category Chart Section (hidden by default) -->
+<div class="food-analytics-container" id="categorySection" style="display: none;">
+  <!-- Donut Chart Box -->
+  <div class="chart-box">
+    <h3 class="chart-title">Food Category Distribution</h3>
+    <canvas id="categoryChart"></canvas>
+  </div>
+
+  <!-- Legend Box -->
+  <div class="legend-box">
+    <h3 class="legend-title">Category Breakdown</h3>
+    <div id="foodLegend"></div>
+  </div>
+</div>
+
+
 
 
   <!-- Global site scripts (sets username, sidebar behavior) -->

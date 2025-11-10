@@ -65,13 +65,11 @@ function updateSummary(data) {
 }
 
 function drawTrend(trendData) {
-  console.log('Drawing trend chart with data:', trendData);
-  
-  if (currentChart) {
-    currentChart.destroy();
-  }
-  
-  currentChart = new Chart(ctx, {
+  const trendCtx = document.getElementById("foodChart").getContext("2d");
+
+  if (trendChart) trendChart.destroy();
+
+  trendChart = new Chart(trendCtx, {
     type: "line",
     data: {
       labels: trendData.map(d => d.date),
@@ -82,16 +80,7 @@ function drawTrend(trendData) {
           borderColor: "#10b981",
           backgroundColor: "rgba(16, 185, 129, 0.1)",
           fill: true,
-          tension: 0.4,
-          borderWidth: 2,
-          pointRadius: 3,
-          pointHoverRadius: 5,
-          pointBackgroundColor: "#10b981",
-          pointBorderColor: "#fff",
-          pointBorderWidth: 2,
-          pointHoverBackgroundColor: "#059669",
-          pointHoverBorderColor: "#fff",
-          pointHoverBorderWidth: 2
+          tension: 0.4
         },
         {
           label: "Food Wasted",
@@ -99,290 +88,126 @@ function drawTrend(trendData) {
           borderColor: "#ef4444",
           backgroundColor: "rgba(239, 68, 68, 0.1)",
           fill: true,
-          tension: 0.4,
-          borderWidth: 2,
-          pointRadius: 3,
-          pointHoverRadius: 5,
-          pointBackgroundColor: "#ef4444",
-          pointBorderColor: "#fff",
-          pointBorderWidth: 2,
-          pointHoverBackgroundColor: "#dc2626",
-          pointHoverBorderColor: "#fff",
-          pointHoverBorderWidth: 2
+          tension: 0.4
         }
       ]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
-      aspectRatio: 3.5,
-      interaction: {
-        mode: 'index',
-        intersect: false
-      },
-      plugins: { 
-        legend: { 
-          position: "top",
-          align: 'start',
-          labels: {
-            usePointStyle: true,
-            pointStyle: 'circle',
-            padding: 10,
-            font: {
-              size: 11,
-              weight: '500'
-            },
-            boxWidth: 8,
-            boxHeight: 8
-          }
-        },
-        tooltip: {
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          padding: 8,
-          borderColor: 'rgba(255, 255, 255, 0.2)',
-          borderWidth: 1,
-          titleFont: {
-            size: 12,
-            weight: 'bold'
-          },
-          bodyFont: {
-            size: 11
-          },
-          bodySpacing: 4,
-          usePointStyle: true,
-          callbacks: {
-            label: function(context) {
-              return ` ${context.dataset.label}: ${context.parsed.y} items`;
-            }
-          }
-        }
-      },
-      layout: {
-        padding: {
-          top: 5,
-          bottom: 5,
-          left: 10,
-          right: 10
-        }
-      },
-      scales: { 
-        x: {
-          grid: {
-            display: false
-          },
-          ticks: {
-            font: {
-              size: 9
-            },
-            maxRotation: 45,
-            minRotation: 0,
-            autoSkip: true,
-            maxTicksLimit: 15
-          }
-        },
-        y: { 
-          beginAtZero: true,
-          ticks: {
-            stepSize: 1,
-            font: {
-              size: 9
-            },
-            padding: 5
-          },
-          grid: {
-            color: 'rgba(0, 0, 0, 0.05)',
-            drawBorder: false
-          }
-        }
-      }
+      plugins: { legend: { position: "top" } },
+      scales: { y: { beginAtZero: true } }
     }
   });
 }
 
 function drawCategory(categoryData) {
-  console.log('Drawing category chart with data:', categoryData);
-  
-  if (currentChart) {
-    currentChart.destroy();
-  }
-  
+  console.log('Drawing category chart:', categoryData);
+  const categoryCtx = document.getElementById("categoryChart").getContext("2d");
+
+  // Destroy previous chart if exists
+  if (categoryChart) categoryChart.destroy();
+
   if (!categoryData || categoryData.length === 0) {
-    showNoDataMessage();
+    showNoDataMessage(categoryCtx);
     return;
   }
-  
-  // Modern color palette
+
+  // Color palette
   const colors = [
-    '#10b981', // Green
-    '#3b82f6', // Blue
-    '#f59e0b', // Amber
-    '#ef4444', // Red
-    '#8b5cf6', // Purple
-    '#ec4899', // Pink
-    '#06b6d4', // Cyan
-    '#84cc16'  // Lime
+    '#10b981', '#3b82f6', '#f59e0b', '#ef4444',
+    '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316'
   ];
-  
-  // Create gradient colors
-  const gradients = colors.map(color => {
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, color);
-    gradient.addColorStop(1, color + 'cc'); // Add transparency
-    return gradient;
-  });
-  
-  // Use a square aspect ratio for doughnut and let Chart.js maintain sizing
-  currentChart = new Chart(ctx, {
+
+  // Resize the canvas smaller (optional: adjust CSS instead if preferred)
+  categoryCtx.canvas.height = 550; // smaller height
+  categoryCtx.canvas.width = 550;  // smaller width
+
+  // Create the chart
+  categoryChart = new Chart(categoryCtx, {
     type: "doughnut",
     data: {
       labels: categoryData.map(c => c.category),
       datasets: [{
-        data: categoryData.map(c => c.count),
-        backgroundColor: colors,
-        borderColor: '#ffffff',
-        borderWidth: 2,
-        hoverBorderWidth: 3,
-        hoverOffset: 10
+        data: categoryData.map(c => c.percentage),
+        backgroundColor: colors.slice(0, categoryData.length),
+        borderColor: "#fff",
+        borderWidth: 2
       }]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      aspectRatio: 1,
-      cutout: '65%',
-      plugins: { 
-        legend: {
-          position: 'right',
-          align: 'center',
-          labels: {
-            usePointStyle: true,
-            pointStyle: 'circle',
-            padding: 25,           // reduce padding between legend items and chart
-            boxWidth: 10,         // smaller legend box
-            boxHeight: 10,
-            font: {
-              size: 15,          // slightly smaller legend text
-              weight: '500'
-            }
-          }
-        },
+      cutout: "60%", // slightly smaller inner hole
+      responsive: true, // use canvas size defined above
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }, // hide default legend
         tooltip: {
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          padding: 8,
-          borderColor: 'rgba(255, 255, 255, 0.2)',
-          borderWidth: 1,
-          titleFont: {
-            size: 20,
-            weight: 'bold'
-          },
-          bodyFont: {
-            size: 11
-          },
           callbacks: {
-            label: function(context) {
-              const total = context.dataset.data.reduce((a, b) => a + b, 0);
-              const value = context.parsed;
-              const percentage = ((value / total) * 100).toFixed(1);
-              return ` ${context.label}: ${value} items (${percentage}%)`;
-            }
+            label: (context) => `${context.label}: ${context.parsed}%`
           }
-        },
-      },
-      layout: {
-        padding: {
-          right: 100,
-          top: 6,
-          bottom: 6
         }
-      },
-      animation: {
-        animateRotate: true,
-        animateScale: true
       }
     }
   });
-  
-  // Draw center total label for doughnut
-  const total = categoryData.reduce((s, c) => s + (c.count || 0), 0);
-  if (total > 0) {
-    // Add a lightweight plugin to render center text
-    const centerPlugin = {
-      id: 'doughnutCenterText',
-      beforeDraw: (chart) => {
-        const width = chart.width,
-              height = chart.height,
-              ctxc = chart.ctx;
-        ctxc.restore();
-        const fontSize = Math.min(height / 12, 18);
-        ctxc.font = `bold ${fontSize}px Arial`;
-        ctxc.fillStyle = '#374151';
-        ctxc.textBaseline = 'middle';
 
-        const text = `${total} items`;
-        const textX = Math.round((width - ctxc.measureText(text).width) / 2);
-        const textY = height / 2;
-        ctxc.fillText(text, textX, textY);
-        ctxc.save();
-      }
-    };
+  // Generate custom legend
+  const legendContainer = document.getElementById("foodLegend");
+  legendContainer.innerHTML = "";
 
-    // Register plugin for this chart instance only
-    currentChart.config.plugins = currentChart.config.plugins || [];
-    currentChart.config.plugins.push(centerPlugin);
-    currentChart.update();
-  }
+  categoryData.forEach((item, i) => {
+    legendContainer.innerHTML += `
+      <div class="legend-item" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div class="legend-color" style="width:16px;height:16px;border-radius:4px;background-color:${colors[i]}"></div>
+          <span class="legend-label">${item.category}</span>
+        </div>
+        <span class="legend-value">${item.percentage}%</span>
+      </div>
+    `;
+  });
+}
+
+
+function showCategory() {
+  console.log("Switching to category view");
+  document.getElementById("categoryBtn").classList.add("active");
+  document.getElementById("trendBtn").classList.remove("active");
+  document.getElementById("trendSection").style.display = "none";
+  document.getElementById("categorySection").style.display = "flex";
+
+  const range = document.getElementById("filterRange").value;
+
+  // Force redraw after unhide (helps with invisible chart)
+  setTimeout(() => {
+    fetch(`food_analytics_data.php?range=${range}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.category && data.category.length > 0) {
+          drawCategory(data.category);
+        } else {
+          const ctx = document.getElementById("categoryChart").getContext("2d");
+          showNoDataMessage(ctx);
+        }
+      })
+      .catch(err => console.error("Error loading category:", err));
+  }, 100);
 }
 
 function showTrend() {
-  console.log('Switching to trend view');
+  console.log("Switching to trend view");
   document.getElementById("trendBtn").classList.add("active");
   document.getElementById("categoryBtn").classList.remove("active");
-
-  // 🟢 Update title
-  document.getElementById("chartTitle").textContent = "Food Trend (Saved vs Wasted Items)";
-
-  const range = document.getElementById("filterRange").value;
-  fetch(`food_analytics_data.php?range=${range}`)
-    .then(res => res.json())
-    .then(data => {
-      if (data.trend && data.trend.length > 0) {
-        drawTrend(data.trend);
-      } else {
-        showNoDataMessage();
-      }
-    })
-    .catch(err => console.error("Error loading trend:", err));
+  document.getElementById("trendSection").style.display = "block";
+  document.getElementById("categorySection").style.display = "none";
 }
 
-function showCategory() {
-  console.log('Switching to category view');
-  document.getElementById("categoryBtn").classList.add("active");
-  document.getElementById("trendBtn").classList.remove("active");
-
-  // 🟣 Update title
-  document.getElementById("chartTitle").textContent = "Food Category Breakdown";
-
-  const range = document.getElementById("filterRange").value;
-  fetch(`food_analytics_data.php?range=${range}`)
-    .then(res => res.json())
-    .then(data => {
-      if (data.category && data.category.length > 0) {
-        drawCategory(data.category);
-      } else {
-        showNoDataMessage();
-      }
-    })
-    .catch(err => console.error("Error loading category:", err));
+function showNoDataMessage(context) {
+  const canvas = context.canvas;
+  const { width, height } = canvas;
+  context.clearRect(0, 0, width, height);
+  context.font = "14px Poppins";
+  context.fillStyle = "#666";
+  context.textAlign = "center";
+  context.fillText("No data available for the selected period", width / 2, height / 2);
 }
-
-function showNoDataMessage() {
-  if (currentChart) {
-    currentChart.destroy();
-  }
-  
-  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  ctx.font = '16px Arial';
-  ctx.fillStyle = '#666';
-  ctx.textAlign = 'center';
-  ctx.fillText('No data available for the selected period', ctx.canvas.width / 2, ctx.canvas.height / 2);
-}
+let trendChart = null;
+let categoryChart = null;
