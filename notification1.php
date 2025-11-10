@@ -85,9 +85,17 @@ $result = $stmt->get_result();
 
       <div class="notification-list">
         <?php while ($row = $result->fetch_assoc()): ?>
-          <div class="notification-card">
+          <?php
+            $statusClass = '';
+            if ($row['notification_status'] === 'Unread') {
+              $statusClass = 'notification-unread';
+            } elseif ($row['notification_status'] === 'Read') {
+              $statusClass = 'notification-read';
+            }
+          ?>
+          <div class="notification-card <?= $statusClass ?>">
             <div class="notification-content">
-              <div class="notification-title">Type: <?= htmlspecialchars($row['notification_type']) ?></div>
+              <div class="notification-title"><?= htmlspecialchars($row['notification_type']) ?></div>
               <div class="notification-message"><?= htmlspecialchars($row['message']) ?></div>
               <div class="notification-actions">
                 <a href="#">View</a>
@@ -95,10 +103,10 @@ $result = $stmt->get_result();
                 <a href="#">Delete</a>
               </div>
             </div>
-            <div class="notification-time">
-              <?= date('H:i', strtotime($row['timestamp'])) ?>
+            <div class="notification-sidebar">
+              <div class="notification-time"><?= date('d M Y, H:i', strtotime($row['timestamp'])) ?></div>
               <?php if ($row['notification_status']): ?>
-                <span style="margin-left:10px;font-size:12px;color:#888;">Status: <?= htmlspecialchars($row['notification_status']) ?></span>
+                <div class="notification-status"><?= htmlspecialchars($row['notification_status']) ?></div>
               <?php endif; ?>
             </div>
           </div>
