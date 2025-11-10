@@ -99,8 +99,8 @@ $result = $stmt->get_result();
               <div class="notification-message"><?= htmlspecialchars($row['message']) ?></div>
               <div class="notification-actions">
                 <a href="#">View</a>
-                <a href="#">Mark As Read</a>
-                <a href="#">Delete</a>
+                <a href="#" class="mark-read" data-id="<?= $row['notification_id'] ?>">Mark As Read</a>
+                <a href="#" class="delete-notification" data-id="<?= $row['notification_id'] ?>">Delete</a>
               </div>
             </div>
             <div class="notification-sidebar">
@@ -125,6 +125,76 @@ $result = $stmt->get_result();
     } else {
       window.location.href = "login.html";
     }
+
+    // Mark as read (single)
+    document.querySelectorAll('.mark-read').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const id = this.dataset.id;
+        fetch('notification_actions.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `action=mark_read&id=${id}`
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) location.reload();
+          else alert('Failed to mark as read');
+        });
+      });
+    });
+
+    // Delete (single)
+    document.querySelectorAll('.delete-notification').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const id = this.dataset.id;
+        if (confirm('Are you sure you want to delete this notification?')) {
+          fetch('notification_actions.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `action=delete&id=${id}`
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) location.reload();
+            else alert('Failed to delete notification');
+          });
+        }
+      });
+    });
+
+    // Mark all as read
+    document.querySelector('.action-btn.edit-btn[onclick*="markAllAsRead"]')?.addEventListener('click', function(e) {
+      e.preventDefault();
+      fetch('notification_actions.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'action=mark_all_read'
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) location.reload();
+        else alert('Failed to mark all as read');
+      });
+    });
+
+    // Delete read messages
+    document.querySelector('.action-btn.edit-btn[onclick*="deleteReadMessages"]')?.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (confirm('Delete all read notifications?')) {
+        fetch('notification_actions.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'action=delete_read'
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) location.reload();
+          else alert('Failed to delete read notifications');
+        });
+      }
+    });
   });
 </script>
 
