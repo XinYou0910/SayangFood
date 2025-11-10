@@ -4,6 +4,15 @@ if (!isset($_SESSION['user_id'])) {
   header('Location: login.html');
   exit;
 }
+include 'db_connect.php';
+// Fetch notifications for current user
+$currentUserId = $_SESSION['user_id'];
+// Use correct table and columns
+$sql = "SELECT * FROM notification WHERE user_id = ? ORDER BY timestamp DESC";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $currentUserId);
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -75,44 +84,25 @@ if (!isset($_SESSION['user_id'])) {
       </div>
 
       <div class="notification-list">
-        <div class="notification-card">
-          <div class="notification-content">
-            <div class="notification-title">Donation Alert</div>
-            <div class="notification-message">Donation confirmed (5 food items).</div>
-            <div class="notification-actions">
-              <a href="#">View</a>
-              <a href="#">Mark As Read</a>
-              <a href="#">Delete</a>
+        <?php while ($row = $result->fetch_assoc()): ?>
+          <div class="notification-card">
+            <div class="notification-content">
+              <div class="notification-title">Type: <?= htmlspecialchars($row['notification_type']) ?></div>
+              <div class="notification-message"><?= htmlspecialchars($row['message']) ?></div>
+              <div class="notification-actions">
+                <a href="#">View</a>
+                <a href="#">Mark As Read</a>
+                <a href="#">Delete</a>
+              </div>
+            </div>
+            <div class="notification-time">
+              <?= date('H:i', strtotime($row['timestamp'])) ?>
+              <?php if ($row['notification_status']): ?>
+                <span style="margin-left:10px;font-size:12px;color:#888;">Status: <?= htmlspecialchars($row['notification_status']) ?></span>
+              <?php endif; ?>
             </div>
           </div>
-          <div class="notification-time">20:12</div>
-        </div>
-
-        <div class="notification-card">
-          <div class="notification-content">
-            <div class="notification-title">Weekly Meal Plan Alert</div>
-            <div class="notification-message">It is time for your planned meal!</div>
-            <div class="notification-actions">
-              <a href="#">View</a>
-              <a href="#">Mark As Read</a>
-              <a href="#">Delete</a>
-            </div>
-          </div>
-          <div class="notification-time">19:17</div>
-        </div>
-
-        <div class="notification-card">
-          <div class="notification-content">
-            <div class="notification-title">Expiry Alert</div>
-            <div class="notification-message">A food item is expiring soon — please check your inventory.</div>
-            <div class="notification-actions">
-              <a href="#">View</a>
-              <a href="#">Mark As Read</a>
-              <a href="#">Delete</a>
-            </div>
-          </div>
-          <div class="notification-time">14:55</div>
-        </div>
+        <?php endwhile; ?>
       </div>
       <!-- We'll add notification content here later -->
     </div>
