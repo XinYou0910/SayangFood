@@ -58,12 +58,17 @@
 }
 
 .chart-card h3 {
-  font-size: 16px;
+  font-size: 20px;
   color: #1f2937;
-  margin: 0 0 20px 0;
-  font-weight: 600;
-  display: none; /* Hide the h3 as we'll add custom titles */
+  margin-bottom: 15px;
+  font-weight: 700;
+  text-align: center;
+  background: linear-gradient(90deg, #4CAF50, #ff9800);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
+
 
 #foodChart {
   width: 100% !important;

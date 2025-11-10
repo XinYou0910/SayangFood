@@ -337,7 +337,10 @@ function showTrend() {
   console.log('Switching to trend view');
   document.getElementById("trendBtn").classList.add("active");
   document.getElementById("categoryBtn").classList.remove("active");
-  
+
+  // 🟢 Update title
+  document.getElementById("chartTitle").textContent = "Food Trend (Saved vs Wasted Items)";
+
   const range = document.getElementById("filterRange").value;
   fetch(`food_analytics_data.php?range=${range}`)
     .then(res => res.json())
@@ -355,7 +358,10 @@ function showCategory() {
   console.log('Switching to category view');
   document.getElementById("categoryBtn").classList.add("active");
   document.getElementById("trendBtn").classList.remove("active");
-  
+
+  // 🟣 Update title
+  document.getElementById("chartTitle").textContent = "Food Category Breakdown";
+
   const range = document.getElementById("filterRange").value;
   fetch(`food_analytics_data.php?range=${range}`)
     .then(res => res.json())
