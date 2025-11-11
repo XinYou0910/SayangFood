@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SayangFood - Food Analytics</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="dashboard_page.css">
   <link rel="stylesheet" href="food_analytics.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -102,9 +103,43 @@
 
  <!-- Chart Section -->
 <div class="charts" id="trendSection">
-  <div class="chart-card">
-    <h3 id="chartTitle">Food Trend</h3>
+  <div class="chart-card main-chart">
+    <div class="chart-toolbar">
+      <div class="chart-left">
+        <h3 id="chartTitle">Food Trend</h3>
+        <p class="chart-sub">Daily saved vs wasted items</p>
+      </div>
+      <div class="chart-actions">
+        <button id="downloadTrendBtn" class="toolbar-btn">Download PNG</button>
+      </div>
+    </div>
     <canvas id="foodChart"></canvas>
+  </div>
+
+  <div class="chart-card main-chart">
+    <div class="chart-toolbar">
+      <div class="chart-left">
+        <h3 class="small-title">Total Donation Made</h3>
+        <p class="chart-sub">Donations per day for selected range</p>
+      </div>
+      <div class="chart-actions">
+        <button id="downloadDonationBtn" class="toolbar-btn">Download PNG</button>
+      </div>
+    </div>
+    <canvas id="donationChart"></canvas>
+  </div>
+
+  <div class="chart-card main-chart">
+    <div class="chart-toolbar">
+      <div class="chart-left">
+        <h3 class="small-title">Total Food Usage</h3>
+        <p class="chart-sub">Daily used items for selected range</p>
+      </div>
+      <div class="chart-actions">
+        <button id="downloadUsageBtn" class="toolbar-btn">Download PNG</button>
+      </div>
+    </div>
+    <canvas id="usageChart"></canvas>
   </div>
 </div>
 

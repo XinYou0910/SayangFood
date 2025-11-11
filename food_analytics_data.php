@@ -58,7 +58,9 @@ $trendQuery = "
   SELECT 
     DATE(expiry_date) AS date,
     COUNT(CASE WHEN item_status IN ('Available', 'Planned for Meal', 'Used') THEN 1 END) AS saved,
-    COUNT(CASE WHEN item_status = 'Expired' THEN 1 END) AS wasted
+    COUNT(CASE WHEN item_status = 'Expired' THEN 1 END) AS wasted,
+    COUNT(CASE WHEN item_status = 'Donated' THEN 1 END) AS donated,
+    COUNT(CASE WHEN item_status = 'Used' THEN 1 END) AS used
   FROM food_item_inventory
   WHERE expiry_date >= ?
   GROUP BY DATE(expiry_date)
@@ -79,8 +81,10 @@ $trend = [];
 while ($row = $trendRes->fetch_assoc()) {
     $trend[] = [
         'date' => $row['date'],
-        'saved' => (int)$row['saved'],
-        'wasted' => (int)$row['wasted']
+    'saved' => (int)$row['saved'],
+    'wasted' => (int)$row['wasted'],
+    'donated' => (int)$row['donated'],
+    'used' => (int)$row['used']
     ];
 }
 

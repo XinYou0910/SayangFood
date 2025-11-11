@@ -1,4 +1,11 @@
 /* Summary Cards - Make Smaller */
+/* Page base and fonts */
+body {
+  font-family: 'Poppins', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', "Helvetica Neue", Arial;
+  background: linear-gradient(180deg, #f7fbff 0%, #ffffff 40%);
+  color: #0f172a;
+}
+
 .dashboard-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -44,8 +51,9 @@
 /* Chart Section - Make Bigger */
 .charts {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(3, 1fr); /* three equal large charts */
   gap: 20px;
+  align-items: start;
   margin-top: 20px;
 }
 
@@ -70,11 +78,16 @@
 }
 
 
-#foodChart {
+#foodChart,
+#donationChart,
+#usageChart {
   width: 100% !important;
-  height: 400px !important;
-  max-height: 400px !important;
+  height: 380px !important;
+  max-height: 380px !important;
 }
+
+.main-chart { min-height: 420px; }
+.small-title { font-size: 16px; text-align: center; margin-bottom: 10px; }
 
 /* Category Breakdown Sidebar */
 .category-sidebar {
@@ -168,6 +181,33 @@
 .chart-toggle button:hover:not(.active) {
   color: #1f2937;
 }
+
+/* Chart toolbar */
+.chart-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.chart-left h3 { margin: 0; font-size: 18px; color: #0f172a; }
+.chart-sub { margin: 2px 0 0 0; font-size: 12px; color: #6b7280; }
+.chart-actions { display: flex; gap: 8px; }
+.toolbar-btn {
+  background: linear-gradient(90deg,#2563eb,#3b82f6);
+  color: white;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(59,130,246,0.12);
+}
+.toolbar-btn:hover { transform: translateY(-2px); }
+
+/* Card polish */
+.chart-card { transition: transform .18s ease, box-shadow .18s ease; }
+.chart-card:hover { transform: translateY(-6px); box-shadow: 0 10px 30px rgba(2,6,23,0.08); }
+.card p, .chart-sub { font-family: 'Inter', sans-serif; }
 
 /* Sidebar dropdown (Browse Food Item) hover — match dashboard styles */
 .sidebar .dropdown-container button {
@@ -324,4 +364,11 @@
   .card p {
     font-size: 18px;
   }
+}
+
+/* Medium screens: make two columns for charts */
+@media (max-width: 1100px) {
+  .charts { grid-template-columns: 1fr 1fr; }
+  .small-chart { padding: 12px; }
+  .small-chart canvas { height: 160px !important; }
 }

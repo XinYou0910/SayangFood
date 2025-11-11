@@ -35,9 +35,14 @@ function loadAnalytics(range = 30) {
       
       updateSummary(data);
       
-      // Load trend by default
+      // Load trend and separate visual reports by default
       if (data.trend && data.trend.length > 0) {
         drawTrend(data.trend);
+        // additional visual reports (separate, not mixed)
+        drawDonationChart(data.trend);
+        drawUsageChart(data.trend);
+        // attach download buttons after charts are drawn
+        attachDownloadButtons();
       } else {
         console.warn('No trend data available');
         showNoDataMessage();
@@ -69,35 +74,104 @@ function drawTrend(trendData) {
 
   if (trendChart) trendChart.destroy();
 
+  // Original trend chart: saved & wasted as lines
   trendChart = new Chart(trendCtx, {
-    type: "line",
+    type: 'line',
     data: {
       labels: trendData.map(d => d.date),
       datasets: [
         {
-          label: "Food Saved",
-          data: trendData.map(d => d.saved),
-          borderColor: "#10b981",
-          backgroundColor: "rgba(16, 185, 129, 0.1)",
+          label: 'Food Saved',
+          data: trendData.map(d => d.saved || 0),
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16,185,129,0.1)',
           fill: true,
-          tension: 0.4
+          tension: 0.4,
+          pointRadius: 3
         },
         {
-          label: "Food Wasted",
-          data: trendData.map(d => d.wasted),
-          borderColor: "#ef4444",
-          backgroundColor: "rgba(239, 68, 68, 0.1)",
+          label: 'Food Wasted',
+          data: trendData.map(d => d.wasted || 0),
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239,68,68,0.1)',
           fill: true,
-          tension: 0.4
+          tension: 0.4,
+          pointRadius: 3
         }
       ]
     },
     options: {
       responsive: true,
-      plugins: { legend: { position: "top" } },
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
       scales: { y: { beginAtZero: true } }
     }
   });
+
+  // Restore original chart title
+  const titleEl = document.getElementById('chartTitle');
+  if (titleEl) titleEl.textContent = 'Food Trend';
+  // Small delayed update helps Chart.js recompute sizes when fonts or layout
+  // finish loading (fixes the 'invisible / squashed' render seen after refresh).
+  setTimeout(() => { try { trendChart.resize(); trendChart.update(); } catch(e){} }, 150);
+}
+
+// Draw a donation chart (bar) as a separate full-size report
+let donationChart = null;
+function drawDonationChart(trendData) {
+  const ctx = document.getElementById('donationChart').getContext('2d');
+  if (donationChart) donationChart.destroy();
+
+  donationChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: trendData.map(d => d.date),
+      datasets: [{
+        label: 'Total Donation',
+        data: trendData.map(d => d.donated || 0),
+        backgroundColor: 'rgba(59,130,246,0.9)',
+        borderColor: '#2563eb',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+  setTimeout(() => { try { donationChart.resize(); donationChart.update(); } catch(e){} }, 150);
+}
+
+// Draw a usage chart (line) as a separate full-size report
+let usageChart = null;
+function drawUsageChart(trendData) {
+  const ctx = document.getElementById('usageChart').getContext('2d');
+  if (usageChart) usageChart.destroy();
+
+  usageChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: trendData.map(d => d.date),
+      datasets: [{
+        label: 'Total Food Usage',
+        data: trendData.map(d => d.used || 0),
+        borderColor: '#f59e0b',
+        backgroundColor: 'rgba(245,158,11,0.12)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+  setTimeout(() => { try { usageChart.resize(); usageChart.update(); } catch(e){} }, 150);
 }
 
 function drawCategory(categoryData) {
@@ -148,6 +222,7 @@ function drawCategory(categoryData) {
       }
     }
   });
+  setTimeout(() => { try { categoryChart.resize(); categoryChart.update(); } catch(e){} }, 150);
 
   // Generate custom legend
   const legendContainer = document.getElementById("foodLegend");
@@ -198,7 +273,62 @@ function showTrend() {
   document.getElementById("categoryBtn").classList.remove("active");
   document.getElementById("trendSection").style.display = "block";
   document.getElementById("categorySection").style.display = "none";
+  // Charts may render incorrectly if their canvas was previously hidden or the
+  // layout changed (this happens on refresh or when navigating back). Resize
+  // and update charts after a short delay to allow layout to settle.
+  setTimeout(() => {
+    try {
+      if (trendChart) { trendChart.resize(); trendChart.update(); }
+      if (donationChart) { donationChart.resize(); donationChart.update(); }
+      if (usageChart) { usageChart.resize(); usageChart.update(); }
+      if (categoryChart) { categoryChart.resize(); categoryChart.update(); }
+    } catch (err) {
+      console.warn('Error resizing charts on showTrend:', err);
+    }
+  }, 120);
 }
+
+// Ensure charts respond when the window size changes (helps when user resizes
+// the browser or returns from another page). This also helps after refresh.
+window.addEventListener('resize', () => {
+  try {
+    if (trendChart) trendChart.resize();
+    if (donationChart) donationChart.resize();
+    if (usageChart) usageChart.resize();
+    if (categoryChart) categoryChart.resize();
+  } catch (e) {
+    // non-fatal
+  }
+});
+
+// Also re-run resize/update when fonts are ready and on full window load.
+// Some browsers (and Google Fonts) load after DOMContentLoaded causing Chart.js
+// to measure before final font metrics are available which leads to the
+// compressed/squashed rendering you reported.
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => {
+    setTimeout(() => {
+      try {
+        if (trendChart) { trendChart.resize(); trendChart.update(); }
+        if (donationChart) { donationChart.resize(); donationChart.update(); }
+        if (usageChart) { usageChart.resize(); usageChart.update(); }
+        if (categoryChart) { categoryChart.resize(); categoryChart.update(); }
+      } catch (e) {}
+    }, 120);
+  }).catch(() => {});
+}
+
+window.addEventListener('load', () => {
+  // final safety resize after everything (images, fonts, assets) finished
+  setTimeout(() => {
+    try {
+      if (trendChart) { trendChart.resize(); trendChart.update(); }
+      if (donationChart) { donationChart.resize(); donationChart.update(); }
+      if (usageChart) { usageChart.resize(); usageChart.update(); }
+      if (categoryChart) { categoryChart.resize(); categoryChart.update(); }
+    } catch (e) {}
+  }, 200);
+});
 
 function showNoDataMessage(context) {
   const canvas = context.canvas;
@@ -211,3 +341,36 @@ function showNoDataMessage(context) {
 }
 let trendChart = null;
 let categoryChart = null;
+
+// Attach download handlers for each chart toolbar button
+function attachDownloadButtons() {
+  const trendBtn = document.getElementById('downloadTrendBtn');
+  const donationBtn = document.getElementById('downloadDonationBtn');
+  const usageBtn = document.getElementById('downloadUsageBtn');
+
+  if (trendBtn) {
+    trendBtn.onclick = () => downloadChartImage(trendChart, 'food_trend.png');
+  }
+  if (donationBtn) {
+    donationBtn.onclick = () => downloadChartImage(donationChart, 'total_donations.png');
+  }
+  if (usageBtn) {
+    usageBtn.onclick = () => downloadChartImage(usageChart, 'total_usage.png');
+  }
+}
+
+function downloadChartImage(chartInstance, filename) {
+  if (!chartInstance) { alert('Chart is not ready yet'); return; }
+  try {
+    const url = chartInstance.toBase64Image();
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } catch (err) {
+    console.error('Failed to download chart image', err);
+    alert('Failed to download image');
+  }
+}
