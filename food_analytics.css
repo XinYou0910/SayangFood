@@ -245,7 +245,23 @@ body {
   justify-content: center;
   align-items: flex-start;
   flex-wrap: wrap;    /* wrap on smaller screens */
-  padding: 15px;
+  padding: 8px; /* reduce container padding to bring content up */
+}
+
+/* Center the donut chart and legend together as a group without affecting the filters row */
+.category-center {
+  display: flex;
+  justify-content: center; /* center the two child boxes as a unit */
+  align-items: flex-start;
+  gap: 100px;
+  width: 100%;
+  margin-top: -250px; /* ensure no extra gap so chart sits directly under filters */
+}
+
+.category-center .chart-box,
+.category-center .legend-box {
+  /* keep their explicit widths and avoid flex-grow so they stay as a centered pair */
+  flex: 0 0 auto;
 }
 
 .chart-box{
@@ -258,6 +274,13 @@ body {
   padding: 25px;
   box-shadow: 0 3px 6px rgba(0,0,0,0.1);
 }
+
+/* Category filters row */
+.category-filters { display:flex; align-items:center; gap:12px; margin-inline-start:4px; margin-bottom:6px; }
+.category-filters input, .category-filters select { font-size:14px; }
+
+/* Remove extra internal top padding so donut sits closer to filters */
+#categorySection .chart-box { padding-top: 0; }
 
 .legend-box{
   flex: 1 1 300px;   /* grow/shrink with minimum width */
@@ -274,32 +297,6 @@ body {
 .chart-box canvas {
   width: 450px !important;
   height: 380px !important;
-}
-
-.chart-box:hover,
-.legend-box:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
-}
-
-/* Chart title */
-.chart-title {
-  text-align: center;
-  font-size: 18px;
-  font-weight: 700;
-  color: #374151;
-  margin-bottom: 20px;
-}
-
-/* Legend box styling */
-.legend-box {
-  flex: 1 1 200px;
-  max-width: 250px;
-  min-width: 180px;
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
 }
 
 .legend-title {
@@ -352,6 +349,11 @@ body {
   .legend-box {
     width: 90%;
     max-width: none;
+  }
+  .category-center {
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
   }
 }
 
