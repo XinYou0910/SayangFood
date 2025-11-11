@@ -169,6 +169,31 @@
   color: #1f2937;
 }
 
+/* Sidebar dropdown (Browse Food Item) hover — match dashboard styles */
+.sidebar .dropdown-container button {
+  padding: 12px 20px;
+  font-size: 14px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-medium);
+  border-radius: 6px;
+  margin: 2px 8px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  display: block;
+  width: calc(100% - 16px); /* account for horizontal margins */
+}
+
+.sidebar .dropdown-container button:hover {
+  background: linear-gradient(135deg, var(--light-orange) 0%, var(--accent-orange) 100%);
+  color: white;
+  transform: translateX(3px);
+  box-shadow: 0 4px 12px var(--shadow-medium);
+}
+
+
 /* ==============================
    CATEGORY CHART & LEGEND LAYOUT
    ============================== */
