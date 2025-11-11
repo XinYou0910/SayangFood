@@ -41,45 +41,6 @@ function placeholderFor(field) {
   );
 }
 
-// Toggle edit mode for weekly meal table
-function toggleEdit(enable) {
-  editing = enable;
-  const body = document.getElementById("weekBody");
-  const tds = body.querySelectorAll("td[data-field]");
-
-  if (editing) {
-    tds.forEach((td) => cellToInput(td));
-    document.getElementById("editBtn").disabled = true;
-  } else {
-    tds.forEach((td) => inputToCell(td));
-    document.getElementById("editBtn").disabled = false;
-  }
-}
-
-// Accept suggestion → insert into weekly plan
-function acceptSuggestion() {
-  const s = document.querySelector("#suggestRow").children;
-  const rowData = {
-    date: s[0].textContent.trim(),
-    slot: s[1].textContent.trim(),
-    meal: s[2].textContent.trim(),
-    item: s[3].textContent.trim(),
-    qty: s[4].textContent.trim(),
-    remark: s[5].textContent.trim(),
-    status: "Accepted",
-  };
-  appendWeekRow(rowData);
-  document.getElementById("suggestRow").style.opacity = 0.45;
-}
-
-// Reject suggestion → mark visually
-function rejectSuggestion() {
-  const chip = document.querySelector("#suggestRow .status");
-  chip.className = "status";
-  chip.textContent = "Rejected";
-  document.getElementById("suggestRow").style.opacity = 0.35;
-}
-
 // Append a new row into the weekly table
 function appendWeekRow(data) {
   const body = document.getElementById("weekBody");
@@ -248,52 +209,6 @@ function restoreUnitDropdown(customValue) {
     select.value = customValue.trim();
   }
 }
-
-// ----------------------
-// BROWSE FOOD DROPDOWN (NEW VERSION)
-// ----------------------
-document.addEventListener("DOMContentLoaded", () => {
-  const dropdownBtn =
-    document.getElementById("browseToggle") ||
-    document.querySelector(".dropdown-btn");
-  const dropdownMenu =
-    document.getElementById("dropdownMenu") ||
-    document.querySelector(".dropdown-container");
-  const arrow =
-    document.getElementById("arrowIcon") ||
-    (dropdownBtn ? dropdownBtn.querySelector(".arrow") : null);
-
-  if (!dropdownBtn || !dropdownMenu) return;
-
-  // Toggle open/close
-  dropdownBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    dropdownMenu.classList.toggle("show");
-    if (arrow) arrow.classList.toggle("open");
-  });
-
-  // ✅ Close when clicking a submenu
-  dropdownMenu.addEventListener("click", (e) => {
-    const clickedItem = e.target.closest("button, a");
-    if (!clickedItem) return;
-    dropdownMenu.classList.remove("show");
-    if (arrow) arrow.classList.remove("open");
-  });
-
-  // ✅ Close when clicking outside
-  document.addEventListener("click", (e) => {
-    if (!dropdownMenu.contains(e.target) && !dropdownBtn.contains(e.target)) {
-      dropdownMenu.classList.remove("show");
-      if (arrow) arrow.classList.remove("open");
-    }
-  });
-
-  // ✅ Highlight current active submenu
-  const currentPage = window.location.pathname.split("/").pop();
-  document.querySelectorAll(".submenu-item").forEach((item) => {
-    if (item.dataset.page === currentPage) item.classList.add("active");
-  });
-});
 
 function changeQty(change) {
   const input = document.getElementById('quantityValue');
@@ -714,64 +629,71 @@ if (protectedPages.includes(currentPage)) {
   }
 
 // ===========================
-// Sidebar Active Highlight + Dropdown Auto Expand
+// Sidebar Active Highlight + Dropdown Auto Expand (Improved for Meal Plan)
 // ===========================
 document.addEventListener("DOMContentLoaded", () => {
   const currentPage = window.location.pathname.split("/").pop().toLowerCase();
-  const menuItems = document.querySelectorAll(".menu-item");
   const dropdownBtn = document.querySelector(".dropdown-btn");
   const dropdownContainer = document.getElementById("dropdownMenu");
   const arrowIcon = document.getElementById("arrowIcon");
 
-  // Step 1: Reset all active states
-  menuItems.forEach(btn => btn.classList.remove("active"));
+  // Reset all actives
+  document.querySelectorAll(".menu-item, .submenu-item").forEach((btn) =>
+    btn.classList.remove("active")
+  );
 
-  // Step 2: Apply highlight based on current page
-  menuItems.forEach(btn => {
-    const text = btn.innerText.trim().toLowerCase();
-
-    // Dashboard page
-    if (currentPage.includes("dashboard") && text.includes("dashboard")) {
-      btn.classList.add("active");
-    }
-
-    // Browse Food Item dropdown (Inventory, Weekly Meal, Donations)
-    else if (
-      (currentPage.includes("inventory") ||
-       currentPage.includes("weekly_meal") ||
-       currentPage.includes("donation")) &&
-      text.includes("browse")
-    ) {
-      btn.classList.add("active");
-
-      // Auto expand dropdown
-      if (dropdownContainer) {
-        dropdownContainer.style.display = "block";
-        arrowIcon.textContent = "▲";
+  // Highlight Dashboard
+  if (currentPage.includes("dashboard")) {
+    document.querySelectorAll(".menu-item").forEach((btn) => {
+      if (btn.textContent.trim().toLowerCase().includes("dashboard")) {
+        btn.classList.add("active");
       }
+    });
+  }
 
-      // Highlight current submenu item
-      const submenuItems = document.querySelectorAll(".submenu-item");
-      submenuItems.forEach(sub => {
-        const page = sub.getAttribute("data-page").toLowerCase();
-        if (currentPage === page) {
-          sub.classList.add("active");
-        } else {
-          sub.classList.remove("active");
-        }
-      });
+  // Highlight Analytics
+  if (currentPage.includes("analytics")) {
+    document.querySelectorAll(".menu-item").forEach((btn) => {
+      if (btn.textContent.trim().toLowerCase().includes("analytics")) {
+        btn.classList.add("active");
+      }
+    });
+  }
+
+  // Highlight Notification
+  if (currentPage.includes("notification")) {
+    document.querySelectorAll(".menu-item").forEach((btn) => {
+      if (btn.textContent.trim().toLowerCase().includes("notification")) {
+        btn.classList.add("active");
+      }
+    });
+  }
+
+  // For dropdown pages (Inventory / Meal Plan / Donation)
+  if (
+    currentPage.includes("inventory") ||
+    currentPage.includes("meal_plan") ||
+    currentPage.includes("weekly_meal") ||
+    currentPage.includes("donation")
+  ) {
+    // Highlight parent button (Browse Food Items)
+    if (dropdownBtn) dropdownBtn.classList.add("active");
+
+    // Open the dropdown
+    if (dropdownContainer) dropdownContainer.classList.add("show");
+
+    // Flip arrow
+    if (arrowIcon) {
+      arrowIcon.textContent = "▲";
+      arrowIcon.classList.add("open");
     }
 
-    // Food Analytics page
-    else if (currentPage.includes("analytics") && text.includes("analytics")) {
-      btn.classList.add("active");
-    }
-
-    // Notification page
-    else if (currentPage.includes("notification") && text.includes("notification")) {
-      btn.classList.add("active");
-    }
-  });
+    // Highlight the correct submenu
+    document.querySelectorAll(".submenu-item").forEach((sub) => {
+      const page = (sub.getAttribute("data-page") || "").toLowerCase();
+      if (page === currentPage) sub.classList.add("active");
+    });
+  }
 });
 
 document.addEventListener("DOMContentLoaded", () => {
