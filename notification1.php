@@ -92,8 +92,22 @@ $result = $stmt->get_result();
             } elseif ($row['notification_status'] === 'Read') {
               $statusClass = 'notification-read';
             }
+
+            // choose image based on notification type
+            $type = trim($row['notification_type'] ?? '');
+            $imgSrc = 'pic/notification.png';
+            if (strcasecmp($type, 'Inventory') === 0) {
+              $imgSrc = 'pic/inventory.png';
+            } elseif (strcasecmp($type, 'Donation') === 0) {
+              $imgSrc = 'pic/donation.png';
+            } elseif (strcasecmp($type, 'Meal Planning') === 0 || strcasecmp($type, 'MealPlanner') === 0 || strcasecmp($type, 'MealPlanning') === 0) {
+              $imgSrc = 'pic/mealplanning.png';
+            }
           ?>
           <div class="notification-card <?= $statusClass ?>">
+            <div class="notification-media">
+              <img src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($row['notification_type']) ?>" class="notification-img">
+            </div>
             <div class="notification-content">
               <div class="notification-title"><?= htmlspecialchars($row['notification_type']) ?></div>
               <div class="notification-message"><?= htmlspecialchars($row['message']) ?></div>

@@ -372,6 +372,24 @@ body {
   box-shadow: 0 8px 24px var(--shadow-medium);
 }
 
+/* Media notifications */
+.notification-media {
+  flex: 0 0 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+}
+
+.notification-img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,0.6);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
 /* Status-based background colors */
 .notification-card.notification-unread {
   background: #E7F5E5; 
