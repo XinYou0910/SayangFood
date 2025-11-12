@@ -70,7 +70,7 @@
         <span class="dd">${d.getDate()}</span>
       </button>`;
 
-    // Build: [📅] [‹] [Mon..Sun] [›] (prev arrow already in DOM)
+    // Build Mon..Sun then append inline next (›)
     let html = "";
     for (let i = 0; i < 7; i++) html += pillHTML(days[i]); // Mon..Sun
     html += `<button class="nav-arrow" id="inlineNext" aria-label="Next day">›</button>`;
@@ -107,7 +107,7 @@
     renderDayTitle();
   });
 
-  // Calendar picker next to ‹
+  // Calendar picker next to the date bar
   const calBtn = document.getElementById("calendarBtn");
   const jump = document.getElementById("jumpDate");
   if (calBtn && jump) {
@@ -142,7 +142,7 @@
   });
 })();
 
-// Save demo
+// Save demo - demo only (connect to backend if needed)
 document.getElementById("saveBtn")?.addEventListener("click", () => {
   const payload = {
     dateText: document.getElementById("dayTitle")?.textContent || "",
