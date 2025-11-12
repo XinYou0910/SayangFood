@@ -174,7 +174,7 @@ function drawUsageChart(trendData) {
   setTimeout(() => { try { usageChart.resize(); usageChart.update(); } catch(e){} }, 150);
 }
 
-function drawCategory(categoryData) {
+function drawCategory(categoryData, metric = "percentage") {
   console.log('Drawing category chart:', categoryData);
   const categoryCtx = document.getElementById("categoryChart").getContext("2d");
 
@@ -186,109 +186,149 @@ function drawCategory(categoryData) {
     return;
   }
 
-  // Color palette
-  const colors = [
+  // Preserve full data for toggling visibility
+  _lastCategoryData = categoryData.map(d => ({ ...d, hidden: false }));
+
+  // Define palette and color mapping (persistent across filters)
+  const palette = [
     '#10b981', '#3b82f6', '#f59e0b', '#ef4444',
     '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316'
   ];
+  if (typeof categoryColorMap === "undefined") window.categoryColorMap = {};
 
-  // Resize the canvas smaller (optional: adjust CSS instead if preferred)
-  categoryCtx.canvas.height = 550; // smaller height
-  categoryCtx.canvas.width = 550;  // smaller width
+  // Assign color per category (keeps consistent color across filters/search)
+  categoryData.forEach((item, i) => {
+    if (!categoryColorMap[item.category]) {
+      categoryColorMap[item.category] = palette[i % palette.length];
+    }
+  });
 
-  // Create the chart
-  // default to percentage values; drawCategoryFiltered will map to desired metric
+  const colors = categoryData.map(c => categoryColorMap[c.category]);
+
+  // Set fixed chart canvas size (keeps donut stable)
+  categoryCtx.canvas.height = 550;
+  categoryCtx.canvas.width = 550;
+
+  // Select data metric for the chart
+  const chartValues = metric === "percentage"
+    ? categoryData.map(c => c.percentage)
+    : categoryData.map(c => c.count);
+
   categoryChart = new Chart(categoryCtx, {
     type: "doughnut",
     data: {
       labels: categoryData.map(c => c.category),
       datasets: [{
-        data: categoryData.map(c => c.percentage),
-        backgroundColor: colors.slice(0, categoryData.length),
+        data: chartValues,
+        backgroundColor: colors,
         borderColor: "#fff",
         borderWidth: 2
       }]
     },
     options: {
-      cutout: "60%", // slightly smaller inner hole
-      responsive: true, // use canvas size defined above
+      cutout: "60%",
+      responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false }, // hide default legend
-        tooltip: {
-          callbacks: {
-            label: (context) => `${context.label}: ${context.parsed}%`
+      plugins: { legend: { display: false } },
+      animation: { duration: 300 },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const label = context.label;
+            const value = metric === "percentage"
+              ? `${context.parsed}%`
+              : `${context.parsed} items`;
+            return `${label}: ${value}`;
           }
         }
       }
     }
   });
-  setTimeout(() => { try { categoryChart.resize(); categoryChart.update(); } catch(e){} }, 150);
 
-  // Generate custom legend
+  // Build custom legend
   const legendContainer = document.getElementById("foodLegend");
   legendContainer.innerHTML = "";
 
   categoryData.forEach((item, i) => {
-    legendContainer.innerHTML += `
-      <div class="legend-item" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <div style="display:flex;align-items:center;gap:6px;">
-          <div class="legend-color" style="width:16px;height:16px;border-radius:4px;background-color:${colors[i]}"></div>
-          <span class="legend-label">${item.category}</span>
-        </div>
-        <span class="legend-value">${item.percentage}% (${item.count})</span>
+    const color = colors[i];
+    const legendItem = document.createElement("div");
+    legendItem.classList.add("legend-item");
+    legendItem.style.display = "flex";
+    legendItem.style.justifyContent = "space-between";
+    legendItem.style.alignItems = "center";
+    legendItem.style.marginBottom = "6px";
+    legendItem.style.cursor = "pointer";
+    legendItem.style.transition = "opacity 0.3s";
+
+    const valueDisplay = metric === "percentage"
+      ? `${item.percentage}%`
+      : `${item.count} items`;
+
+    legendItem.innerHTML = `
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div class="legend-color"
+             style="width:16px;height:16px;border-radius:4px;background-color:${color}"></div>
+        <span class="legend-label">${item.category}</span>
       </div>
+      <span class="legend-value">${valueDisplay}</span>
     `;
+
+    // ✅ Toggle visibility on click
+    legendItem.addEventListener("click", () => {
+      const category = item.category;
+      const dataIndex = categoryChart.data.labels.indexOf(category);
+      if (dataIndex !== -1) {
+        const dataset = categoryChart.data.datasets[0];
+        const dataObj = _lastCategoryData.find(d => d.category === category);
+        dataObj.hidden = !dataObj.hidden;
+
+        // Hide the data slice visually
+        dataset.data[dataIndex] = dataObj.hidden
+          ? NaN
+          : (metric === "percentage" ? dataObj.percentage : dataObj.count);
+
+        legendItem.style.opacity = dataObj.hidden ? "0.4" : "1";
+        categoryChart.update();
+      }
+    });
+
+    legendContainer.appendChild(legendItem);
   });
 }
 
-// Category filtering helpers
-let _lastCategoryData = null;
+
+// --- CATEGORY FILTER LOGIC FIX ---
 function renderCategoryWithFilters() {
-  if (!_lastCategoryData) return;
-  const search = (document.getElementById('categorySearch')?.value || '').trim().toLowerCase();
-  const topN = parseInt(document.getElementById('topN')?.value || '0', 10);
-  const metric = document.getElementById('categoryMetric')?.value || 'percentage';
+  if (!_allCategoryData || _allCategoryData.length === 0) return;
 
-  let data = _lastCategoryData.slice();
-  if (search) {
-    data = data.filter(d => (d.category || '').toLowerCase().includes(search));
-  }
-  // sort by metric descending
-  data.sort((a,b) => (b[metric] || 0) - (a[metric] || 0));
-  if (topN > 0) data = data.slice(0, topN);
+  const search = document.getElementById("categorySearch")?.value?.toLowerCase() || "";
+  const topNValue = document.getElementById("topN")?.value?.toLowerCase() || "all";
+  const metric = document.getElementById("categoryMetric")?.value || "percentage";
 
-  // prepare values depending on metric
-  const values = data.map(d => metric === 'count' ? d.count : d.percentage);
-  const labels = data.map(d => d.category);
+  // Start from full dataset each time
+  let filtered = _allCategoryData.filter(c =>
+    c.category.toLowerCase().includes(search)
+  );
 
-  // update chart dataset
-  if (categoryChart) {
-    categoryChart.data.labels = labels;
-    categoryChart.data.datasets[0].data = values;
-    // update colors if needed
-    categoryChart.data.datasets[0].backgroundColor = categoryChart.data.datasets[0].backgroundColor.slice(0, labels.length);
-    categoryChart.update();
+  // Sort descending by selected metric
+  filtered.sort((a, b) => (b[metric] || 0) - (a[metric] || 0));
+
+  // Handle topN filter (skip slicing for "all")
+  if (topNValue !== "all") {
+    const topN = parseInt(topNValue, 10);
+    if (!isNaN(topN)) filtered = filtered.slice(0, topN);
   }
 
-  // update custom legend
-  const legendContainer = document.getElementById("foodLegend");
-  legendContainer.innerHTML = '';
-  const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316'];
-  data.forEach((item, i) => {
-    const displayValue = metric === 'count' ? item.count : item.percentage + '%';
-    legendContainer.innerHTML += `
-      <div class="legend-item" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <div style="display:flex;align-items:center;gap:6px;">
-          <div class="legend-color" style="width:16px;height:16px;border-radius:4px;background-color:${colors[i % colors.length]}"></div>
-          <span class="legend-label">${item.category}</span>
-        </div>
-        <span class="legend-value">${displayValue}</span>
-      </div>
-    `;
-  });
+  // Redraw the chart with consistent colors
+  drawCategory(filtered, metric);
+
+  // Update label text
+  const labelEl = document.getElementById("categoryLabel");
+  if (labelEl) {
+    labelEl.textContent =
+      metric === "percentage" ? "Category by Percentage" : "Category by Count";
+  }
 }
-
 
 
 function showCategory() {
@@ -307,7 +347,8 @@ function showCategory() {
       .then(data => {
         if (data.category && data.category.length > 0) {
           // cache for filtering
-          _lastCategoryData = data.category.map(d => ({ ...d }));
+          _allCategoryData = data.category.map(d => ({ ...d }));
+          _lastCategoryData = [..._allCategoryData];
           drawCategory(_lastCategoryData);
           // set default filters UI values if present
           document.getElementById('topN').value = '5';
@@ -410,6 +451,8 @@ function showNoDataMessage(context) {
 }
 let trendChart = null;
 let categoryChart = null;
+let _allCategoryData = [];
+const categoryColorMap = {};
 
 // Attach download handlers for each chart toolbar button
 function attachDownloadButtons() {
