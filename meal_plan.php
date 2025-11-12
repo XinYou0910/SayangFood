@@ -10,6 +10,7 @@ if (!isset($_SESSION['user_id'])) {
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>SayangFood — Meal Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="meal_plan.css?v=9"/>
 </head>
 <body>
