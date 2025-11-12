@@ -8,12 +8,22 @@
 (function () {
   const $ = (s) => document.querySelector(s);
 
-  // Mark "Browse Food Items" as active (turns green)
+  // Ensure dropdown parent becomes active and the correct submenu is highlighted
   document.addEventListener("DOMContentLoaded", () => {
     const page = location.pathname.split("/").pop().toLowerCase();
+    // mark the dropdown parent button active (turns green via .menu-item.active)
     if (/inventory|meal_plan|donation/.test(page)) {
       document.querySelector(".dropdown-btn")?.classList.add("active");
     }
+    // highlight submenu matching current file name
+    document.querySelectorAll(".submenu-item").forEach((el) => {
+      const href = (el.getAttribute("onclick") || "").toLowerCase();
+      if (href.includes(page)) {
+        el.classList.add("active");
+      } else {
+        el.classList.remove("active");
+      }
+    });
   });
 
   const state = { selected: new Date() };
@@ -60,7 +70,7 @@
         <span class="dd">${d.getDate()}</span>
       </button>`;
 
-    // Build: [‹] [📅] [Mon..Sun] [›]    <-- › is now AFTER Sunday
+    // Build: [📅] [‹] [Mon..Sun] [›] (prev arrow already in DOM)
     let html = "";
     for (let i = 0; i < 7; i++) html += pillHTML(days[i]); // Mon..Sun
     html += `<button class="nav-arrow" id="inlineNext" aria-label="Next day">›</button>`;

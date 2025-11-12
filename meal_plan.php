@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>SayangFood — Meal Plan</title>
-  <link rel="stylesheet" href="meal_plan.css?v=8"/>
+  <link rel="stylesheet" href="meal_plan.css?v=9"/>
 </head>
 <body>
   <div id="pageContent">
@@ -113,6 +113,6 @@ if (!isset($_SESSION['user_id'])) {
     </main>
   </div>
 
-  <script src="meal_plan.js?v=8"></script>
+  <script src="meal_plan.js?v=9"></script>
 </body>
 </html>
