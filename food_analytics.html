@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SayangFood - Dashboard</title>
+  <title>SayangFood - Food Analytics</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="dashboard_page.css">
+  <link rel="stylesheet" href="food_analytics.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -13,7 +14,7 @@
   <!-- Hamburger Button -->
   <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
 
-  <!-- Sidebar -->
+  <!-- Sidebar (same as dashboard) -->
   <div class="sidebar">
     <div class="logo-container">
       <img src="pic/logo.png" alt="SayangFood Logo" class="logo-img">
@@ -23,7 +24,7 @@
       </div>
     </div>
 
-    <button class="menu-item active" onclick="location.href='dashboard_page.html'">
+    <button class="menu-item" onclick="location.href='dashboard_page.html'">
       <img src="pic/home.png" alt="Home Icon" class="icon"> Dashboard
     </button>
 
@@ -34,11 +35,11 @@
 
     <div class="dropdown-container">
       <button onclick="location.href='inventory_list.php'">Inventory</button>
-      <button onclick="location.href='meal_plan.php'">Meal Plan</button>
+      <button>Weekly Meal</button>
       <button onclick="location.href='donation_list.php'">Donations</button>
     </div>
 
-    <button class="menu-item" onclick="location.href='food_analytics.html'">
+    <button class="menu-item active">
       <img src="pic/data-analytics.png" alt="Analytics Icon" class="icon"> Food Analytics
     </button>
 
@@ -56,69 +57,77 @@
     </div>
   </div>
 
-  <!-- Main Dashboard Content -->
+  <!-- Main Analytics Content -->
   <div class="main-content">
     <div class="header">
-      <h1>Dashboard Overview</h1>
-      <p>Quick insights of your food inventory and donations.</p>
+      <h1>Food Analytics</h1>
+      <p>Advanced analytics and predictive insights for waste management.</p>
     </div>
 
-    <!-- Dashboard Cards -->
+    <div class="filter-controls">
+      <select id="filterRange">
+        <option value="7">7 days</option>
+        <option value="30" selected>1 month</option>
+        <option value="365">12 months</option>
+      </select>
+      <button id="filterBtn" class="filter-btn">Filter</button>
+    </div>
+
+    <!-- Summary Cards -->
     <div class="dashboard-cards">
       <div class="card">
-        <h2>Total Food Items</h2>
-        <p id="totalFoodItems">0</p>
+        <h2>Total Food Saving</h2>
+        <p id="total-saving">-- KG</p>
       </div>
       <div class="card">
-        <h2>Expiring Soon</h2>
-        <p id="expiringSoon">0</p>
+        <h2>Total Food Waste</h2>
+        <p id="total-waste">-- KG</p>
       </div>
       <div class="card">
-        <h2>Donations Made</h2>
-        <p id="donationsMade">0</p>
+        <h2>Total Donation Made</h2>
+        <p id="total-donation">--</p>
+      </div>
+      <div class="card">
+        <h2>Total Food Usage</h2>
+        <p id="total-usage">-- KG</p>
       </div>
     </div>
 
-    <!-- Chart Section -->
-    <div class="charts">
-      <div class="chart-card">
-        <h3>Food Category Distribution</h3>
-        <canvas id="foodCategoryChart"></canvas>
-      </div>
-
-      <div class="chart-card">
-        <h3>Monthly Donations</h3>
-        <canvas id="donationTrendChart"></canvas>
-      </div>
-
-      <div class="chart-card">
-        <h3>Expiry Status</h3>
-        <canvas id="expiryStatusChart"></canvas>
-      </div>
+    <!-- Chart Controls -->
+    <div class="chart-toggle">
+      <button id="trendBtn" class="active">View Trend</button>
+      <button id="categoryBtn">By Category</button>
     </div>
+
+ <!-- Chart Section -->
+<div class="charts" id="trendSection">
+  <div class="chart-card">
+    <h3 id="chartTitle">Food Trend</h3>
+    <canvas id="foodChart"></canvas>
   </div>
+</div>
+
+<!-- Category Chart Section (hidden by default) -->
+<div class="food-analytics-container" id="categorySection" style="display: none;">
+  <!-- Donut Chart Box -->
+  <div class="chart-box">
+    <h3 class="chart-title">Food Category Distribution</h3>
+    <canvas id="categoryChart"></canvas>
   </div>
 
-  <!-- User Script -->
-  <script>
-    const username = localStorage.getItem('user_name');
-    if (username) {
-      document.getElementById('username').textContent = username;
-    } else {
-      window.location.href = 'login.html';
-    }
+  <!-- Legend Box -->
+  <div class="legend-box">
+    <h3 class="legend-title">Category Breakdown</h3>
+    <div id="foodLegend"></div>
+  </div>
+</div>
 
-    function logout() {
-      localStorage.removeItem('user_name');
-      window.location.href = 'Homepage.html';
-    }
 
-    function toggleSidebar() {
-      document.querySelector('.sidebar').classList.toggle('active');
-    }
-  </script>
 
-  <!-- Dashboard JS -->
-  <script src="dashboard_page.js"></script>
+
+  <!-- Global site scripts (sets username, sidebar behavior) -->
+  <script src="script.js"></script>
+  <!-- Analytics-specific JS -->
+  <script src="food_analytics.js"></script>
 </body>
 </html>
