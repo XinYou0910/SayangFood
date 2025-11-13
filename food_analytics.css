@@ -1,0 +1,302 @@
+/* Summary Cards - Make Smaller */
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e5e7eb;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+  .card h2 {
+    font-size: 20px;
+    /* colorful gradient label matching dashboard accents */
+    background: linear-gradient(90deg, var(--primary-green) 0%, var(--light-green) 60%, var(--light-orange) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin: 0 0 8px 0;
+    font-weight: 700;
+  }
+
+.card p {
+  font-size: 20px;
+  /* colorful gradient label matching dashboard accents */
+  background: linear-gradient(90deg, var(--primary-green) 0%, var(--light-green) 60%, var(--light-orange) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 0 0 8px 0;
+  font-weight: 700;
+}
+/* Chart Section - Make Bigger */
+.charts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.chart-card {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-height: 450px;
+}
+
+.chart-card h3 {
+  font-size: 20px;
+  color: #1f2937;
+  margin-bottom: 15px;
+  font-weight: 700;
+  text-align: center;
+  background: linear-gradient(90deg, #4CAF50, #ff9800);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+
+#foodChart {
+  width: 100% !important;
+  height: 400px !important;
+  max-height: 400px !important;
+}
+
+/* Category Breakdown Sidebar */
+.category-sidebar {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  right: 30px;
+  top: 420px;
+  width: 280px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.category-sidebar h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 5px 0;
+}
+
+.category-sidebar .subtitle {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0 0 15px 0;
+}
+
+.category-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.category-item:last-child {
+  border-bottom: none;
+}
+
+.category-name {
+  font-size: 13px;
+  color: #374151;
+  font-weight: 500;
+}
+
+.category-percentage {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+/* Chart Toggle Buttons */
+.chart-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 18px 0;
+  background: transparent;
+  padding: 6px;
+  border-radius: 12px;
+}
+
+/* Base button style */
+.chart-toggle button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #4CAF50, #2E8B57);
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Hover effect */
+.chart-toggle button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+/* Active state (when selected) */
+.chart-toggle button.active {
+  background: linear-gradient(135deg, #ff9800, #f44336);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+  transform: scale(1.08);
+}
+
+
+.chart-toggle button:hover:not(.active) {
+  color: #1f2937;
+}
+
+/* ==============================
+   CATEGORY CHART & LEGEND LAYOUT
+   ============================== */
+
+/* Container holding the chart and legend */
+.food-analytics-container {
+  display: flex;
+  gap: 300px;          /* space between chart and legend */
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;    /* wrap on smaller screens */
+  padding: 15px;
+}
+
+.chart-box{
+  flex: 1 1 300px;   /* grow/shrink with minimum width */
+  max-width: 450px;  /* prevent too big on large screens */
+  min-width: 250px;  /* prevent too small on small screens */
+  height: 450px;     /* fixed height for chart */
+  background: #fff;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+.legend-box{
+  flex: 1 1 300px;   /* grow/shrink with minimum width */
+  max-width: 600px;  /* prevent too big on large screens */
+  min-width: 250px;  /* prevent too small on small screens */
+  height: 450px;     /* fixed height for chart */
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+/* Make chart fill its container nicely */
+.chart-box canvas {
+  width: 450px !important;
+  height: 380px !important;
+}
+
+.chart-box:hover,
+.legend-box:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+}
+
+/* Chart title */
+.chart-title {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 20px;
+}
+
+/* Legend box styling */
+.legend-box {
+  flex: 1 1 200px;
+  max-width: 250px;
+  min-width: 180px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+.legend-title {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 15px;
+}
+
+#foodLegend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+/* Each legend item spacing */
+.legend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.legend-color {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+}
+
+.legend-label {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.legend-value {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Make layout responsive */
+@media (max-width: 768px) {
+  .food-analytics-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .chart-box,
+  .legend-box {
+    width: 90%;
+    max-width: none;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .dashboard-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .card p {
+    font-size: 18px;
+  }
+}
