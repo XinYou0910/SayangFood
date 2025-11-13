@@ -268,7 +268,7 @@ body{
   display:block;
   font-weight:800;
   font-size:14px;
-  colorvar(--pill-wd-color)
+  color: var(--pill-wd-color)
 }
 
 .pill.active{
