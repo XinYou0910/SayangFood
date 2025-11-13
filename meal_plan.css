@@ -216,9 +216,28 @@ body{
   display:flex;align-items:center;justify-content:center;font-size:20px;
 }
 
+.date-bar .nav-arrow:hover {
+  background: linear-gradient(135deg, var(--accent-orange), var(--light-orange));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 6px 18px rgba(230,126,34,0.12);
+}
+
 /* pills row and pills: fixed height to align with calendar & arrows */
-.pills-row{display:flex;gap:12px;align-items:center;overflow-x:auto;flex:1;padding:4px}
+.pills-row{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  overflow-x:auto;
+  flex:1;
+  padding:4px;
+}
+
 .pill{
+  /* default text color variables */
+  --pill-wd-color: #66717d;
+  --pill-dd-color: #24323d;
+
   min-width:78px;
   height:54px;
   display:flex;
@@ -230,11 +249,52 @@ body{
   background:#fff;
   padding:0 12px;
   box-shadow:0 2px 6px rgba(0,0,0,.04);
+
+  transition:
+    background 240ms ease,
+    box-shadow 240ms ease,
+    border-color 240ms ease,
+    color 240ms ease;
 }
-.pill .wd{display:block;font-size:12px;color:#66717d;margin-bottom:4px}
-.pill .dd{display:block;font-weight:800;font-size:14px;color:#24323d}
-.pill.active{background:linear-gradient(135deg,var(--primary-green),var(--light-green));color:#fff;border-color:transparent}
-.pill.active .wd,.pill.active .dd{color:#fff}
+
+.pill .wd{
+  display:block;
+  font-size:12px;
+  color: var(--pill-wd-color);
+  margin-bottom:4px
+}
+
+.pill .dd{
+  display:block;
+  font-weight:800;
+  font-size:14px;
+  colorvar(--pill-wd-color)
+}
+
+.pill.active{
+  background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+  border-color: transparent;
+  color: #fff;
+  --pill-wd-color: #fff;
+  --pill-dd-color: #fff;
+}
+
+.pill:hover {
+  background: linear-gradient(135deg, var(--accent-orange), var(--light-orange));
+  border-color: transparent;
+  box-shadow: 0 6px 18px rgba(230,126,34,0.12);
+  --pill-wd-color: #fff;
+  --pill-dd-color: #fff;
+}
+
+.pill:hover .wd,
+.pill:hover .dd {
+  color: #fff !important;
+}
+
+.pill.active .dd {
+  color: #fff;
+}
 
 /* Board layout */
 .grid-2{display:grid;grid-template-columns:1fr 320px;gap:18px}
