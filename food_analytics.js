@@ -26,7 +26,6 @@ function loadAnalytics(range = 30) {
     .then(data => {
       console.log('Analytics data received:', data);
       
-      // Check for errors in response
       if (data.error) {
         console.error('Server error:', data.error, data.details);
         alert('Error loading analytics: ' + data.error);
@@ -35,18 +34,14 @@ function loadAnalytics(range = 30) {
       
       updateSummary(data);
       
-      // Load trend and separate visual reports by default
       if (data.trend && data.trend.length > 0) {
-        drawTrend(data.trend);
-        // additional visual reports (separate, not mixed)
-        drawDonationChart(data.trend);
-        drawUsageChart(data.trend);
-        // attach download buttons after charts are drawn
-        attachDownloadButtons();
-      } else {
-        console.warn('No trend data available');
-        showNoDataMessage();
-      }
+          drawTrend(data.trend);
+          drawDonationChart(data.trend);
+        } else {
+          console.warn('No trend data available');
+          showNoDataMessage();
+        }
+
     })
     .catch(err => {
       console.error("Error loading analytics:", err);
@@ -54,20 +49,20 @@ function loadAnalytics(range = 30) {
     });
 }
 
+
 function updateSummary(data) {
   // Update summary cards - showing item counts, not KG
-  document.getElementById("total-saving").textContent = `${data.total_saved} Items`;
-  document.getElementById("total-waste").textContent = `${data.total_waste} Items`;
+  document.getElementById("total-saving").textContent   = `${data.total_saved} Items`;
+  document.getElementById("total-waste").textContent    = `${data.total_waste} Items`;
   document.getElementById("total-donation").textContent = `${data.total_donation} Items`;
-  document.getElementById("total-usage").textContent = `${data.total_used} Items`;
-  
+
   console.log('Summary updated:', {
     saved: data.total_saved,
     waste: data.total_waste,
-    donation: data.total_donation,
-    used: data.total_used
+    donation: data.total_donation
   });
 }
+
 
 function drawTrend(trendData) {
   const trendCtx = document.getElementById("foodChart").getContext("2d");
@@ -144,35 +139,7 @@ function drawDonationChart(trendData) {
   setTimeout(() => { try { donationChart.resize(); donationChart.update(); } catch(e){} }, 150);
 }
 
-// Draw a usage chart (line) as a separate full-size report
-let usageChart = null;
-function drawUsageChart(trendData) {
-  const ctx = document.getElementById('usageChart').getContext('2d');
-  if (usageChart) usageChart.destroy();
 
-  usageChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: trendData.map(d => d.date),
-      datasets: [{
-        label: 'Total Food Usage',
-        data: trendData.map(d => d.used || 0),
-        borderColor: '#f59e0b',
-        backgroundColor: 'rgba(245,158,11,0.12)',
-        fill: true,
-        tension: 0.3,
-        pointRadius: 3
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { position: 'top' } },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
-  setTimeout(() => { try { usageChart.resize(); usageChart.update(); } catch(e){} }, 150);
-}
 
 function drawCategory(categoryData, metric = "percentage") {
   console.log('Drawing category chart:', categoryData);
@@ -390,7 +357,6 @@ function showTrend() {
     try {
       if (trendChart) { trendChart.resize(); trendChart.update(); }
       if (donationChart) { donationChart.resize(); donationChart.update(); }
-      if (usageChart) { usageChart.resize(); usageChart.update(); }
       if (categoryChart) { categoryChart.resize(); categoryChart.update(); }
     } catch (err) {
       console.warn('Error resizing charts on showTrend:', err);
@@ -404,7 +370,6 @@ window.addEventListener('resize', () => {
   try {
     if (trendChart) trendChart.resize();
     if (donationChart) donationChart.resize();
-    if (usageChart) usageChart.resize();
     if (categoryChart) categoryChart.resize();
   } catch (e) {
     // non-fatal
@@ -421,7 +386,6 @@ if (document.fonts && document.fonts.ready) {
       try {
         if (trendChart) { trendChart.resize(); trendChart.update(); }
         if (donationChart) { donationChart.resize(); donationChart.update(); }
-        if (usageChart) { usageChart.resize(); usageChart.update(); }
         if (categoryChart) { categoryChart.resize(); categoryChart.update(); }
       } catch (e) {}
     }, 120);
@@ -434,7 +398,6 @@ window.addEventListener('load', () => {
     try {
       if (trendChart) { trendChart.resize(); trendChart.update(); }
       if (donationChart) { donationChart.resize(); donationChart.update(); }
-      if (usageChart) { usageChart.resize(); usageChart.update(); }
       if (categoryChart) { categoryChart.resize(); categoryChart.update(); }
     } catch (e) {}
   }, 200);
@@ -454,35 +417,3 @@ let categoryChart = null;
 let _allCategoryData = [];
 const categoryColorMap = {};
 
-// Attach download handlers for each chart toolbar button
-function attachDownloadButtons() {
-  const trendBtn = document.getElementById('downloadTrendBtn');
-  const donationBtn = document.getElementById('downloadDonationBtn');
-  const usageBtn = document.getElementById('downloadUsageBtn');
-
-  if (trendBtn) {
-    trendBtn.onclick = () => downloadChartImage(trendChart, 'food_trend.png');
-  }
-  if (donationBtn) {
-    donationBtn.onclick = () => downloadChartImage(donationChart, 'total_donations.png');
-  }
-  if (usageBtn) {
-    usageBtn.onclick = () => downloadChartImage(usageChart, 'total_usage.png');
-  }
-}
-
-function downloadChartImage(chartInstance, filename) {
-  if (!chartInstance) { alert('Chart is not ready yet'); return; }
-  try {
-    const url = chartInstance.toBase64Image();
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  } catch (err) {
-    console.error('Failed to download chart image', err);
-    alert('Failed to download image');
-  }
-}

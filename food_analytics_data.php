@@ -6,14 +6,14 @@
 header('Content-Type: application/json; charset=utf-8');
 include 'db_connect.php';
 
-$type = isset($_GET['type']) ? $_GET['type'] : 'trend';
+$type  = isset($_GET['type']) ? $_GET['type'] : 'trend';
 $range = isset($_GET['range']) ? intval($_GET['range']) : 30;
 
 // Check database connection
 if (!isset($conn) || $conn->connect_error) {
     http_response_code(500);
     echo json_encode([
-        'error' => 'Database connection failed', 
+        'error'   => 'Database connection failed',
         'details' => $conn->connect_error ?? 'No connection'
     ]);
     exit;
@@ -22,12 +22,16 @@ if (!isset($conn) || $conn->connect_error) {
 // Calculate the date range
 $startDate = date('Y-m-d', strtotime("-$range days"));
 
-// Summary counts - count items by status
+// ========================
+// SUMMARY COUNTS (UPDATED)
+// ========================
 $summaryQuery = "
   SELECT
-    COUNT(CASE WHEN item_status IN ('Available', 'Planned for Meal') THEN 1 END) AS total_saved,
+    -- Food saved = Used + Planned for Meal
+    COUNT(CASE WHEN item_status IN ('Used', 'Planned for Meal') THEN 1 END) AS total_saved,
+    -- Food waste = Expired
     COUNT(CASE WHEN item_status = 'Expired' THEN 1 END) AS total_waste,
-    COUNT(CASE WHEN item_status = 'Used' THEN 1 END) AS total_used,
+    -- Donation (unchanged)
     COUNT(CASE WHEN item_status = 'Donated' THEN 1 END) AS total_donation
   FROM food_item_inventory
   WHERE expiry_date >= ?
@@ -47,17 +51,19 @@ $summary = $summaryRes->fetch_assoc();
 
 // Set defaults if null
 $summary = [
-    'total_saved' => (int)($summary['total_saved'] ?? 0),
-    'total_waste' => (int)($summary['total_waste'] ?? 0),
-    'total_used' => (int)($summary['total_used'] ?? 0),
+    'total_saved'    => (int)($summary['total_saved'] ?? 0),
+    'total_waste'    => (int)($summary['total_waste'] ?? 0),
     'total_donation' => (int)($summary['total_donation'] ?? 0)
 ];
 
-// Trend by expiry_date - group by date
+// ======================
+// TREND DATA (UPDATED)
+// ======================
 $trendQuery = "
   SELECT 
     DATE(expiry_date) AS date,
-    COUNT(CASE WHEN item_status IN ('Available', 'Planned for Meal', 'Used') THEN 1 END) AS saved,
+    -- Saved = Used + Planned for Meal (no more Available)
+    COUNT(CASE WHEN item_status IN ('Used', 'Planned for Meal') THEN 1 END) AS saved,
     COUNT(CASE WHEN item_status = 'Expired' THEN 1 END) AS wasted,
     COUNT(CASE WHEN item_status = 'Donated' THEN 1 END) AS donated,
     COUNT(CASE WHEN item_status = 'Used' THEN 1 END) AS used
@@ -80,15 +86,17 @@ $trendRes = $stmt2->get_result();
 $trend = [];
 while ($row = $trendRes->fetch_assoc()) {
     $trend[] = [
-        'date' => $row['date'],
-    'saved' => (int)$row['saved'],
-    'wasted' => (int)$row['wasted'],
-    'donated' => (int)$row['donated'],
-    'used' => (int)$row['used']
+        'date'    => $row['date'],
+        'saved'   => (int)$row['saved'],
+        'wasted'  => (int)$row['wasted'],
+        'donated' => (int)$row['donated'],
+        'used'    => (int)$row['used']
     ];
 }
 
-// Category distribution - count items per category
+// ==========================
+// CATEGORY DISTRIBUTION
+// ==========================
 $categoryQuery = "
   SELECT 
     item_category AS category,
@@ -113,21 +121,22 @@ $categoryRes = $stmt3->get_result();
 $category = [];
 while ($row = $categoryRes->fetch_assoc()) {
     $category[] = [
-        'category' => $row['category'],
+        'category'   => $row['category'],
         'percentage' => (float)$row['percentage'],
-        'count' => (int)$row['count']
+        'count'      => (int)$row['count']
     ];
 }
 
-// Return JSON response
+// ==========================
+// RETURN JSON RESPONSE
+// ==========================
 echo json_encode([
-    'total_saved' => $summary['total_saved'],
-    'total_waste' => $summary['total_waste'],
-    'total_used' => $summary['total_used'],
+    'total_saved'    => $summary['total_saved'],
+    'total_waste'    => $summary['total_waste'],
     'total_donation' => $summary['total_donation'],
-    'trend' => $trend,
-    'category' => $category,
-    'debug' => [
+    'trend'          => $trend,
+    'category'       => $category,
+    'debug'          => [
         'start_date' => $startDate,
         'range_days' => $range
     ]

@@ -7,20 +7,22 @@ body {
 }
 
 .dashboard-cards {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
+  justify-content: center;
   gap: 15px;
-  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .card {
   background: white;
   border-radius: 12px;
   padding: 15px;
+  width: 200px; /* keeps consistent size */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 2px solid #e5e7eb;
   transition: transform 0.2s, box-shadow 0.2s;
 }
+
 
 .card:hover {
   transform: translateY(-2px);
@@ -79,8 +81,7 @@ body {
 
 
 #foodChart,
-#donationChart,
-#usageChart {
+#donationChart{
   width: 100% !important;
   height: 380px !important;
   max-height: 380px !important;
