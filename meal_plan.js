@@ -267,8 +267,7 @@ async function filterInventoryForQuery(term){
 
 })();
 
-// ------------------------ Add Meal Modal with ingredient search ------------------------
-
+// ------------------------ Add Meal Modal (single header + ingredient rows) ------------------------
 (function(){
   const modal = document.getElementById('addMealModal');
   if (!modal) {
@@ -279,7 +278,7 @@ async function filterInventoryForQuery(term){
   const backdrop = document.getElementById('addMealBackdrop');
   const closeBtn = document.getElementById('addMealClose');
   const form = document.getElementById('addMealForm');
-  const ingredientsContainer = form?.querySelector('.grid-form-two');
+  const ingredientsContainer = form?.querySelector('.grid-form-two') || null; // where ingredient rows go
   const addIngredientBtn = document.getElementById('addIngredientBtn');
   const cancelBtn = document.getElementById('addMealCancel');
   const titleEl = document.getElementById('addMealTitle');
@@ -289,70 +288,94 @@ async function filterInventoryForQuery(term){
     return;
   }
 
-  // create ingredient row with numbering
+  // create a single header row (inserted once above ingredient rows)
+  function ensureIngredientHeader() {
+    let header = modal.querySelector('.ingredient-header');
+    if (header) return header;
+
+    header = document.createElement('div');
+    header.className = 'ingredient-header';
+    header.style.display = 'flex';
+    header.style.alignItems = 'center';
+    header.style.gap = '12px';
+    header.style.marginBottom = '8px';
+    header.style.padding = '4px 2px';
+
+    const colNum = document.createElement('div'); // empty space for badges
+    colNum.style.width = '36px';
+    colNum.style.flex = '0 0 36px';
+    header.appendChild(colNum);
+
+    const colName = document.createElement('div');
+    colName.className = 'col-name';
+    colName.textContent = 'Ingredient name';
+    header.appendChild(colName);
+
+    const colQty = document.createElement('div');
+    colQty.className = 'col-qty';
+    colQty.textContent = 'Quantity value';
+    header.appendChild(colQty);
+
+    const colUnit = document.createElement('div');
+    colUnit.className = 'col-unit';
+    colUnit.textContent = 'Unit';
+    header.appendChild(colUnit);
+
+    // insert header at top of the ingredientsContainer's parent (we want it above the rows)
+    // if grid-form-two is the container itself, put header before it
+    ingredientsContainer.parentNode.insertBefore(header, ingredientsContainer);
+    return header;
+  }
+
+  // create a single ingredient input row (no label row)
   async function createIngredientRow(prefillName = '', preQty = '', preUnit = '') {
-    // count existing ingredient rows
+    // compute current index (1-based) for the badge
     const rowCount = ingredientsContainer.querySelectorAll('.ingredient-row').length + 1;
 
     const row = document.createElement('div');
     row.className = 'ingredient-row';
-    row.style.position = 'relative';
     row.style.display = 'flex';
     row.style.flexDirection = 'column';
     row.style.gap = '8px';
-    row.style.marginBottom = '16px';
-    row.style.paddingBottom = '16px';
+    row.style.padding = '12px 0';
     row.style.borderBottom = '1px solid rgba(0,0,0,0.06)';
 
-    // LABEL row with numbering
+    // LABEL (compact) - number + optional small heading text removed (we use shared header)
     const labelRow = document.createElement('div');
     labelRow.style.display = 'flex';
-    labelRow.style.gap = '12px';
-    labelRow.style.fontSize = '13px';
-    labelRow.style.fontWeight = '600';
-    labelRow.style.color = '#4a7c59';
     labelRow.style.alignItems = 'center';
+    labelRow.style.gap = '12px';
 
     const numberBadge = document.createElement('span');
-    numberBadge.style.display = 'inline-flex';
-    numberBadge.style.alignItems = 'center';
-    numberBadge.style.justifyContent = 'center';
-    numberBadge.style.width = '24px';
-    numberBadge.style.height = '24px';
-    numberBadge.style.borderRadius = '50%';
-    numberBadge.style.background = 'var(--primary-green)';
-    numberBadge.style.color = '#fff';
-    numberBadge.style.fontSize = '12px';
-    numberBadge.style.fontWeight = '700';
+    numberBadge.className = 'ingredient-badge';
     numberBadge.textContent = rowCount;
+    Object.assign(numberBadge.style, {
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '28px',
+      height: '28px',
+      borderRadius: '50%',
+      background: 'var(--primary-green)',
+      color: '#fff',
+      fontWeight: '700',
+      fontSize: '13px',
+      flex: '0 0 28px'
+    });
 
-    const labelName = document.createElement('div');
-    labelName.style.flex = '1';
-    labelName.textContent = 'Ingredient name';
-
-    const labelQty = document.createElement('div');
-    labelQty.style.width = '120px';
-    labelQty.textContent = 'Quantity value';
-
-    const labelUnit = document.createElement('div');
-    labelUnit.style.width = '140px';
-    labelUnit.textContent = 'Unit';
-
-    labelRow.appendChild(numberBadge);
-    labelRow.appendChild(labelName);
-    labelRow.appendChild(labelQty);
-    labelRow.appendChild(labelUnit);
-
-    // INPUT row
+    // inputRow contains: nameWrap (relative) | qty | unit | remove
     const inputRow = document.createElement('div');
     inputRow.style.display = 'flex';
     inputRow.style.gap = '12px';
     inputRow.style.alignItems = 'center';
+    inputRow.style.width = '100%';
+    inputRow.style.boxSizing = 'border-box';
 
-    // NAME
+    // name wrapper (relative for suggest box)
     const nameWrap = document.createElement('div');
-    nameWrap.style.flex = '1';
     nameWrap.style.position = 'relative';
+    nameWrap.style.flex = '1';
+    nameWrap.style.minWidth = '0';
 
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
@@ -364,7 +387,6 @@ async function filterInventoryForQuery(term){
     nameInput.style.borderRadius = '8px';
     nameInput.style.border = '1px solid rgba(0,0,0,0.08)';
     nameInput.style.fontSize = '14px';
-    nameInput.style.boxSizing = 'border-box';
     nameInput.autocomplete = 'off';
 
     const hiddenId = document.createElement('input');
@@ -393,7 +415,7 @@ async function filterInventoryForQuery(term){
     nameWrap.appendChild(hiddenId);
     nameWrap.appendChild(suggestBox);
 
-    // QUANTITY VALUE
+    // qty input
     const qtyInput = document.createElement('input');
     qtyInput.type = 'text';
     qtyInput.placeholder = 'e.g. 2';
@@ -403,10 +425,9 @@ async function filterInventoryForQuery(term){
     qtyInput.style.borderRadius = '8px';
     qtyInput.style.border = '1px solid rgba(0,0,0,0.08)';
     qtyInput.style.fontSize = '14px';
-    qtyInput.style.boxSizing = 'border-box';
     qtyInput.value = preQty || '';
 
-    // UNIT
+    // unit input
     const unitInput = document.createElement('input');
     unitInput.type = 'text';
     unitInput.className = 'ingredient-unit';
@@ -416,46 +437,38 @@ async function filterInventoryForQuery(term){
     unitInput.style.borderRadius = '8px';
     unitInput.style.border = '1px solid rgba(0,0,0,0.08)';
     unitInput.style.fontSize = '14px';
-    unitInput.style.boxSizing = 'border-box';
     unitInput.value = preUnit || '';
 
-    const unitDatalistId = 'unit-options-datalist';
-    if (!document.getElementById(unitDatalistId)) {
-      const dl = document.createElement('datalist');
-      dl.id = unitDatalistId;
-      ['g','kg','pcs','pack','packs','ml','l','tbsp','tsp'].forEach(u=>{
-        const opt = document.createElement('option');
-        opt.value = u;
-        dl.appendChild(opt);
-      });
-      document.body.appendChild(dl);
-    }
-    unitInput.setAttribute('list', unitDatalistId);
-
-    // REMOVE
+    // remove button
     const removeBtn = document.createElement('button');
     removeBtn.type = 'button';
-    removeBtn.textContent = '✕';
     removeBtn.className = 'ingredient-remove';
+    removeBtn.textContent = '✕';
     Object.assign(removeBtn.style, {
       border: '1px solid rgba(0,0,0,0.08)',
       background: '#fff',
       borderRadius: '6px',
       padding: '10px 8px',
       cursor: 'pointer',
-      fontSize: '16px'
+      fontSize: '16px',
+      flex: '0 0 40px'
     });
 
+    // assemble inputRow
     inputRow.appendChild(nameWrap);
     inputRow.appendChild(qtyInput);
     inputRow.appendChild(unitInput);
     inputRow.appendChild(removeBtn);
 
+    // assemble labelRow (badge + inputRow)
+    labelRow.appendChild(numberBadge);
+    labelRow.appendChild(inputRow);
+
     row.appendChild(labelRow);
-    row.appendChild(inputRow);
+    // append row to container
     ingredientsContainer.appendChild(row);
 
-    // suggestions
+    // attach suggestion behaviour to nameInput
     let suggTimeout = null;
     nameInput.addEventListener('input', () => {
       const v = nameInput.value.trim();
@@ -527,21 +540,27 @@ async function filterInventoryForQuery(term){
           });
         }
         suggestBox.style.display = 'block';
-      }, 200);
+      }, 180);
     });
 
     document.addEventListener('click', ev => {
       if (!nameWrap.contains(ev.target)) suggestBox.style.display = 'none';
     });
 
-    removeBtn.addEventListener('click', () => row.remove());
+    removeBtn.addEventListener('click', () => {
+      row.remove();
+      // renumber remaining badges
+      Array.from(ingredientsContainer.querySelectorAll('.ingredient-row')).forEach((r, i) => {
+        const b = r.querySelector('.ingredient-badge');
+        if (b) b.textContent = (i + 1);
+      });
+    });
 
     return row;
   }
 
-  // modal open/close
+  // modal open/close logic
   let activeSlot = null;
-
   function slotLabel(slot){
     if (!slot) return 'Meal';
     return slot.charAt(0).toUpperCase() + slot.slice(1);
@@ -550,9 +569,12 @@ async function filterInventoryForQuery(term){
   function openModal(slot){
     activeSlot = slot || 'lunch';
     try { form.reset(); } catch(e){}
+    // clear existing ingredient rows and ensure header
+    const existingHeader = modal.querySelector('.ingredient-header');
+    if (existingHeader) existingHeader.remove();
     ingredientsContainer.innerHTML = '';
+    ensureIngredientHeader();
     createIngredientRow();
-
     if (titleEl) titleEl.textContent = `Add Meal for ${slotLabel(activeSlot)}`;
 
     modal.setAttribute('aria-hidden','false');
@@ -579,22 +601,25 @@ async function filterInventoryForQuery(term){
 
   addIngredientBtn?.addEventListener('click', e => {
     e.preventDefault();
+    // ensure header exists (if not created for some reason)
+    ensureIngredientHeader();
     createIngredientRow();
   });
 
-  // submit form
+  // submit form (same behavior as your previous code)
   form.addEventListener('submit', async ev => {
     ev.preventDefault();
-    
+
     const mealNameInput = form.querySelector('input[name="meal_name"]');
     const mealName = (mealNameInput?.value || '').trim();
-    
+
     if (!mealName) {
       alert('Please enter meal name');
       mealNameInput?.focus();
       return;
     }
 
+    // collect ingredient rows
     const rows = Array.from(ingredientsContainer.querySelectorAll('.ingredient-row'));
     const ingredients = rows.map(row => {
       const nameInput = row.querySelector('.ingredient-name');
@@ -629,22 +654,20 @@ async function filterInventoryForQuery(term){
         body: JSON.stringify(payload)
       });
       const json = await resp.json();
-      
+
       if (!resp.ok || !json.ok) {
         console.error('Save failed', json);
         alert('Failed to save meal: ' + (json.message || 'Unknown error'));
         return;
       }
 
-      // success: update UI
+      // on success add to UI demoMeals
       window.demoMeals[activeSlot] = window.demoMeals[activeSlot] || [];
       window.demoMeals[activeSlot].push(mealName);
+      if (typeof window.renderMeals === 'function') window.renderMeals();
 
-      if (typeof window.renderMeals === 'function') {
-        window.renderMeals();
-      }
-
-      inventoryCache = null;
+      // clear cache if any
+      if (typeof inventoryCache !== 'undefined') inventoryCache = null;
       closeModal();
       alert('Meal saved successfully!');
       console.log('[Add Meal] saved:', json);
@@ -655,8 +678,10 @@ async function filterInventoryForQuery(term){
     }
   });
 
+  // ESC to close
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') closeModal();
   });
 
-})();  // end modal IIFE
+})(); // end modal IIFE
+  // end modal IIFE

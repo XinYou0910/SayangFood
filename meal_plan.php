@@ -160,13 +160,12 @@ if (!isset($_SESSION['user_id'])) {
             
             <!-- Add ingredient button -->
             <button type="button" id="addIngredientBtn" style="margin-top: 12px; padding: 10px 16px; background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 8px; color: var(--primary-green); font-weight: 600; cursor: pointer;">+ Add ingredient</button>
-            <p style="margin-top: 8px; font-size: 13px; color: #999;">Choose from your inventory (type to search). Quantity value and unit will auto-fill from the database when available.</p>
           </div>
 
           <!-- Remark field -->
           <div style="margin-bottom: 20px;">
             <label style="display: block; font-size: 13px; font-weight: 600; color: #4a7c59; margin-bottom: 8px; text-transform: capitalize;">Remark (optional)</label>
-            <textarea name="meal_remark" placeholder="Optional: e.g. use soon, almost expired, for donation..." style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08); font-size: 14px; box-sizing: border-box; min-height: 80px; resize: vertical; font-family: inherit;"></textarea>
+            <textarea name="meal_remark" placeholder="Optional: e.g. make for kids, bring to workplace..." style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08); font-size: 14px; box-sizing: border-box; min-height: 80px; resize: vertical; font-family: inherit;"></textarea>
           </div>
 
         </form>

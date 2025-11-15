@@ -342,3 +342,206 @@ html, body {
 .ingredient-header .col-unit {
   width: 140px;
 }
+
+/* -------------------- ADDED: Improved Add Meal form / ingredient-row layout --------------------
+   This section provides the clear, aligned layout for ingredient rows (label row + input row),
+   suggestion dropdown positioning (so it doesn't overlap qty/unit), responsive stacking, and
+   button styling. It intentionally overrides modal rules above where required.
+   ------------------------------------------------------------------------------ */
+
+/* container for the two-column grid where ingredient rows are appended */
+#addMealModal .grid-form-two {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* an ingredient row contains two stacked divs from JS:
+   [0] = label row (number badge + column headings)
+   [1] = input row (name input | qty | unit | remove) */
+#addMealModal .ingredient-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+/* LABEL row (first child) — shows number + column labels */
+#addMealModal .ingredient-row > div:nth-child(1) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary-green);
+}
+
+/* style the number badge (JS creates a span inside the label row) */
+#addMealModal .ingredient-row > div:nth-child(1) span {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  background:var(--primary-green);
+  color:#fff;
+  font-weight:800;
+  font-size:13px;
+}
+
+/* LABEL text columns — keep columns aligned with inputs below */
+#addMealModal .ingredient-row > div:nth-child(1) > div:nth-child(2) { flex: 1; }    /* Ingredient name label */
+#addMealModal .ingredient-row > div:nth-child(1) > div:nth-child(3) { width:120px; } /* Quantity label */
+#addMealModal .ingredient-row > div:nth-child(1) > div:nth-child(4) { width:140px; } /* Unit label */
+
+/* INPUT row (second child) — align inputs horizontally */
+#addMealModal .ingredient-row > div:nth-child(2) {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Name input area — allow suggestions dropdown to position absolutely inside this wrapper */
+#addMealModal .ingredient-row .ingredient-name,
+#addMealModal .ingredient-row input.ingredient-name {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+/* Ensure name input wrapper is positioned relative so suggest-list can be absolute */
+#addMealModal .ingredient-row .ingredient-name,
+#addMealModal .ingredient-row .ingredient-item-id,
+#addMealModal .ingredient-row .suggest-list {
+  position: relative;
+}
+
+/* Quantity and Unit inputs fixed width */
+#addMealModal .ingredient-row .ingredient-qty,
+#addMealModal .ingredient-row input.ingredient-qty {
+  width: 120px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  box-sizing: border-box;
+  font-size: 14px;
+}
+
+#addMealModal .ingredient-row .ingredient-unit,
+#addMealModal .ingredient-row input.ingredient-unit {
+  width: 140px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  box-sizing: border-box;
+  font-size: 14px;
+}
+
+/* Remove button aligns at the end */
+#addMealModal .ingredient-row .ingredient-remove,
+#addMealModal .ingredient-row .ingredient-remove:focus {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.06);
+  background: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+/* Suggest-list: position it so it appears below the name input and doesn't overlap qty/unit */
+#addMealModal .ingredient-row .suggest-list {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 300px; /* leaves room for the qty/unit inputs on the right */
+  max-height: 220px;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  border-radius: 8px;
+  z-index: 12000;
+  display: none; /* JS toggles this */
+  padding: 6px 0;
+}
+
+/* Suggest items */
+#addMealModal .ingredient-row .suggest-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(0,0,0,0.03);
+}
+#addMealModal .ingredient-row .suggest-item:last-child { border-bottom: none; }
+#addMealModal .ingredient-row .suggest-item:hover { background: #f7faf7; color: var(--primary-green); }
+
+/* Add-ingredient button — visual style like picture 2 */
+#addMealModal #addIngredientBtn {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.06);
+  background: #fff;
+  color: var(--primary-green);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.04);
+}
+
+/* make the add button sit left and the optional note beneath it */
+#addMealModal #addIngredientBtn + p { margin-top: 10px; color: #9aa6b2; font-size: 13px; }
+
+/* Modal textarea / remark styling — full width and comfortable height */
+#addMealModal textarea[name="meal_remark"] {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  box-sizing: border-box;
+  font-size: 14px;
+  resize: vertical;
+}
+
+/* footer buttons spacing */
+#addMealModal .modal-footer { display: flex; justify-content: flex-end; gap: 12px; align-items: center; margin-top: 12px; }
+
+/* Responsive: stack qty/unit/remove under name on small screens */
+@media (max-width:720px) {
+  #addMealModal .ingredient-row > div:nth-child(2) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  #addMealModal .ingredient-row .ingredient-qty,
+  #addMealModal .ingredient-row .ingredient-unit,
+  #addMealModal .ingredient-row .ingredient-remove {
+    width: 100%;
+  }
+  #addMealModal .ingredient-row .suggest-list { right: 10px; }
+}
+
+/* Make the panel body scroll smooth and padding comfortable */
+#addMealModal .modal-body {
+  padding: 12px 6px 6px 6px;
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+/* small cosmetic: give header title stronger color */
+#addMealModal #addMealTitle { color: var(--primary-green); font-weight: 900; font-size: 20px; margin: 0 6px 8px 0; }
+
+/* -------------------- END of added Add Meal layout rules -------------------- */
