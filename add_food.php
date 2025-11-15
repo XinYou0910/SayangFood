@@ -8,6 +8,48 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// ============================================
+// Function to check and create expiry notification
+// ============================================
+function checkAndCreateExpiryNotification($conn, $user_id, $item_name, $expiry_date) {
+    $now = new DateTime();
+    $today = $now->format('Y-m-d');
+    $now_timestamp = $now->format('Y-m-d H:i:s');
+    
+    // Calculate days until expiry
+    $expiry = new DateTime($expiry_date);
+    $interval = $now->diff($expiry);
+    $days_remaining = $interval->days;
+    $is_expired = $interval->invert === 1; // invert=1 means expiry is in the past
+    
+    $notification_type = 'Inventory';
+    $message = '';
+    
+    if ($is_expired) {
+        // Item has already expired
+        $message = "\"$item_name\" is expired!";
+    } elseif ($days_remaining <= 3 && $days_remaining >= 0) {
+        // Item will expire within 3 days
+        $day_word = ($days_remaining === 1) ? 'day' : 'days';
+        $message = "\"$item_name\" is going to expire in $days_remaining $day_word! Would you want to plan it as meal or donate it?";
+    }
+    
+    // Only insert notification if item is expiring soon or expired
+    if (!empty($message)) {
+        $insert_sql = "
+            INSERT INTO notification 
+            (user_id, notification_type, message, notification_status, timestamp)
+            VALUES (?, ?, ?, 'Unread', ?)
+        ";
+        $insert_stmt = $conn->prepare($insert_sql);
+        if ($insert_stmt) {
+            $insert_stmt->bind_param('isss', $user_id, $notification_type, $message, $now_timestamp);
+            $insert_stmt->execute();
+            $insert_stmt->close();
+        }
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ------------------------------
     // 1️⃣ Retrieve form inputs safely
@@ -77,6 +119,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ('$user_id', '$item_name', '$item_category', '$quantity', '$expiry_date', '$item_status', '$storage_place', '$item_remark')";
 
     if (mysqli_query($conn, $sql)) {
+        // ✅ Item added successfully - now check if it needs an expiry notification
+        checkAndCreateExpiryNotification($conn, $user_id, $item_name, $expiry_date);
+        
         echo "<script>alert('✅ New food item added successfully!'); window.location.href='inventory_list.php';</script>";
         exit();
     } else {
