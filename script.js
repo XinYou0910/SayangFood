@@ -41,45 +41,6 @@ function placeholderFor(field) {
   );
 }
 
-// Toggle edit mode for weekly meal table
-function toggleEdit(enable) {
-  editing = enable;
-  const body = document.getElementById("weekBody");
-  const tds = body.querySelectorAll("td[data-field]");
-
-  if (editing) {
-    tds.forEach((td) => cellToInput(td));
-    document.getElementById("editBtn").disabled = true;
-  } else {
-    tds.forEach((td) => inputToCell(td));
-    document.getElementById("editBtn").disabled = false;
-  }
-}
-
-// Accept suggestion → insert into weekly plan
-function acceptSuggestion() {
-  const s = document.querySelector("#suggestRow").children;
-  const rowData = {
-    date: s[0].textContent.trim(),
-    slot: s[1].textContent.trim(),
-    meal: s[2].textContent.trim(),
-    item: s[3].textContent.trim(),
-    qty: s[4].textContent.trim(),
-    remark: s[5].textContent.trim(),
-    status: "Accepted",
-  };
-  appendWeekRow(rowData);
-  document.getElementById("suggestRow").style.opacity = 0.45;
-}
-
-// Reject suggestion → mark visually
-function rejectSuggestion() {
-  const chip = document.querySelector("#suggestRow .status");
-  chip.className = "status";
-  chip.textContent = "Rejected";
-  document.getElementById("suggestRow").style.opacity = 0.35;
-}
-
 // Append a new row into the weekly table
 function appendWeekRow(data) {
   const body = document.getElementById("weekBody");
@@ -248,52 +209,6 @@ function restoreUnitDropdown(customValue) {
     select.value = customValue.trim();
   }
 }
-
-// ----------------------
-// BROWSE FOOD DROPDOWN (NEW VERSION)
-// ----------------------
-document.addEventListener("DOMContentLoaded", () => {
-  const dropdownBtn =
-    document.getElementById("browseToggle") ||
-    document.querySelector(".dropdown-btn");
-  const dropdownMenu =
-    document.getElementById("dropdownMenu") ||
-    document.querySelector(".dropdown-container");
-  const arrow =
-    document.getElementById("arrowIcon") ||
-    (dropdownBtn ? dropdownBtn.querySelector(".arrow") : null);
-
-  if (!dropdownBtn || !dropdownMenu) return;
-
-  // Toggle open/close
-  dropdownBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    dropdownMenu.classList.toggle("show");
-    if (arrow) arrow.classList.toggle("open");
-  });
-
-  // ✅ Close when clicking a submenu
-  dropdownMenu.addEventListener("click", (e) => {
-    const clickedItem = e.target.closest("button, a");
-    if (!clickedItem) return;
-    dropdownMenu.classList.remove("show");
-    if (arrow) arrow.classList.remove("open");
-  });
-
-  // ✅ Close when clicking outside
-  document.addEventListener("click", (e) => {
-    if (!dropdownMenu.contains(e.target) && !dropdownBtn.contains(e.target)) {
-      dropdownMenu.classList.remove("show");
-      if (arrow) arrow.classList.remove("open");
-    }
-  });
-
-  // ✅ Highlight current active submenu
-  const currentPage = window.location.pathname.split("/").pop();
-  document.querySelectorAll(".submenu-item").forEach((item) => {
-    if (item.dataset.page === currentPage) item.classList.add("active");
-  });
-});
 
 function changeQty(change) {
   const input = document.getElementById('quantityValue');
@@ -714,64 +629,71 @@ if (protectedPages.includes(currentPage)) {
   }
 
 // ===========================
-// Sidebar Active Highlight + Dropdown Auto Expand
+// Sidebar Active Highlight + Dropdown Auto Expand (Improved for Meal Plan)
 // ===========================
 document.addEventListener("DOMContentLoaded", () => {
   const currentPage = window.location.pathname.split("/").pop().toLowerCase();
-  const menuItems = document.querySelectorAll(".menu-item");
   const dropdownBtn = document.querySelector(".dropdown-btn");
   const dropdownContainer = document.getElementById("dropdownMenu");
   const arrowIcon = document.getElementById("arrowIcon");
 
-  // Step 1: Reset all active states
-  menuItems.forEach(btn => btn.classList.remove("active"));
+  // Reset all actives
+  document.querySelectorAll(".menu-item, .submenu-item").forEach((btn) =>
+    btn.classList.remove("active")
+  );
 
-  // Step 2: Apply highlight based on current page
-  menuItems.forEach(btn => {
-    const text = btn.innerText.trim().toLowerCase();
-
-    // Dashboard page
-    if (currentPage.includes("dashboard") && text.includes("dashboard")) {
-      btn.classList.add("active");
-    }
-
-    // Browse Food Item dropdown (Inventory, Weekly Meal, Donations)
-    else if (
-      (currentPage.includes("inventory") ||
-       currentPage.includes("weekly_meal") ||
-       currentPage.includes("donation")) &&
-      text.includes("browse")
-    ) {
-      btn.classList.add("active");
-
-      // Auto expand dropdown
-      if (dropdownContainer) {
-        dropdownContainer.style.display = "block";
-        arrowIcon.textContent = "▲";
+  // Highlight Dashboard
+  if (currentPage.includes("dashboard")) {
+    document.querySelectorAll(".menu-item").forEach((btn) => {
+      if (btn.textContent.trim().toLowerCase().includes("dashboard")) {
+        btn.classList.add("active");
       }
+    });
+  }
 
-      // Highlight current submenu item
-      const submenuItems = document.querySelectorAll(".submenu-item");
-      submenuItems.forEach(sub => {
-        const page = sub.getAttribute("data-page").toLowerCase();
-        if (currentPage === page) {
-          sub.classList.add("active");
-        } else {
-          sub.classList.remove("active");
-        }
-      });
+  // Highlight Analytics
+  if (currentPage.includes("analytics")) {
+    document.querySelectorAll(".menu-item").forEach((btn) => {
+      if (btn.textContent.trim().toLowerCase().includes("analytics")) {
+        btn.classList.add("active");
+      }
+    });
+  }
+
+  // Highlight Notification
+  if (currentPage.includes("notification")) {
+    document.querySelectorAll(".menu-item").forEach((btn) => {
+      if (btn.textContent.trim().toLowerCase().includes("notification")) {
+        btn.classList.add("active");
+      }
+    });
+  }
+
+  // For dropdown pages (Inventory / Meal Plan / Donation)
+  if (
+    currentPage.includes("inventory") ||
+    currentPage.includes("meal_plan") ||
+    currentPage.includes("weekly_meal") ||
+    currentPage.includes("donation")
+  ) {
+    // Highlight parent button (Browse Food Items)
+    if (dropdownBtn) dropdownBtn.classList.add("active");
+
+    // Open the dropdown
+    if (dropdownContainer) dropdownContainer.classList.add("show");
+
+    // Flip arrow
+    if (arrowIcon) {
+      arrowIcon.textContent = "▲";
+      arrowIcon.classList.add("open");
     }
 
-    // Food Analytics page
-    else if (currentPage.includes("analytics") && text.includes("analytics")) {
-      btn.classList.add("active");
-    }
-
-    // Notification page
-    else if (currentPage.includes("notification") && text.includes("notification")) {
-      btn.classList.add("active");
-    }
-  });
+    // Highlight the correct submenu
+    document.querySelectorAll(".submenu-item").forEach((sub) => {
+      const page = (sub.getAttribute("data-page") || "").toLowerCase();
+      if (page === currentPage) sub.classList.add("active");
+    });
+  }
 });
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -802,4 +724,115 @@ function logout() {
   window.location.href = "Homepage.html";
 }
 
+// hydrate username like your inventory page
+    document.addEventListener("DOMContentLoaded", () => {
+      const username = localStorage.getItem("user_name");
+      if (username) document.getElementById("username").textContent = username;
+    });
 
+    // ------- Row building + collection ----------
+    function addNewMealRow(){
+      const body = document.getElementById('weekBody');
+      const addRow = document.getElementById('addRow');
+      const tr = document.createElement('tr');
+
+      const col = (field, html) => {
+        const td = document.createElement('td'); td.dataset.field = field; td.innerHTML = html; return td;
+      };
+
+      tr.appendChild(col('date', `<input type="date" value="<?php echo htmlspecialchars($weekStart->format('Y-m-d')) ?>">`));
+      tr.appendChild(col('slot', `<select><option>Breakfast</option><option>Lunch</option><option>Dinner</option></select>`));
+      tr.appendChild(col('meal', `<input type="text" placeholder="Meal name…">`));
+      tr.appendChild(col('item', `<input type="text" placeholder="Item name…">`));
+      tr.appendChild(col('qty',  `<input type="text" placeholder="Qty (e.g., 1 can, 800g)">`));
+      tr.appendChild(col('remark', `<input type="text" placeholder="Remark">`));
+      tr.appendChild((() => { const td = document.createElement('td'); td.innerHTML = `<span class="status-chip">—</span>`; return td; })());
+
+      body.insertBefore(tr, addRow);
+    }
+
+    function rowToObj(tr){
+      const val = (f) => {
+        const el = tr.querySelector(`[data-field="${f}"] input, [data-field="${f}"] select`);
+        return (el ? el.value : tr.querySelector(`[data-field="${f}"]`).textContent).trim();
+      };
+      return { date:val('date'), slot:val('slot'), meal:val('meal'),
+               item:val('item'), qty:val('qty'), remark:val('remark') };
+    }
+
+    function collectWeekData(){
+      const trs = Array.from(document.querySelectorAll('#weekBody tr')).filter(r => r.id !== 'addRow');
+      return trs.map(rowToObj).filter(r => r.date && r.slot && r.meal);
+    }
+
+    // ------- Save to backend (uses meal_plan_save.php) ----------
+    async function savePlan(){
+      const payload = { rows: collectWeekData() };
+      if (!payload.rows.length){ alert('Nothing to save.'); return; }
+
+      const res = await fetch('meal_plan_save.php', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (!data.ok){ alert(data.error || 'Save failed'); return; }
+
+      // update status badges from backend result
+      const chips = document.querySelectorAll('#weekBody tr:not(#addRow) td:last-child .status-chip');
+      data.statuses.forEach((s,i)=>{
+        if (!chips[i]) return;
+        chips[i].className = 'status-chip ' + (s==='Available' ? 'status-ok' : 'status-warn');
+        chips[i].textContent = s;
+      });
+
+      // mark related inventory rows as "Planned for Meal" (optional UX feedback handled server-side too)
+      alert('Weekly plan saved.');
+    }
+
+    // ------- Suggestion accept/reject (uses suggestion_action.php) ----------
+    async function acceptSuggestion(){
+      const tds = document.querySelectorAll('#suggestRow td');
+      const body = {
+        action:'accept',
+        date: tds[0].textContent.trim(),
+        slot: tds[1].textContent.trim(),
+        meal: tds[2].textContent.trim(),
+        item: tds[3].textContent.trim(),
+        qty : tds[4].textContent.trim(),
+        remark: tds[5].textContent.trim()
+      };
+
+      const res = await fetch('suggestion_action.php', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!data.ok){ alert(data.error || 'Failed to accept'); return; }
+
+      // append to week table
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td data-field="date">${body.date}</td>
+        <td data-field="slot">${body.slot}</td>
+        <td data-field="meal">${body.meal}</td>
+        <td data-field="item">${body.item}</td>
+        <td data-field="qty">${body.qty}</td>
+        <td data-field="remark">${body.remark}</td>
+        <td><span class="status-chip ${data.status==='Available'?'status-ok':'status-warn'}">${data.status}</span></td>`;
+      document.getElementById('weekBody').insertBefore(tr, document.getElementById('addRow'));
+
+      document.getElementById('suggestRow').style.opacity = .45;
+    }
+
+    async function rejectSuggestion(){
+      const res = await fetch('suggestion_action.php', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({action:'reject'})
+      });
+      const data = await res.json();
+      if (!data.ok){ alert(data.error || 'Failed to reject'); return; }
+      const chip = document.querySelector('#suggestRow .status-chip');
+      chip.className = 'status-chip'; chip.textContent = 'Rejected';
+      document.getElementById('suggestRow').style.opacity = .35;
+    }
