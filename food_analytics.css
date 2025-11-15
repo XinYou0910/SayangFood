@@ -6,6 +6,122 @@ body {
   color: #0f172a;
 }
 
+/* Improved Filter Section */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  background: #f3f4f6;
+  padding: 12px 18px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Quick filter and custom filter enhancements */
+.quick-filter,
+.custom-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  border-radius: 8px;
+  background: white;
+  padding: 8px 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+/* Hover effect for filter inputs */
+.quick-filter:hover,
+.custom-filter:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Input elements */
+.filter-bar input[type="date"],
+.filter-bar select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  width: 150px;
+  background-color: #f9fafb;
+  color: #4b5563;
+  transition: border 0.3s ease;
+}
+
+/* Focus effect for input fields */
+.filter-bar input[type="date"]:focus,
+.filter-bar select:focus {
+  border-color: #10b981;
+  outline: none;
+}
+
+/* Apply Button */
+#filterBtn, #applyCustomFilter {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #4CAF50, #2E8B57);
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover effect for apply button */
+#filterBtn:hover, #applyCustomFilter:hover {
+  background: linear-gradient(135deg, #ff9800, #f44336);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+}
+
+/* Custom Filter Layout */
+.custom-filter input[type="date"] {
+  width: 130px; /* Adjusted width */
+}
+
+/* Custom range divider */
+.custom-filter span {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Enhanced layout for different screen sizes */
+@media (max-width: 768px) {
+  .filter-bar {
+    flex-direction: column;
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .quick-filter,
+  .custom-filter {
+    width: 100%;
+    justify-content: space-between;
+    padding: 10px;
+  }
+
+  .filter-bar input[type="date"],
+  .filter-bar select {
+    width: 100%;
+    padding: 10px;
+  }
+
+  #filterBtn, #applyCustomFilter {
+    width: 100%;
+    padding: 12px;
+  }
+}
+
+
+
 .dashboard-cards {
   display: flex;
   justify-content: center;
@@ -277,8 +393,78 @@ body {
 }
 
 /* Category filters row */
-.category-filters { display:flex; align-items:center; gap:12px; margin-inline-start:4px; margin-bottom:6px; }
-.category-filters input, .category-filters select { font-size:14px; }
+/* Improved Category Filter Section */
+.category-filters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+  background: #f3f4f6;
+  padding: 12px 18px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Individual category filter inputs */
+.category-filters input,
+.category-filters select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  background-color: #f9fafb;
+  color: #4b5563;
+  width: 180px;
+  transition: border 0.3s ease;
+}
+
+/* Focus effect for input fields */
+.category-filters input:focus,
+.category-filters select:focus {
+  border-color: #10b981;
+  outline: none;
+}
+
+/* Apply Filter Button */
+.toolbar-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #4CAF50, #2E8B57);
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover effect for apply filter button */
+.toolbar-btn:hover {
+  background: linear-gradient(135deg, #ff9800, #f44336);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+}
+
+/* Category Filter layout adjustments for smaller screens */
+@media (max-width: 768px) {
+  .category-filters {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .category-filters input,
+  .category-filters select {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .toolbar-btn {
+    width: 100%;
+    padding: 12px;
+  }
+}
+
 
 /* Remove extra internal top padding so donut sits closer to filters */
 #categorySection .chart-box { padding-top: 0; }

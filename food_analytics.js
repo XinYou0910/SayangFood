@@ -2,21 +2,55 @@ const ctx = document.getElementById("foodChart").getContext("2d");
 let currentChart = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-  loadAnalytics();
+  // default: last 30 days
+  loadAnalytics({ range: 30 });
+
   document.getElementById("filterBtn").addEventListener("click", applyFilter);
+  document.getElementById("applyCustomFilter").addEventListener("click", applyCustomDateFilter);
   document.getElementById("trendBtn").addEventListener("click", showTrend);
   document.getElementById("categoryBtn").addEventListener("click", showCategory);
 });
 
+
+// example quick filter
 function applyFilter() {
-  const range = document.getElementById("filterRange").value;
-  loadAnalytics(range);
+  const range = parseInt(document.getElementById("filterRange").value, 10) || 30;
+  loadAnalytics({ range });
 }
 
-function loadAnalytics(range = 30) {
-  console.log('Loading analytics with range:', range);
-  
-  fetch(`food_analytics_data.php?range=${range}`)
+// example custom calendar filter
+function applyCustomDateFilter() {
+  const startInput = document.getElementById("startDate").value;
+  const endInput   = document.getElementById("endDate").value;
+
+  if (!startInput || !endInput) {
+    alert("Please select both start and end dates.");
+    return;
+  }
+  if (startInput > endInput) {
+    alert("Start date cannot be after end date.");
+    return;
+  }
+
+  loadAnalytics({ startDate: startInput, endDate: endInput });
+}
+
+
+
+function loadAnalytics(options = {}) {
+  const { range = 30, startDate = null, endDate = null } = options;
+  console.log('Loading analytics with options:', options);
+
+  const params = new URLSearchParams();
+
+  if (startDate && endDate) {
+    params.append('start', startDate);
+    params.append('end', endDate);
+  } else {
+    params.append('range', range);
+  }
+
+  fetch(`food_analytics_data.php?${params.toString()}`)
     .then(res => {
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
@@ -24,30 +58,30 @@ function loadAnalytics(range = 30) {
       return res.json();
     })
     .then(data => {
-      console.log('Analytics data received:', data);
-      
+      console.log('Analytics data received:', data); // Debugging data received
+
       if (data.error) {
         console.error('Server error:', data.error, data.details);
         alert('Error loading analytics: ' + data.error);
         return;
       }
-      
-      updateSummary(data);
-      
-      if (data.trend && data.trend.length > 0) {
-          drawTrend(data.trend);
-          drawDonationChart(data.trend);
-        } else {
-          console.warn('No trend data available');
-          showNoDataMessage();
-        }
 
+      updateSummary(data);
+
+      if (data.trend && data.trend.length > 0) {
+        drawTrend(data.trend);
+        drawDonationChart(data.trend);
+      } else {
+        console.warn('No trend data available');
+        // Handle the case where no trend data is returned
+      }
     })
     .catch(err => {
       console.error("Error loading analytics:", err);
       alert('Failed to load analytics data. Check console for details.');
     });
 }
+
 
 
 function updateSummary(data) {

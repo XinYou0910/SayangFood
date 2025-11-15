@@ -66,14 +66,27 @@
       <p>Advanced analytics and predictive insights for waste management.</p>
     </div>
 
-    <div class="filter-controls">
-      <select id="filterRange">
-        <option value="7">7 days</option>
-        <option value="30" selected>1 month</option>
-        <option value="365">12 months</option>
-      </select>
-      <button id="filterBtn" class="filter-btn">Filter</button>
-    </div>
+<div class="filter-bar">
+  <!-- Quick filter (7, 30, 90 days) -->
+  <div class="quick-filter">
+    <label for="filterRange">Quick range:</label>
+    <select id="filterRange">
+      <option value="7">Last 7 days</option>
+      <option value="30" selected>Last 30 days</option>
+      <option value="90">Last 90 days</option>
+    </select>
+    <button id="filterBtn">Apply</button>
+  </div>
+
+  <!-- Custom date range with calendar -->
+  <div class="custom-filter">
+    <span>or custom range:</span>
+    <input type="date" id="startDate">
+    <input type="date" id="endDate">
+    <button id="applyCustomFilter">Apply</button>
+  </div>
+</div>
+
 
     <!-- Summary Cards -->
     <div class="dashboard-cards">
