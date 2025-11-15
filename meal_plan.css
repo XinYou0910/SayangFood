@@ -320,3 +320,25 @@ html, body {
 
 /* small tweak so modal footer buttons remain clickable */
 .modal-panel{ position:relative; z-index:11000; }
+
+/* Ingredient header – match Add Food Item modal */
+.ingredient-header {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--primary-green);
+}
+
+.ingredient-header .col-name {
+  flex: 1;
+}
+
+.ingredient-header .col-qty {
+  width: 120px;
+}
+
+.ingredient-header .col-unit {
+  width: 140px;
+}

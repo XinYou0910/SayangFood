@@ -145,42 +145,37 @@ if (!isset($_SESSION['user_id'])) {
 
       <div class="modal-body">
         <form id="addMealForm" autocomplete="off">
-          <!-- Only meal name now -->
-          <div class="grid-form-two">
-            <div style="grid-column: 1 / -1;">
-              <label class="label-lg">Meal name</label>
-              <input id="mealNameInput" type="text" placeholder="e.g. Fried Rice" required />
-            </div>
+          <!-- Meal name -->
+          <div style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #4a7c59; margin-bottom: 8px; text-transform: capitalize;">Meal name</label>
+            <input type="text" name="meal_name" placeholder="e.g. Fried Rice" style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08); font-size: 14px; box-sizing: border-box;">
           </div>
 
-          <hr style="margin:14px 0; border:none; border-top:1px solid var(--border);" />
-
-          <label class="label-lg">Ingredients</label>
-
-          <!-- Column labels for clarity -->
-          <div style="display:flex; gap:8px; font-size:13px; color:var(--muted); margin-bottom:4px;">
-            <div style="flex:1;">Ingredient name</div>
-            <div style="width:110px;">Quantity value</div>
-            <div style="width:140px;">Unit</div>
+          <!-- Ingredients section -->
+          <div style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 16px; font-weight: 700; color: var(--primary-green); margin-bottom: 12px;">Ingredients</label>
+            
+            <!-- Container where JS appends ingredient rows -->
+            <div class="grid-form-two" style="display: flex; flex-direction: column; gap: 8px;"></div>
+            
+            <!-- Add ingredient button -->
+            <button type="button" id="addIngredientBtn" style="margin-top: 12px; padding: 10px 16px; background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 8px; color: var(--primary-green); font-weight: 600; cursor: pointer;">+ Add ingredient</button>
+            <p style="margin-top: 8px; font-size: 13px; color: #999;">Choose from your inventory (type to search). Quantity value and unit will auto-fill from the database when available.</p>
           </div>
 
-          <div id="ingredientsContainer">
-            <!-- rows added by JS -->
+          <!-- Remark field -->
+          <div style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #4a7c59; margin-bottom: 8px; text-transform: capitalize;">Remark (optional)</label>
+            <textarea name="meal_remark" placeholder="Optional: e.g. use soon, almost expired, for donation..." style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08); font-size: 14px; box-sizing: border-box; min-height: 80px; resize: vertical; font-family: inherit;"></textarea>
           </div>
 
-          <div style="display:flex; gap:12px; margin-top:10px; align-items:center;">
-            <button id="addIngredientBtn" type="button" class="btn-ghost">+ Add ingredient</button>
-            <small class="muted">
-              Choose from your inventory (type to search). Quantity value and unit will auto-fill from the database when available.
-            </small>
-          </div>
-
-          <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:18px;">
-            <button id="addMealCancel" type="button" class="btn-ghost">Cancel</button>
-            <button id="addMealSubmit" type="submit" class="action-btn primary-btn">Add Meal</button>
-          </div>
         </form>
       </div>
+
+      <footer class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end; padding: 16px 20px; border-top: 1px solid rgba(0,0,0,0.06);">
+        <button type="button" id="addMealCancel" style="padding: 10px 20px; border: 1px solid rgba(0,0,0,0.08); background: #fff; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
+        <button type="submit" form="addMealForm" style="padding: 10px 24px; background: var(--primary-green); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 700;">Add Meal</button>
+      </footer>
     </div>
   </div>
 

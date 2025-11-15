@@ -271,29 +271,83 @@ async function filterInventoryForQuery(term){
 
 (function(){
   const modal = document.getElementById('addMealModal');
-  if (!modal) return;
+  if (!modal) {
+    console.warn('[Add Meal Modal] addMealModal not found');
+    return;
+  }
 
-  const backdrop            = document.getElementById('addMealBackdrop');
-  const closeBtn            = document.getElementById('addMealClose');
-  const form                = document.getElementById('addMealForm');
-  const mealNameInput       = document.getElementById('mealNameInput');
-  const ingredientsContainer= document.getElementById('ingredientsContainer');
-  const addIngredientBtn    = document.getElementById('addIngredientBtn');
-  const cancelBtn           = document.getElementById('addMealCancel');
-  const titleEl             = document.getElementById('addMealTitle');
+  const backdrop = document.getElementById('addMealBackdrop');
+  const closeBtn = document.getElementById('addMealClose');
+  const form = document.getElementById('addMealForm');
+  const ingredientsContainer = form?.querySelector('.grid-form-two');
+  const addIngredientBtn = document.getElementById('addIngredientBtn');
+  const cancelBtn = document.getElementById('addMealCancel');
+  const titleEl = document.getElementById('addMealTitle');
 
-  [backdrop, closeBtn, form, mealNameInput, ingredientsContainer, addIngredientBtn, cancelBtn]
-    .forEach(el => { if (!el) console.warn('Add-meal script expected element missing', el); });
+  if (!form || !ingredientsContainer) {
+    console.warn('[Add Meal Modal] form or ingredientsContainer missing');
+    return;
+  }
 
-  // create ingredient row
+  // create ingredient row with numbering
   async function createIngredientRow(prefillName = '', preQty = '', preUnit = '') {
+    // count existing ingredient rows
+    const rowCount = ingredientsContainer.querySelectorAll('.ingredient-row').length + 1;
+
     const row = document.createElement('div');
     row.className = 'ingredient-row';
     row.style.position = 'relative';
-    row.style.display  = 'flex';
-    row.style.gap      = '8px';
-    row.style.marginBottom = '8px';
-    row.style.alignItems   = 'center';
+    row.style.display = 'flex';
+    row.style.flexDirection = 'column';
+    row.style.gap = '8px';
+    row.style.marginBottom = '16px';
+    row.style.paddingBottom = '16px';
+    row.style.borderBottom = '1px solid rgba(0,0,0,0.06)';
+
+    // LABEL row with numbering
+    const labelRow = document.createElement('div');
+    labelRow.style.display = 'flex';
+    labelRow.style.gap = '12px';
+    labelRow.style.fontSize = '13px';
+    labelRow.style.fontWeight = '600';
+    labelRow.style.color = '#4a7c59';
+    labelRow.style.alignItems = 'center';
+
+    const numberBadge = document.createElement('span');
+    numberBadge.style.display = 'inline-flex';
+    numberBadge.style.alignItems = 'center';
+    numberBadge.style.justifyContent = 'center';
+    numberBadge.style.width = '24px';
+    numberBadge.style.height = '24px';
+    numberBadge.style.borderRadius = '50%';
+    numberBadge.style.background = 'var(--primary-green)';
+    numberBadge.style.color = '#fff';
+    numberBadge.style.fontSize = '12px';
+    numberBadge.style.fontWeight = '700';
+    numberBadge.textContent = rowCount;
+
+    const labelName = document.createElement('div');
+    labelName.style.flex = '1';
+    labelName.textContent = 'Ingredient name';
+
+    const labelQty = document.createElement('div');
+    labelQty.style.width = '120px';
+    labelQty.textContent = 'Quantity value';
+
+    const labelUnit = document.createElement('div');
+    labelUnit.style.width = '140px';
+    labelUnit.textContent = 'Unit';
+
+    labelRow.appendChild(numberBadge);
+    labelRow.appendChild(labelName);
+    labelRow.appendChild(labelQty);
+    labelRow.appendChild(labelUnit);
+
+    // INPUT row
+    const inputRow = document.createElement('div');
+    inputRow.style.display = 'flex';
+    inputRow.style.gap = '12px';
+    inputRow.style.alignItems = 'center';
 
     // NAME
     const nameWrap = document.createElement('div');
@@ -301,15 +355,20 @@ async function filterInventoryForQuery(term){
     nameWrap.style.position = 'relative';
 
     const nameInput = document.createElement('input');
-    nameInput.type        = 'text';
-    nameInput.className   = 'ingredient-name';
+    nameInput.type = 'text';
+    nameInput.className = 'ingredient-name';
     nameInput.placeholder = 'Ingredient name';
-    nameInput.value       = prefillName || '';
+    nameInput.value = prefillName || '';
     nameInput.style.width = '100%';
+    nameInput.style.padding = '10px 14px';
+    nameInput.style.borderRadius = '8px';
+    nameInput.style.border = '1px solid rgba(0,0,0,0.08)';
+    nameInput.style.fontSize = '14px';
+    nameInput.style.boxSizing = 'border-box';
     nameInput.autocomplete = 'off';
 
     const hiddenId = document.createElement('input');
-    hiddenId.type      = 'hidden';
+    hiddenId.type = 'hidden';
     hiddenId.className = 'ingredient-item-id';
 
     const suggestBox = document.createElement('div');
@@ -319,7 +378,7 @@ async function filterInventoryForQuery(term){
       left: '0',
       top: 'calc(100% + 6px)',
       zIndex: '12000',
-      minWidth: '260px',
+      minWidth: '280px',
       maxHeight: '220px',
       overflow: 'auto',
       background: '#fff',
@@ -336,19 +395,29 @@ async function filterInventoryForQuery(term){
 
     // QUANTITY VALUE
     const qtyInput = document.createElement('input');
-    qtyInput.type        = 'text';
+    qtyInput.type = 'text';
     qtyInput.placeholder = 'e.g. 2';
-    qtyInput.className   = 'ingredient-qty';
-    qtyInput.style.width = '110px';
-    qtyInput.value       = preQty || '';
+    qtyInput.className = 'ingredient-qty';
+    qtyInput.style.width = '120px';
+    qtyInput.style.padding = '10px 14px';
+    qtyInput.style.borderRadius = '8px';
+    qtyInput.style.border = '1px solid rgba(0,0,0,0.08)';
+    qtyInput.style.fontSize = '14px';
+    qtyInput.style.boxSizing = 'border-box';
+    qtyInput.value = preQty || '';
 
     // UNIT
     const unitInput = document.createElement('input');
-    unitInput.type        = 'text';
-    unitInput.className   = 'ingredient-unit';
+    unitInput.type = 'text';
+    unitInput.className = 'ingredient-unit';
     unitInput.placeholder = 'unit (g / kg / pcs)';
     unitInput.style.width = '140px';
-    unitInput.value       = preUnit || '';
+    unitInput.style.padding = '10px 14px';
+    unitInput.style.borderRadius = '8px';
+    unitInput.style.border = '1px solid rgba(0,0,0,0.08)';
+    unitInput.style.fontSize = '14px';
+    unitInput.style.boxSizing = 'border-box';
+    unitInput.value = preUnit || '';
 
     const unitDatalistId = 'unit-options-datalist';
     if (!document.getElementById(unitDatalistId)) {
@@ -365,21 +434,25 @@ async function filterInventoryForQuery(term){
 
     // REMOVE
     const removeBtn = document.createElement('button');
-    removeBtn.type  = 'button';
+    removeBtn.type = 'button';
     removeBtn.textContent = '✕';
-    removeBtn.className   = 'ingredient-remove';
+    removeBtn.className = 'ingredient-remove';
     Object.assign(removeBtn.style, {
       border: '1px solid rgba(0,0,0,0.08)',
       background: '#fff',
       borderRadius: '6px',
-      padding: '6px 8px',
-      cursor: 'pointer'
+      padding: '10px 8px',
+      cursor: 'pointer',
+      fontSize: '16px'
     });
 
-    row.appendChild(nameWrap);
-    row.appendChild(qtyInput);
-    row.appendChild(unitInput);
-    row.appendChild(removeBtn);
+    inputRow.appendChild(nameWrap);
+    inputRow.appendChild(qtyInput);
+    inputRow.appendChild(unitInput);
+    inputRow.appendChild(removeBtn);
+
+    row.appendChild(labelRow);
+    row.appendChild(inputRow);
     ingredientsContainer.appendChild(row);
 
     // suggestions
@@ -404,7 +477,7 @@ async function filterInventoryForQuery(term){
           useRow.textContent = `Use: "${v}" (not in inventory)`;
           useRow.addEventListener('click', () => {
             nameInput.value = v;
-            hiddenId.value  = '';
+            hiddenId.value = '';
             suggestBox.style.display = 'none';
           });
           suggestBox.appendChild(useRow);
@@ -433,13 +506,11 @@ async function filterInventoryForQuery(term){
 
             el.addEventListener('click', () => {
               nameInput.value = it.item_name;
-              hiddenId.value  = it.item_id ?? '';
+              hiddenId.value = it.item_id ?? '';
 
-              // auto-fill quantity value and unit from DB
               if (it.quantity_value != null && it.quantity_value !== '') {
                 qtyInput.value = it.quantity_value;
               } else if (it.quantity) {
-                // fallback: try to parse number from "2 kg"
                 const m = String(it.quantity).match(/([\d.]+)/);
                 if (m) qtyInput.value = m[1];
               }
@@ -470,6 +541,7 @@ async function filterInventoryForQuery(term){
 
   // modal open/close
   let activeSlot = null;
+
   function slotLabel(slot){
     if (!slot) return 'Meal';
     return slot.charAt(0).toUpperCase() + slot.slice(1);
@@ -479,15 +551,12 @@ async function filterInventoryForQuery(term){
     activeSlot = slot || 'lunch';
     try { form.reset(); } catch(e){}
     ingredientsContainer.innerHTML = '';
-    createIngredientRow(); // one blank row
+    createIngredientRow();
 
-    if (titleEl) {
-      titleEl.textContent = `Add Meal for ${slotLabel(activeSlot)}`;
-    }
+    if (titleEl) titleEl.textContent = `Add Meal for ${slotLabel(activeSlot)}`;
 
     modal.setAttribute('aria-hidden','false');
     modal.style.display = 'flex';
-    setTimeout(()=>{ try{ mealNameInput.focus(); }catch(e){} }, 60);
   }
 
   function closeModal(){
@@ -496,7 +565,7 @@ async function filterInventoryForQuery(term){
     modal.style.display = 'none';
   }
 
-  // hook plus buttons
+  // hook plus buttons in meal slots
   document.addEventListener('click', ev => {
     const b = ev.target.closest('.slot-add');
     if (!b) return;
@@ -513,13 +582,16 @@ async function filterInventoryForQuery(term){
     createIngredientRow();
   });
 
-  // submit
-  form?.addEventListener('submit', ev => {
+  // submit form
+  form.addEventListener('submit', async ev => {
     ev.preventDefault();
-    const mealName = (mealNameInput.value || '').trim();
+    
+    const mealNameInput = form.querySelector('input[name="meal_name"]');
+    const mealName = (mealNameInput?.value || '').trim();
+    
     if (!mealName) {
       alert('Please enter meal name');
-      mealNameInput.focus();
+      mealNameInput?.focus();
       return;
     }
 
@@ -527,46 +599,60 @@ async function filterInventoryForQuery(term){
     const ingredients = rows.map(row => {
       const nameInput = row.querySelector('.ingredient-name');
       if (!nameInput) return null;
-      const idInput   = row.querySelector('.ingredient-item-id');
-      const qtyInput  = row.querySelector('.ingredient-qty');
+      const idInput = row.querySelector('.ingredient-item-id');
+      const qtyInput = row.querySelector('.ingredient-qty');
       const unitInput = row.querySelector('.ingredient-unit');
       return {
-        name      : (nameInput.value || '').trim(),
-        item_id   : idInput && idInput.value ? idInput.value : null,
-        qty_value : (qtyInput && qtyInput.value ? qtyInput.value.trim() : ''),
-        qty_unit  : (unitInput && unitInput.value ? unitInput.value.trim() : '')
+        name: (nameInput.value || '').trim(),
+        item_id: idInput?.value || null,
+        qty_value: (qtyInput?.value || '').trim(),
+        qty_unit: (unitInput?.value || '').trim()
       };
     }).filter(x => x && x.name);
 
-    // push meal into UI store
-    window.demoMeals[activeSlot] = window.demoMeals[activeSlot] || [];
-    const idx = window.demoMeals[activeSlot].length;
-    window.demoMeals[activeSlot].push(mealName);
+    const remarkInput = form.querySelector('textarea[name="meal_remark"]');
+    const remark = (remarkInput?.value || '').trim();
 
-    const key = `${activeSlot}__${idx}__${Date.now()}`;
-    window.mealSnapshots = window.mealSnapshots || {};
-    window.mealSnapshots[key] = {
-      slot: activeSlot,
-      index: idx,
+    const payload = {
+      user_id: window.CURRENT_USER_ID || 0,
+      meal_date: (new Date()).toISOString().slice(0,10),
+      meal_slot: activeSlot || 'lunch',
       meal_name: mealName,
-      category: '',       // no more category field
-      ingredients
+      remark: remark,
+      ingredients: ingredients
     };
 
-    if (typeof window.renderMeals === 'function') {
-      try { window.renderMeals(); } catch(e) { console.warn('renderMeals threw', e); }
-    } else {
-      const c = document.getElementById(activeSlot + '-list');
-      if (c) {
-        const tile = document.createElement('div');
-        tile.className = 'meal-tile';
-        tile.textContent = mealName;
-        c.appendChild(tile);
+    try {
+      const resp = await fetch('api/add_meal.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await resp.json();
+      
+      if (!resp.ok || !json.ok) {
+        console.error('Save failed', json);
+        alert('Failed to save meal: ' + (json.message || 'Unknown error'));
+        return;
       }
-    }
 
-    closeModal();
-    console.log('[Add Meal] snapshot:', window.mealSnapshots[key]);
+      // success: update UI
+      window.demoMeals[activeSlot] = window.demoMeals[activeSlot] || [];
+      window.demoMeals[activeSlot].push(mealName);
+
+      if (typeof window.renderMeals === 'function') {
+        window.renderMeals();
+      }
+
+      inventoryCache = null;
+      closeModal();
+      alert('Meal saved successfully!');
+      console.log('[Add Meal] saved:', json);
+
+    } catch (err) {
+      console.error('[Add Meal] error:', err);
+      alert('Unable to reach server. Check console for details.');
+    }
   });
 
   document.addEventListener('keydown', e => {
