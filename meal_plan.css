@@ -15,10 +15,8 @@
 /* Reset & base */
 *{box-sizing:border-box}
 html,body{height:100%; margin:0; padding:0;}
-
-/* --- IMPORTANT: disable page-level scrolling --- */
 html, body {
-  overflow: hidden; /* remove window scrollbar */
+  overflow: hidden;
   background: linear-gradient(135deg,var(--bg) 0%, #eef3f0 100%);
   font-family: 'Noto Serif', serif;
   color: var(--text);
@@ -221,7 +219,9 @@ html, body {
 .modal{ display:none; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center; }
 .modal[aria-hidden="false"]{ display:flex; }
 .modal-backdrop{ position:absolute; inset:0; background:rgba(20,30,20,0.38); backdrop-filter: blur(2px); }
-.modal-panel{ position:relative; width:min(880px, 92%); max-height:82vh; background: #fff; border-radius:12px; padding:18px; box-shadow:0 30px 80px rgba(0,0,0,0.28); overflow:hidden; display:flex; flex-direction:column; z-index:1; }
+.modal-panel{ position: relative; z-index: 10010; width:min(880px, 92%); max-height:82vh; background: #fff; border-radius:12px; padding:18px; box-shadow:0 30px 80px rgba(0,0,0,0.28); overflow:hidden; display:flex; flex-direction:column; z-index:1; }
+/* generic style fallback for suggestion list inside modal */
+.suggest-list { max-height: 180px; overflow:auto; box-sizing: border-box; }
 .modal-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
 .modal-header h2{ margin:0; font-size:20px; color:var(--text); }
 .modal-close{ border:none; background:transparent; font-size:28px; line-height:1; cursor:pointer; color:#666; }
@@ -236,3 +236,87 @@ html, body {
   .all-suggestions-grid{ grid-template-columns:repeat(2,1fr) }
   .modal-panel{ width:94%; padding:12px; }
 }
+
+#addMealModal { display:none; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center; }
+#addMealModal[aria-hidden="false"] { display:flex; }
+#addMealModal .modal-backdrop { position:absolute; inset:0; background: rgba(0,0,0,0.36); }
+#addMealModal .modal-panel {
+  position:relative;
+  z-index:2;
+  width:760px;
+  max-width:94%;
+  background:#fff;
+  border-radius:12px;
+  padding:18px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.22);
+  overflow:auto;
+}
+
+/* header */
+#addMealModal .modal-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+#addMealModal .modal-header h2 { margin:0; color:var(--primary-green); font-weight:800; }
+
+/* form layout - two column top + ingredients list */
+#addMealModal .grid-form-two { display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px; }
+#addMealModal label, #addMealModal .label-lg { display:block; font-weight:700; color:var(--primary-green); margin-bottom:6px; }
+#addMealModal input[type="text"], #addMealModal select, #addMealModal input[type="date"], #addMealModal textarea {
+  width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); font-size:14px;
+}
+
+/* ingredients rows (scoped) */
+#addMealModal #ingredientsContainer { margin-top:6px; }
+#addMealModal .ing-row {
+  display:flex; gap:10px; align-items:center; margin-bottom:8px; position:relative;
+}
+#addMealModal .ing-row .ing-name { flex:1; min-width:0; padding:10px 12px; border-radius:8px; border:1px solid var(--border); }
+#addMealModal .ing-row .ing-qty { width:180px; padding:10px 12px; border-radius:8px; border:1px solid var(--border); }
+#addMealModal .ing-row .ing-action { width:40px; height:36px; border-radius:8px; border:none; background:#fff; box-shadow:0 6px 16px rgba(0,0,0,0.06); cursor:pointer; }
+
+/* suggestions box that appears under input */
+#addMealModal .suggest-list {
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+  right: 120px; /* ensure it doesn't overlap qty button */
+  max-height:220px;
+  overflow:auto;
+  background:#fff;
+  border:1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  border-radius:8px;
+  z-index: 50;
+}
+#addMealModal .suggest-item {
+  padding:10px 12px;
+  cursor:pointer;
+  border-bottom:1px solid #f0f0f0;
+}
+#addMealModal .suggest-item:hover { background:#f7faf7; color:var(--primary-green); }
+
+/* small helpers inside modal */
+#addMealModal .btn-ghost { background:#fff; border:1px solid var(--border); padding:8px 12px; border-radius:8px; cursor:pointer; }
+#addMealModal .muted { color:var(--muted); font-size:13px; }
+#addMealModal .modal-footer { display:flex; justify-content:flex-end; gap:12px; margin-top:12px; }
+
+/* mobile */
+@media (max-width:720px) {
+  #addMealModal .grid-form-two { grid-template-columns: 1fr; }
+  #addMealModal .modal-panel { width:94%; padding:14px; }
+  #addMealModal .suggest-list { right: 90px; }
+}
+
+/* suggestion dropdown inside modal: constrained height and above footer */
+.suggest-list{
+  max-height: 220px;
+  overflow:auto;
+  box-sizing:border-box;
+  z-index:12000;
+}
+
+/* ingredient row layout */
+.ingredient-row input.ingredient-name{ padding:10px; border-radius:8px; border:1px solid rgba(0,0,0,0.08); }
+.ingredient-row input.ingredient-qty{ padding:10px; border-radius:8px; border:1px solid rgba(0,0,0,0.08); text-align:left; }
+.ingredient-row input.ingredient-unit{ padding:10px; border-radius:8px; border:1px solid rgba(0,0,0,0.08); }
+
+/* small tweak so modal footer buttons remain clickable */
+.modal-panel{ position:relative; z-index:11000; }
