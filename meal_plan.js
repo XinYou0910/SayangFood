@@ -154,16 +154,20 @@ async function filterInventoryForQuery(term){
     if (pill && pill.dataset.date) {
       state.selected = new Date(pill.dataset.date);
       renderStrip(); renderDayTitle();
+      // reload saved meals for newly selected date
+      if (typeof reloadMealsForCurrentDate === 'function') reloadMealsForCurrentDate();
     }
   });
 
   document.getElementById("prevDay")?.addEventListener("click", ()=>{
     state.selected.setDate(state.selected.getDate()-1);
     renderStrip(); renderDayTitle();
+    if (typeof reloadMealsForCurrentDate === 'function') reloadMealsForCurrentDate();
   });
   document.getElementById("nextDay")?.addEventListener("click", ()=>{
     state.selected.setDate(state.selected.getDate()+1);
     renderStrip(); renderDayTitle();
+    if (typeof reloadMealsForCurrentDate === 'function') reloadMealsForCurrentDate();
   });
 
   (function(){
@@ -179,6 +183,7 @@ async function filterInventoryForQuery(term){
       const [y,m,d] = jump.value.split("-").map(Number);
       state.selected = new Date(y,m-1,d);
       renderStrip(); renderDayTitle();
+      if (typeof reloadMealsForCurrentDate === 'function') reloadMealsForCurrentDate();
     });
   })();
 
@@ -186,10 +191,23 @@ async function filterInventoryForQuery(term){
     ["breakfast","lunch","dinner","other"].forEach(slot=>{
       const container = document.getElementById(slot + "-list");
       if (!container) return;
-      const tiles = (window.demoMeals[slot] || []).map(n =>
+
+      const arr = window.demoMeals[slot] || [];
+      const tilesHtml = arr.map(n =>
         `<div class="meal-tile" data-name="${escapeHtml(n)}">${escapeHtml(n)}</div>`
       ).join('');
-      container.innerHTML = tiles;
+
+      container.innerHTML = tilesHtml;
+
+      // remove previous count classes
+      container.classList.remove('count-1','count-2','count-3','count-4','count-5plus');
+
+      const count = arr.length;
+      if (count === 1) container.classList.add('count-1');
+      else if (count === 2) container.classList.add('count-2');
+      else if (count === 3) container.classList.add('count-3');
+      else if (count === 4) container.classList.add('count-4');
+      else if (count >= 5) container.classList.add('count-5plus');
     });
   }
 
@@ -237,13 +255,163 @@ async function filterInventoryForQuery(term){
     };
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
+  // -------------------- Load saved meals for a given date --------------------
+  async function loadMealsForDate(dateObj) {
+    if (!dateObj) return;
+    const yyyy = dateObj.toISOString().slice(0,10); // YYYY-MM-DD
+    const uid = window.CURRENT_USER_ID || 0;
+    if (!uid) {
+      console.warn('[loadMealsForDate] no CURRENT_USER_ID set');
+      return;
+    }
+    try {
+      console.log('[loadMealsForDate] fetching meals for', yyyy, 'user', uid);
+      const resp = await fetch(`api/get_meals.php?user_id=${encodeURIComponent(uid)}&date=${encodeURIComponent(yyyy)}&_=${Date.now()}`, {
+        cache: 'no-store'
+      });
+      if (!resp.ok) {
+        console.warn('[loadMealsForDate] server returned', resp.status);
+        return;
+      }
+      const json = await resp.json();
+      console.log('[loadMealsForDate] response', json);
+
+      if (!json || !json.ok || !Array.isArray(json.meals)) {
+        console.warn('[loadMealsForDate] unexpected payload', json);
+        return;
+      }
+
+      // Reset UI meal lists for this date
+      window.demoMeals = { breakfast:[], lunch:[], dinner:[], other:[] };
+      window.mealSnapshots = window.mealSnapshots || {};
+
+      json.meals.forEach((m, idx) => {
+        const slotKey = (m.meal_slot || '').toLowerCase();
+        const slot = slotKey.startsWith('break') ? 'breakfast'
+                    : slotKey.startsWith('lunc') ? 'lunch'
+                    : slotKey.startsWith('dinn') ? 'dinner' : 'other';
+
+        window.demoMeals[slot] = window.demoMeals[slot] || [];
+        window.demoMeals[slot].push(m.meal_name || 'Untitled');
+
+        // store snapshot keyed by slot + index so we can show details later
+        const key = `${slot}__${window.demoMeals[slot].length - 1}__${Date.now()}_${idx}`;
+        window.mealSnapshots[key] = {
+          slot,
+          index: window.demoMeals[slot].length - 1,
+          meal_name: m.meal_name,
+          remark: m.meal_remark || '',
+          ingredients: Array.isArray(m.ingredients) ? m.ingredients : []
+        };
+      });
+
+    } catch (err) {
+      console.error('[loadMealsForDate] error', err);
+    }
+  }
+
+  // helper to reload for the currently selected date in state
+  async function reloadMealsForCurrentDate() {
+    try {
+      await loadMealsForDate(state.selected);
+      renderMeals();
+      attachMealTileClickHandlers && attachMealTileClickHandlers();
+    } catch (e) {
+      console.error('[reloadMealsForCurrentDate] error', e);
+    }
+  }
+
+  function attachMealTileClickHandlers() {
+    // delegate clicks to document so newly-added tiles work
+    document.removeEventListener('click', _mealTileClickHandler);
+    document.addEventListener('click', _mealTileClickHandler);
+  }
+  function _mealTileClickHandler(e) {
+    const tile = e.target.closest('.meal-tile');
+    if (!tile) return;
+    const name = tile.dataset.name || tile.textContent.trim();
+    // find the snapshot (best-effort)
+    let snapshot = null;
+    if (window.mealSnapshots) {
+      // match by name and first found
+      for (const k of Object.keys(window.mealSnapshots)) {
+        const s = window.mealSnapshots[k];
+        if (s && s.meal_name === name) { snapshot = s; break; }
+      }
+    }
+
+    // show simple details modal (client-side)
+    showMealDetailModal(name, snapshot);
+  }
+
+  function showMealDetailModal(name, snapshot) {
+    // create a simple modal element (if not exists)
+    let dlg = document.getElementById('mealDetailDlg');
+    if (!dlg) {
+      dlg = document.createElement('div');
+      dlg.id = 'mealDetailDlg';
+      dlg.style.position = 'fixed';
+      dlg.style.inset = '0';
+      dlg.style.zIndex = 12000;
+      dlg.style.display = 'flex';
+      dlg.style.alignItems = 'center';
+      dlg.style.justifyContent = 'center';
+      dlg.innerHTML = `
+        <div style="width:min(720px,92%); max-height:80vh; overflow:auto; background:#fff; border-radius:10px; box-shadow:0 30px 80px rgba(0,0,0,0.28); padding:18px; position:relative;">
+          <button id="mealDetailClose" style="position:absolute; right:12px; top:10px; border:none; background:transparent; font-size:22px; cursor:pointer;">&times;</button>
+          <h3 style="margin-top:0; color:var(--primary-green);">${escapeHtml(name)}</h3>
+          <div id="mealDetailBody"></div>
+        </div>
+      `;
+      document.body.appendChild(dlg);
+      dlg.addEventListener('click', (ev) => {
+        if (ev.target === dlg) dlg.remove();
+      });
+      dlg.querySelector('#mealDetailClose').addEventListener('click', ()=>dlg.remove());
+    }
+
+    const body = dlg.querySelector('#mealDetailBody');
+    if (!body) return;
+    let html = '';
+    if (snapshot && snapshot.ingredients && snapshot.ingredients.length) {
+      html += '<h4>Ingredients</h4><ul>';
+      snapshot.ingredients.forEach(it => {
+        const label = escapeHtml(it.name || '');
+        const qty = escapeHtml(it.qty_value || it.qty || '');
+        const unit = escapeHtml(it.qty_unit || it.qty_unit || it.unit || '');
+        html += `<li>${label} ${qty ? `— ${qty}` : ''} ${unit ? ` ${unit}` : ''}</li>`;
+      });
+      html += '</ul>';
+    } else {
+      html += '<p class="muted">No ingredient details available.</p>';
+    }
+    if (snapshot && snapshot.remark) {
+      html += `<h4>Remark</h4><p>${escapeHtml(snapshot.remark)}</p>`;
+    }
+    body.innerHTML = html;
+    dlg.style.display = 'flex';
+  }
+
+  // New DOMContentLoaded that loads existing meals for today before renderMeals
+  document.addEventListener("DOMContentLoaded", async () => {
     renderStrip();
     renderDayTitle();
+    // load saved meals for the selected date
+    await loadMealsForDate((function(){ return (new Date()); })());
     renderSuggestions();
     renderExpiring();
     renderMeals();
+    attachMealTileClickHandlers();
   });
+
+  // also ensure we reload meals whenever the strip/date changes
+  // Replace existing pill click handler area or add a call there: after you set state.selected and call renderStrip/renderDayTitle, call:
+  function reloadMealsForCurrentDate() {
+    loadMealsForDate(state.selected).then(()=> {
+      renderMeals();
+      attachMealTileClickHandlers();
+    });
+  }
 
   window.collectPlanPayload = function(){
     const payload = { user_id: window.CURRENT_USER_ID || 0, meal_date: (new Date()).toISOString().slice(0,10), meals: {} };
@@ -661,10 +829,17 @@ async function filterInventoryForQuery(term){
         return;
       }
 
-      // on success add to UI demoMeals
-      window.demoMeals[activeSlot] = window.demoMeals[activeSlot] || [];
-      window.demoMeals[activeSlot].push(mealName);
-      if (typeof window.renderMeals === 'function') window.renderMeals();
+      // reload meals for the current date from server (preferred)
+      if (typeof reloadMealsForCurrentDate === 'function') {
+        await loadMealsForDate(new Date()); // ensure current date is reloaded
+        renderMeals();
+        attachMealTileClickHandlers();
+      } else {
+        // fallback local update
+        window.demoMeals[activeSlot] = window.demoMeals[activeSlot] || [];
+        window.demoMeals[activeSlot].push(mealName);
+        if (typeof window.renderMeals === 'function') window.renderMeals();
+      }
 
       // clear cache if any
       if (typeof inventoryCache !== 'undefined') inventoryCache = null;
