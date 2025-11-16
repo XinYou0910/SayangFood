@@ -1004,7 +1004,15 @@ async function filterInventoryForQuery(term){
 
     const payload = {
       user_id: window.CURRENT_USER_ID || 0,
-      meal_date: (new Date()).toISOString().slice(0,10),
+      // prefer the currently-selected date in the calendar if available, fall back to today
+      meal_date: (function(){
+        try {
+          // pill.active dataset has full ISO date (we used to set data-date="${d.toISOString()}")
+          const active = document.querySelector('.pill.active')?.dataset?.date;
+          if (active) return new Date(active).toISOString().slice(0,10);
+        } catch(_) {}
+        return (new Date()).toISOString().slice(0,10);
+      })(),
       meal_slot: activeSlot || 'lunch',
       meal_name: mealName,
       remark: remark,
@@ -1017,35 +1025,60 @@ async function filterInventoryForQuery(term){
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      const json = await resp.json();
 
-      if (!resp.ok || !json.ok) {
-        console.error('Save failed', json);
-        alert('Failed to save meal: ' + (json.message || 'Unknown error'));
+      // Always read raw text first so we can log it if JSON parse fails
+      const raw = await resp.text();
+      console.log('[AddMeal] HTTP', resp.status, resp.statusText, 'Content-Type:', resp.headers.get('content-type'));
+      console.log('[AddMeal] RAW RESPONSE:', raw);
+
+      let json;
+      try {
+        json = raw ? JSON.parse(raw) : null;
+      } catch (parseErr) {
+        console.error('[AddMeal] JSON parse error:', parseErr);
+        // Show raw server output to console and a friendly alert to user
+        console.error('[AddMeal] Server returned invalid JSON. See RAW RESPONSE above.');
+        alert('Server returned an unexpected response. Check browser console for details.');
         return;
       }
 
-      // reload meals for the current date from server (preferred)
-      if (typeof reloadMealsForCurrentDate === 'function') {
-        await loadMealsForDate(new Date()); // ensure current date is reloaded
-        renderMeals();
-        attachMealTileClickHandlers();
-      } else {
-        // fallback local update
-        window.demoMeals[activeSlot] = window.demoMeals[activeSlot] || [];
-        window.demoMeals[activeSlot].push(mealName);
-        if (typeof window.renderMeals === 'function') window.renderMeals();
+      if (!resp.ok || !json || !json.ok) {
+        console.error('Save failed', json);
+        alert('Failed to save meal: ' + (json && (json.message || json.error) ? (json.message || json.error) : 'Unknown error'));
+        return;
       }
 
-      // clear cache if any
+      // Success path — prefer a server reload, fallback to local update
+      if (typeof reloadMealsForCurrentDate === 'function') {
+        try {
+          await reloadMealsForCurrentDate();
+        } catch (e) {
+          console.error('[Add Meal] reload failed', e);
+          // fallback: minimal local update
+          window.demoMeals[activeSlot] = window.demoMeals[activeSlot] || [];
+          window.demoMeals[activeSlot].push(mealName);
+          if (typeof renderMeals === 'function') renderMeals();
+          if (typeof window.attachMealTileClickHandlers === 'function') window.attachMealTileClickHandlers();
+        }
+      } else {
+        // existing local-only fallback
+        window.demoMeals[activeSlot] = window.demoMeals[activeSlot] || [];
+        window.demoMeals[activeSlot].push(mealName);
+        if (typeof renderMeals === 'function') renderMeals();
+        if (typeof window.attachMealTileClickHandlers === 'function') window.attachMealTileClickHandlers();
+      }
+
       if (typeof inventoryCache !== 'undefined') inventoryCache = null;
       closeModal();
       alert('Meal saved successfully!');
       console.log('[Add Meal] saved:', json);
+      
+      // Auto-refresh page to show latest meal plan
+      location.reload();
 
     } catch (err) {
-      console.error('[Add Meal] error:', err);
-      alert('Unable to reach server. Check console for details.');
+      console.error('[Add Meal] fetch error:', err);
+      alert('Unable to reach server: ' + (err && err.message ? err.message : String(err)) + '. Check console for details.');
     }
   });
 
@@ -1054,6 +1087,18 @@ async function filterInventoryForQuery(term){
     if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') closeModal();
   });
 
+  window.reloadMealsForCurrentDate = async function() {
+  try {
+    await loadMealsForDate(state.selected);
+    renderMeals();
+    attachMealTileClickHandlers && attachMealTileClickHandlers();
+  } catch (e) {
+    console.error('[window.reloadMealsForCurrentDate] error', e);
+    throw e;
+  }
+};
+window.attachMealTileClickHandlers = attachMealTileClickHandlers;
+window.getSelectedDate = function() { return new Date(state.selected); };
 })(); // end modal IIFE
 
 (function addSlotHoverStyles(){
