@@ -176,7 +176,6 @@ function drawDonationChart(trendData) {
 
 
 function drawCategory(categoryData, metric = "percentage") {
-  console.log('Drawing category chart:', categoryData);
   const categoryCtx = document.getElementById("categoryChart").getContext("2d");
 
   // Destroy previous chart if exists
@@ -187,15 +186,11 @@ function drawCategory(categoryData, metric = "percentage") {
     return;
   }
 
-  // Preserve full data for toggling visibility
-  _lastCategoryData = categoryData.map(d => ({ ...d, hidden: false }));
-
-  // Define palette and color mapping (persistent across filters)
+  // Define a lighter color palette without opacity
   const palette = [
-    '#10b981', '#3b82f6', '#f59e0b', '#ef4444',
-    '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316'
+    '#a7f3d0', '#93c5fd', '#fbbf24', '#f87171',
+    '#d6b3f1', '#f472b6', '#22d3ee', '#a3e635', '#fd9e2a'
   ];
-  if (typeof categoryColorMap === "undefined") window.categoryColorMap = {};
 
   // Assign color per category (keeps consistent color across filters/search)
   categoryData.forEach((item, i) => {
@@ -210,6 +205,9 @@ function drawCategory(categoryData, metric = "percentage") {
   categoryCtx.canvas.height = 550;
   categoryCtx.canvas.width = 550;
 
+  // Create solid color slices (no opacity or gradients)
+  const backgroundColors = colors; // Directly using solid colors without opacity
+
   // Select data metric for the chart
   const chartValues = metric === "percentage"
     ? categoryData.map(c => c.percentage)
@@ -221,17 +219,21 @@ function drawCategory(categoryData, metric = "percentage") {
       labels: categoryData.map(c => c.category),
       datasets: [{
         data: chartValues,
-        backgroundColor: colors,
-        borderColor: "#fff",
-        borderWidth: 2
+        backgroundColor: backgroundColors, // Solid colors for slices
+        borderColor: "#fff", // Solid border color
+        borderWidth: 2 // Thicker border for better separation
       }]
     },
     options: {
       cutout: "60%",
       responsive: true,
       maintainAspectRatio: false,
+      rotation: -0.5 * Math.PI, // Tilt the chart slightly to give it a 3D effect
       plugins: { legend: { display: false } },
-      animation: { duration: 300 },
+      animation: {
+        duration: 1000,  // Smooth animation duration
+        easing: 'easeOutBounce'
+      },
       tooltip: {
         callbacks: {
           label: (context) => {
@@ -242,11 +244,23 @@ function drawCategory(categoryData, metric = "percentage") {
             return `${label}: ${value}`;
           }
         }
+      },
+      elements: {
+        arc: {
+          borderWidth: 5,  // Increase border width to create a thicker slice look
+          borderColor: 'rgba(255, 255, 255, 0.8)'  // White border for better separation
+        }
       }
     }
   });
 
-  // Build custom legend
+  // Add a shadow effect on the chart container for a 3D feel
+  categoryCtx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+  categoryCtx.shadowBlur = 15;
+  categoryCtx.shadowOffsetX = 5;
+  categoryCtx.shadowOffsetY = 5;
+
+  // Build custom legend with hover and active state
   const legendContainer = document.getElementById("foodLegend");
   legendContainer.innerHTML = "";
 
@@ -259,7 +273,7 @@ function drawCategory(categoryData, metric = "percentage") {
     legendItem.style.alignItems = "center";
     legendItem.style.marginBottom = "6px";
     legendItem.style.cursor = "pointer";
-    legendItem.style.transition = "opacity 0.3s";
+    legendItem.style.transition = "opacity 0.3s, transform 0.3s";
 
     const valueDisplay = metric === "percentage"
       ? `${item.percentage}%`
@@ -274,7 +288,18 @@ function drawCategory(categoryData, metric = "percentage") {
       <span class="legend-value">${valueDisplay}</span>
     `;
 
-    // ✅ Toggle visibility on click
+    // Hover effect (increase opacity and cursor change)
+    legendItem.addEventListener('mouseenter', () => {
+      legendItem.style.opacity = '1';
+      legendItem.style.transform = 'scale(1.1)';
+    });
+    legendItem.addEventListener('mouseleave', () => {
+      const dataObj = _lastCategoryData.find(d => d.category === item.category);
+      legendItem.style.opacity = dataObj.hidden ? '0.4' : '1';
+      legendItem.style.transform = 'scale(1)';
+    });
+
+    // Toggle visibility on click
     legendItem.addEventListener("click", () => {
       const category = item.category;
       const dataIndex = categoryChart.data.labels.indexOf(category);
@@ -289,6 +314,7 @@ function drawCategory(categoryData, metric = "percentage") {
           : (metric === "percentage" ? dataObj.percentage : dataObj.count);
 
         legendItem.style.opacity = dataObj.hidden ? "0.4" : "1";
+        legendItem.style.transform = dataObj.hidden ? "scale(0.95)" : "scale(1)";
         categoryChart.update();
       }
     });
@@ -296,6 +322,9 @@ function drawCategory(categoryData, metric = "percentage") {
     legendContainer.appendChild(legendItem);
   });
 }
+
+
+
 
 
 // --- CATEGORY FILTER LOGIC FIX ---
