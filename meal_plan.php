@@ -199,5 +199,45 @@ if (!isset($_SESSION['user_id'])) {
   </div>
 
   <script src="meal_plan.js?v=6"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Check if we should open meal detail from notification click
+      const shouldOpenMealDetail = sessionStorage.getItem('shouldOpenMealDetail');
+      const mealPlanData = sessionStorage.getItem('mealPlanData');
+
+      if (shouldOpenMealDetail === 'true' && mealPlanData) {
+        try {
+          const meal = JSON.parse(mealPlanData);
+          // Clear sessionStorage
+          sessionStorage.removeItem('shouldOpenMealDetail');
+          sessionStorage.removeItem('mealPlanData');
+          
+          // Navigate to the meal's date and open detail
+          setTimeout(() => {
+            // Set the selected date to the meal's date
+            if (meal.meal_date && window.setSelectedDate) {
+              window.setSelectedDate(meal.meal_date);
+            }
+            
+            // Store meal for detail view
+            window.mealToDisplay = meal;
+            
+            // If there's a function to open meal detail, call it
+            if (typeof window.openMealDetail === 'function') {
+              window.openMealDetail(meal);
+            } else {
+              // Fallback: create and display a simple meal detail modal
+              console.log('Meal detail:', meal);
+              alert(`Meal: ${meal.meal_name}\nDate: ${meal.meal_date}\nSlot: ${meal.meal_slot}`);
+            }
+          }, 500);
+        } catch (error) {
+          console.error('Error parsing meal data:', error);
+          sessionStorage.removeItem('shouldOpenMealDetail');
+          sessionStorage.removeItem('mealPlanData');
+        }
+      }
+    });
+  </script>
 </body>
 </html>

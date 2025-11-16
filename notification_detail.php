@@ -111,6 +111,49 @@ if (strcasecmp($notifType, 'Inventory') === 0) {
     $responseData['item_type'] = 'donation';
     $responseData['error'] = 'Food item details not found. The item may have been deleted.';
   }
+} elseif (strcasecmp($notifType, 'Meal Planning') === 0) {
+  // Extract meal name and date from message
+  // Message formats:
+  // "meal_name" has been planned for DD MMM YYYY!
+  // "meal_name" is planned for tomorrow "slot"!
+  
+  $mealName = $itemName; // Already extracted from quoted text
+  $mealDate = null;
+  $mealSlot = null;
+
+  // Try to extract date from message (format: "DD MMM YYYY")
+  if (preg_match('/planned for (\d{1,2}\s+\w+\s+\d{4})/i', $message, $matches)) {
+    $dateStr = $matches[1];
+    $mealDate = date('Y-m-d', strtotime($dateStr));
+  }
+
+  // Try to extract slot from message (format: "tomorrow "slot"")
+  if (preg_match('/tomorrow\s+"(\w+)"/i', $message, $matches)) {
+    $mealSlot = ucfirst(strtolower($matches[1]));
+  }
+
+  // Query meal_plan table
+  $mealSql = "
+    SELECT * FROM meal_plan
+    WHERE user_id = ? AND LOWER(meal_name) = LOWER(?)
+    ORDER BY meal_date DESC, meal_id DESC
+    LIMIT 1
+  ";
+  
+  $mealStmt = $conn->prepare($mealSql);
+  $mealStmt->bind_param("is", $currentUserId, $mealName);
+  $mealStmt->execute();
+  $mealResult = $mealStmt->get_result();
+
+  if ($mealResult->num_rows > 0) {
+    $meal = $mealResult->fetch_assoc();
+    $responseData['item_data'] = $meal;
+    $responseData['item_type'] = 'meal_plan';
+  } else {
+    $responseData['item_data'] = null;
+    $responseData['item_type'] = 'meal_plan';
+    $responseData['error'] = 'Meal plan details not found. The meal plan may have been deleted.';
+  }
 }
 
 header('Content-Type: application/json');

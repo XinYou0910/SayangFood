@@ -229,6 +229,17 @@ try {
 
     $pdo->commit();
 
+    // Create notification for meal plan
+    try {
+      // Notification 1: When meal is added
+      $notificationMsg = "\"$meal_name\" has been planned for " . date('d M Y', strtotime($meal_date)) . "!";
+      $notifStmt = $pdo->prepare("INSERT INTO notification (user_id, notification_type, message, notification_status, timestamp) VALUES (?, ?, ?, ?, NOW())");
+      $notifStmt->execute([$user_id, 'Meal Planning', $notificationMsg, 'Unread']);
+    } catch (Exception $notifErr) {
+      error_log('[add_meal] notification creation failed: ' . $notifErr->getMessage());
+      // Continue anyway - meal was saved, just notification failed
+    }
+
     // success response
     send_json([
       'ok' => true,

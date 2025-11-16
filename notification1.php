@@ -192,6 +192,14 @@ $result = $stmt->get_result();
                 sessionStorage.setItem('shouldOpenEditDonatePopup', 'true');
                 window.location.href = 'donation_list.php';
               }
+            } else if (notifTypeNormalized === 'meal planning') {
+              // Go to meal_plan.php and open meal details
+              if (data.item_data) {
+                // Store meal data in sessionStorage to be retrieved on meal plan page
+                sessionStorage.setItem('mealPlanData', JSON.stringify(data.item_data));
+                sessionStorage.setItem('shouldOpenMealDetail', 'true');
+                window.location.href = 'meal_plan.php';
+              }
             }
           })
           .catch(error => {
