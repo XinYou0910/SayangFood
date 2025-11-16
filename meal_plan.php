@@ -38,7 +38,7 @@ if (!isset($_SESSION['user_id'])) {
 
       <div class="dropdown-container" id="dropdownMenu">
         <button class="submenu-item" onclick="location.href='inventory_list.php'">Inventory</button>
-        <button class="submenu-item active" onclick="location.href='meal_plan.php'">Weekly Meal</button>
+        <button class="submenu-item active" onclick="location.href='meal_plan.php'">Meal Plan</button>
         <button class="submenu-item" onclick="location.href='donation_list.php'">Donations</button>
       </div>
 

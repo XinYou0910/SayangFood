@@ -187,29 +187,52 @@ async function filterInventoryForQuery(term){
     });
   })();
 
+  // === UPDATED renderMeals: builds tiles without inline styles,
+  // sets count-* classes and toggles .slot.filled / .slot.empty ===
   function renderMeals(){
     ["breakfast","lunch","dinner","other"].forEach(slot=>{
       const container = document.getElementById(slot + "-list");
-      if (!container) return;
+      if (!container) {
+        console.warn(`[renderMeals] container #${slot}-list not found`);
+        return;
+      }
 
-      const arr = window.demoMeals[slot] || [];
-      const tilesHtml = arr.map(n =>
-        `<div class="meal-tile" data-name="${escapeHtml(n)}">${escapeHtml(n)}</div>`
+      // Ensure container has the meal-row base class used by CSS placement rules
+      container.classList.add('meal-row');
+
+      const arr = (window.demoMeals[slot] || []);
+
+      // create tiles HTML using classes (no inline styles)
+      const tilesHtml = arr.map((n, idx) =>
+        `<div class="meal-tile" tabindex="0" role="button" data-slot="${slot}" data-index="${idx}" data-name="${escapeHtml(n)}">${escapeHtml(n)}</div>`
       ).join('');
 
-      container.innerHTML = tilesHtml;
+      container.innerHTML = tilesHtml || '';
 
-      // remove previous count classes
+      // remove any previous count classes and add the correct one
       container.classList.remove('count-1','count-2','count-3','count-4','count-5plus');
-
       const count = arr.length;
       if (count === 1) container.classList.add('count-1');
       else if (count === 2) container.classList.add('count-2');
       else if (count === 3) container.classList.add('count-3');
       else if (count === 4) container.classList.add('count-4');
       else if (count >= 5) container.classList.add('count-5plus');
+
+      // update slot visual state (filled vs empty): toggle filled / empty classes
+      const slotCard = container.closest('.slot');
+      if (slotCard) {
+        if (count > 0) {
+          slotCard.classList.add('filled');
+          slotCard.classList.remove('empty');
+        } else {
+          slotCard.classList.add('empty');
+          slotCard.classList.remove('filled');
+        }
+      }
     });
   }
+
+  // === end renderMeals ===
 
   window.addMealToSlot = function(slot, name, meta){
     slot = slot || 'lunch';
@@ -338,13 +361,26 @@ async function filterInventoryForQuery(term){
     const tile = e.target.closest('.meal-tile');
     if (!tile) return;
     const name = tile.dataset.name || tile.textContent.trim();
+    const slot = tile.dataset.slot;
+    const index = tile.dataset.index != null ? Number(tile.dataset.index) : null;
+
     // find the snapshot (best-effort)
     let snapshot = null;
     if (window.mealSnapshots) {
-      // match by name and first found
+      // Prefer exact match by slot+index
       for (const k of Object.keys(window.mealSnapshots)) {
         const s = window.mealSnapshots[k];
-        if (s && s.meal_name === name) { snapshot = s; break; }
+        if (!s) continue;
+        if (slot != null && index != null) {
+          if (s.slot === slot && Number(s.index) === index) { snapshot = s; break; }
+        }
+      }
+      // fallback: match by name
+      if (!snapshot) {
+        for (const k of Object.keys(window.mealSnapshots)) {
+          const s = window.mealSnapshots[k];
+          if (s && s.meal_name === name) { snapshot = s; break; }
+        }
       }
     }
 
@@ -496,7 +532,6 @@ async function filterInventoryForQuery(term){
   });
 
   // also ensure we reload meals whenever the strip/date changes
-  // Replace existing pill click handler area or add a call there: after you set state.selected and call renderStrip/renderDayTitle, call:
   function reloadMealsForCurrentDate() {
     loadMealsForDate(state.selected).then(()=> {
       renderMeals();
@@ -1020,4 +1055,70 @@ async function filterInventoryForQuery(term){
   });
 
 })(); // end modal IIFE
-  // end modal IIFE
+
+(function addSlotHoverStyles(){
+  const css = `
+    /* slot card hover / add button (orange background, white text like date pill) */
+    .slot-card { transition: transform .12s ease; }
+    .slot-card h1, .slot-card h2, .slot-card h3, .slot-card h4, .slot-card .slot-title {
+      transition: color .12s ease;
+      color: #333 !important;
+    }
+    .slot-card:hover h1,
+    .slot-card:hover h2,
+    .slot-card:hover h3,
+    .slot-card:hover h4,
+    .slot-card:hover .slot-title {
+      color: #f39c12 !important;
+    }
+
+    .slot-card .slot-add {
+      transition: background .12s ease, color .12s ease, box-shadow .12s ease, border-color .12s ease;
+      background: #fff;
+      color: #333;
+      border: 1px solid rgba(0,0,0,0.08);
+      box-shadow: none;
+    }
+
+    /* hover / focus state: orange background + white text */
+    .slot-card .slot-add:hover,
+    .slot-card:hover .slot-add,
+    .slot-card .slot-add:focus {
+      background: #f39c12 !important;
+      color: #ffffff !important;
+      border-color: #f39c12 !important;
+      box-shadow: 0 8px 24px rgba(243,156,18,0.18);
+    }
+
+    /* accessibility focus ring */
+    .slot-card .slot-add:focus {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(243,156,18,0.12);
+    }
+
+    /* meal tile hover to feel interactive */
+    .meal-tile { transition: transform .08s ease, box-shadow .12s ease; cursor: pointer; }
+    .meal-tile:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+  `;
+  if (!document.getElementById('slot-hover-styles')) {
+    const style = document.createElement('style');
+    style.id = 'slot-hover-styles';
+    style.appendChild(document.createTextNode(css));
+    document.head.appendChild(style);
+  }
+
+  function markSlotParents(){
+    document.querySelectorAll('.slot-add').forEach(btn=>{
+      let p = btn.closest('div');
+      const candidate = btn.closest('div')?.querySelector('h3') ? btn.closest('div') : null;
+      if (candidate) p = candidate;
+      if (p) p.classList.add('slot-card');
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', markSlotParents);
+  } else {
+    markSlotParents();
+  }
+})();
