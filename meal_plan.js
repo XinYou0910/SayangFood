@@ -7,6 +7,14 @@
   if (u && el) el.textContent = u;
 })();
 
+function formatLocalDate(d) {
+  if (!(d instanceof Date)) d = new Date(d);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 //
 // Utility helpers
 //
@@ -281,7 +289,7 @@ async function filterInventoryForQuery(term){
   // -------------------- Load saved meals for a given date --------------------
   async function loadMealsForDate(dateObj) {
     if (!dateObj) return;
-    const yyyy = dateObj.toISOString().slice(0,10); // YYYY-MM-DD
+    const yyyy = formatLocalDate(dateObj); // new
     const uid = window.CURRENT_USER_ID || 0;
     if (!uid) {
       console.warn('[loadMealsForDate] no CURRENT_USER_ID set');
@@ -540,7 +548,7 @@ async function filterInventoryForQuery(term){
   }
 
   window.collectPlanPayload = function(){
-    const payload = { user_id: window.CURRENT_USER_ID || 0, meal_date: (new Date()).toISOString().slice(0,10), meals: {} };
+    const payload = { user_id: window.CURRENT_USER_ID || 0, meal_date: formatLocalDate(window.getSelectedDate ? window.getSelectedDate() : new Date()), meals: {} };
     ['breakfast','lunch','dinner','other'].forEach(slot=>{
       const arr = (window.demoMeals[slot] || []).map((name, i) => {
         let snapshot = null;
@@ -1009,7 +1017,7 @@ async function filterInventoryForQuery(term){
         try {
           // pill.active dataset has full ISO date (we used to set data-date="${d.toISOString()}")
           const active = document.querySelector('.pill.active')?.dataset?.date;
-          if (active) return new Date(active).toISOString().slice(0,10);
+          if (active) return formatLocalDate(new Date(active));
         } catch(_) {}
         return (new Date()).toISOString().slice(0,10);
       })(),
