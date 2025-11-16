@@ -1,19 +1,144 @@
 /* Summary Cards - Make Smaller */
+/* Page base and fonts */
+body {
+  font-family: 'Poppins', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', "Helvetica Neue", Arial;
+  background: linear-gradient(180deg, #f7fbff 0%, #ffffff 40%);
+  color: #0f172a;
+}
+
+/* Improved Filter Section */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  background: #f3f4f6;
+  padding: 12px 18px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Quick filter and custom filter enhancements */
+.quick-filter,
+.custom-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  border-radius: 8px;
+  background: white;
+  padding: 8px 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+/* Hover effect for filter inputs */
+.quick-filter:hover,
+.custom-filter:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Input elements */
+.filter-bar input[type="date"],
+.filter-bar select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  width: 150px;
+  background-color: #f9fafb;
+  color: #4b5563;
+  transition: border 0.3s ease;
+}
+
+/* Focus effect for input fields */
+.filter-bar input[type="date"]:focus,
+.filter-bar select:focus {
+  border-color: #10b981;
+  outline: none;
+}
+
+/* Apply Button */
+#filterBtn, #applyCustomFilter {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #4CAF50, #2E8B57);
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover effect for apply button */
+#filterBtn:hover, #applyCustomFilter:hover {
+  background: linear-gradient(135deg, #ff9800, #f44336);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+}
+
+/* Custom Filter Layout */
+.custom-filter input[type="date"] {
+  width: 130px; /* Adjusted width */
+}
+
+/* Custom range divider */
+.custom-filter span {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Enhanced layout for different screen sizes */
+@media (max-width: 768px) {
+  .filter-bar {
+    flex-direction: column;
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .quick-filter,
+  .custom-filter {
+    width: 100%;
+    justify-content: space-between;
+    padding: 10px;
+  }
+
+  .filter-bar input[type="date"],
+  .filter-bar select {
+    width: 100%;
+    padding: 10px;
+  }
+
+  #filterBtn, #applyCustomFilter {
+    width: 100%;
+    padding: 12px;
+  }
+}
+
+
+
 .dashboard-cards {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
+  justify-content: center;
   gap: 15px;
-  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .card {
   background: white;
   border-radius: 12px;
   padding: 15px;
+  width: 200px; /* keeps consistent size */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 2px solid #e5e7eb;
   transition: transform 0.2s, box-shadow 0.2s;
 }
+
 
 .card:hover {
   transform: translateY(-2px);
@@ -44,8 +169,9 @@
 /* Chart Section - Make Bigger */
 .charts {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(3, 1fr); /* three equal large charts */
   gap: 20px;
+  align-items: start;
   margin-top: 20px;
 }
 
@@ -70,11 +196,15 @@
 }
 
 
-#foodChart {
+#foodChart,
+#donationChart{
   width: 100% !important;
-  height: 400px !important;
-  max-height: 400px !important;
+  height: 380px !important;
+  max-height: 380px !important;
 }
+
+.main-chart { min-height: 420px; }
+.small-title { font-size: 16px; text-align: center; margin-bottom: 10px; }
 
 /* Category Breakdown Sidebar */
 .category-sidebar {
@@ -169,6 +299,58 @@
   color: #1f2937;
 }
 
+/* Chart toolbar */
+.chart-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.chart-left h3 { margin: 0; font-size: 18px; color: #0f172a; }
+.chart-sub { margin: 2px 0 0 0; font-size: 12px; color: #6b7280; }
+.chart-actions { display: flex; gap: 8px; }
+.toolbar-btn {
+  background: linear-gradient(90deg,#2563eb,#3b82f6);
+  color: white;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(59,130,246,0.12);
+}
+.toolbar-btn:hover { transform: translateY(-2px); }
+
+/* Card polish */
+.chart-card { transition: transform .18s ease, box-shadow .18s ease; }
+.chart-card:hover { transform: translateY(-6px); box-shadow: 0 10px 30px rgba(2,6,23,0.08); }
+.card p, .chart-sub { font-family: 'Inter', sans-serif; }
+
+/* Sidebar dropdown (Browse Food Item) hover — match dashboard styles */
+.sidebar .dropdown-container button {
+  padding: 12px 20px;
+  font-size: 14px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-medium);
+  border-radius: 6px;
+  margin: 2px 8px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  display: block;
+  width: calc(100% - 16px); /* account for horizontal margins */
+}
+
+.sidebar .dropdown-container button:hover {
+  background: linear-gradient(135deg, var(--light-orange) 0%, var(--accent-orange) 100%);
+  color: white;
+  transform: translateX(3px);
+  box-shadow: 0 4px 12px var(--shadow-medium);
+}
+
+
 /* ==============================
    CATEGORY CHART & LEGEND LAYOUT
    ============================== */
@@ -180,7 +362,23 @@
   justify-content: center;
   align-items: flex-start;
   flex-wrap: wrap;    /* wrap on smaller screens */
-  padding: 15px;
+  padding: 8px; /* reduce container padding to bring content up */
+}
+
+/* Center the donut chart and legend together as a group without affecting the filters row */
+.category-center {
+  display: flex;
+  justify-content: center; /* center the two child boxes as a unit */
+  align-items: flex-start;
+  gap: 100px;
+  width: 100%;
+  margin-top: -250px; /* ensure no extra gap so chart sits directly under filters */
+}
+
+.category-center .chart-box,
+.category-center .legend-box {
+  /* keep their explicit widths and avoid flex-grow so they stay as a centered pair */
+  flex: 0 0 auto;
 }
 
 .chart-box{
@@ -193,6 +391,83 @@
   padding: 25px;
   box-shadow: 0 3px 6px rgba(0,0,0,0.1);
 }
+
+/* Category filters row */
+/* Improved Category Filter Section */
+.category-filters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+  background: #f3f4f6;
+  padding: 12px 18px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Individual category filter inputs */
+.category-filters input,
+.category-filters select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  background-color: #f9fafb;
+  color: #4b5563;
+  width: 180px;
+  transition: border 0.3s ease;
+}
+
+/* Focus effect for input fields */
+.category-filters input:focus,
+.category-filters select:focus {
+  border-color: #10b981;
+  outline: none;
+}
+
+/* Apply Filter Button */
+.toolbar-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #4CAF50, #2E8B57);
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover effect for apply filter button */
+.toolbar-btn:hover {
+  background: linear-gradient(135deg, #ff9800, #f44336);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+}
+
+/* Category Filter layout adjustments for smaller screens */
+@media (max-width: 768px) {
+  .category-filters {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .category-filters input,
+  .category-filters select {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .toolbar-btn {
+    width: 100%;
+    padding: 12px;
+  }
+}
+
+
+/* Remove extra internal top padding so donut sits closer to filters */
+#categorySection .chart-box { padding-top: 0; }
 
 .legend-box{
   flex: 1 1 300px;   /* grow/shrink with minimum width */
@@ -209,32 +484,6 @@
 .chart-box canvas {
   width: 450px !important;
   height: 380px !important;
-}
-
-.chart-box:hover,
-.legend-box:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
-}
-
-/* Chart title */
-.chart-title {
-  text-align: center;
-  font-size: 18px;
-  font-weight: 700;
-  color: #374151;
-  margin-bottom: 20px;
-}
-
-/* Legend box styling */
-.legend-box {
-  flex: 1 1 200px;
-  max-width: 250px;
-  min-width: 180px;
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
 }
 
 .legend-title {
@@ -288,6 +537,11 @@
     width: 90%;
     max-width: none;
   }
+  .category-center {
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
 }
 
 
@@ -299,4 +553,11 @@
   .card p {
     font-size: 18px;
   }
+}
+
+/* Medium screens: make two columns for charts */
+@media (max-width: 1100px) {
+  .charts { grid-template-columns: 1fr 1fr; }
+  .small-chart { padding: 12px; }
+  .small-chart canvas { height: 160px !important; }
 }

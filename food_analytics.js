@@ -2,21 +2,55 @@ const ctx = document.getElementById("foodChart").getContext("2d");
 let currentChart = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-  loadAnalytics();
+  // default: last 30 days
+  loadAnalytics({ range: 30 });
+
   document.getElementById("filterBtn").addEventListener("click", applyFilter);
+  document.getElementById("applyCustomFilter").addEventListener("click", applyCustomDateFilter);
   document.getElementById("trendBtn").addEventListener("click", showTrend);
   document.getElementById("categoryBtn").addEventListener("click", showCategory);
 });
 
+
+// example quick filter
 function applyFilter() {
-  const range = document.getElementById("filterRange").value;
-  loadAnalytics(range);
+  const range = parseInt(document.getElementById("filterRange").value, 10) || 30;
+  loadAnalytics({ range });
 }
 
-function loadAnalytics(range = 30) {
-  console.log('Loading analytics with range:', range);
-  
-  fetch(`food_analytics_data.php?range=${range}`)
+// example custom calendar filter
+function applyCustomDateFilter() {
+  const startInput = document.getElementById("startDate").value;
+  const endInput   = document.getElementById("endDate").value;
+
+  if (!startInput || !endInput) {
+    alert("Please select both start and end dates.");
+    return;
+  }
+  if (startInput > endInput) {
+    alert("Start date cannot be after end date.");
+    return;
+  }
+
+  loadAnalytics({ startDate: startInput, endDate: endInput });
+}
+
+
+
+function loadAnalytics(options = {}) {
+  const { range = 30, startDate = null, endDate = null } = options;
+  console.log('Loading analytics with options:', options);
+
+  const params = new URLSearchParams();
+
+  if (startDate && endDate) {
+    params.append('start', startDate);
+    params.append('end', endDate);
+  } else {
+    params.append('range', range);
+  }
+
+  fetch(`food_analytics_data.php?${params.toString()}`)
     .then(res => {
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
@@ -24,23 +58,22 @@ function loadAnalytics(range = 30) {
       return res.json();
     })
     .then(data => {
-      console.log('Analytics data received:', data);
-      
-      // Check for errors in response
+      console.log('Analytics data received:', data); // Debugging data received
+
       if (data.error) {
         console.error('Server error:', data.error, data.details);
         alert('Error loading analytics: ' + data.error);
         return;
       }
-      
+
       updateSummary(data);
-      
-      // Load trend by default
+
       if (data.trend && data.trend.length > 0) {
         drawTrend(data.trend);
+        drawDonationChart(data.trend);
       } else {
         console.warn('No trend data available');
-        showNoDataMessage();
+        // Handle the case where no trend data is returned
       }
     })
     .catch(err => {
@@ -49,58 +82,100 @@ function loadAnalytics(range = 30) {
     });
 }
 
+
+
 function updateSummary(data) {
   // Update summary cards - showing item counts, not KG
-  document.getElementById("total-saving").textContent = `${data.total_saved} Items`;
-  document.getElementById("total-waste").textContent = `${data.total_waste} Items`;
+  document.getElementById("total-saving").textContent   = `${data.total_saved} Items`;
+  document.getElementById("total-waste").textContent    = `${data.total_waste} Items`;
   document.getElementById("total-donation").textContent = `${data.total_donation} Items`;
-  document.getElementById("total-usage").textContent = `${data.total_used} Items`;
-  
+
   console.log('Summary updated:', {
     saved: data.total_saved,
     waste: data.total_waste,
-    donation: data.total_donation,
-    used: data.total_used
+    donation: data.total_donation
   });
 }
+
 
 function drawTrend(trendData) {
   const trendCtx = document.getElementById("foodChart").getContext("2d");
 
   if (trendChart) trendChart.destroy();
 
+  // Original trend chart: saved & wasted as lines
   trendChart = new Chart(trendCtx, {
-    type: "line",
+    type: 'line',
     data: {
       labels: trendData.map(d => d.date),
       datasets: [
         {
-          label: "Food Saved",
-          data: trendData.map(d => d.saved),
-          borderColor: "#10b981",
-          backgroundColor: "rgba(16, 185, 129, 0.1)",
+          label: 'Food Saved',
+          data: trendData.map(d => d.saved || 0),
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16,185,129,0.1)',
           fill: true,
-          tension: 0.4
+          tension: 0.4,
+          pointRadius: 3
         },
         {
-          label: "Food Wasted",
-          data: trendData.map(d => d.wasted),
-          borderColor: "#ef4444",
-          backgroundColor: "rgba(239, 68, 68, 0.1)",
+          label: 'Food Wasted',
+          data: trendData.map(d => d.wasted || 0),
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239,68,68,0.1)',
           fill: true,
-          tension: 0.4
+          tension: 0.4,
+          pointRadius: 3
         }
       ]
     },
     options: {
       responsive: true,
-      plugins: { legend: { position: "top" } },
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
       scales: { y: { beginAtZero: true } }
     }
   });
+
+  // Restore original chart title
+  const titleEl = document.getElementById('chartTitle');
+  if (titleEl) titleEl.textContent = 'Food Trend';
+  // Small delayed update helps Chart.js recompute sizes when fonts or layout
+  // finish loading (fixes the 'invisible / squashed' render seen after refresh).
+  setTimeout(() => { try { trendChart.resize(); trendChart.update(); } catch(e){} }, 150);
 }
 
-function drawCategory(categoryData) {
+// Draw a donation chart (bar) as a separate full-size report
+let donationChart = null;
+function drawDonationChart(trendData) {
+  const ctx = document.getElementById('donationChart').getContext('2d');
+  if (donationChart) donationChart.destroy();
+
+  donationChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: trendData.map(d => d.date),
+      datasets: [{
+        label: 'Total Donation',
+        data: trendData.map(d => d.donated || 0),
+        backgroundColor: 'rgba(59,130,246,0.9)',
+        borderColor: '#2563eb',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+  setTimeout(() => { try { donationChart.resize(); donationChart.update(); } catch(e){} }, 150);
+}
+
+
+
+function drawCategory(categoryData, metric = "percentage") {
   console.log('Drawing category chart:', categoryData);
   const categoryCtx = document.getElementById("categoryChart").getContext("2d");
 
@@ -112,58 +187,148 @@ function drawCategory(categoryData) {
     return;
   }
 
-  // Color palette
-  const colors = [
+  // Preserve full data for toggling visibility
+  _lastCategoryData = categoryData.map(d => ({ ...d, hidden: false }));
+
+  // Define palette and color mapping (persistent across filters)
+  const palette = [
     '#10b981', '#3b82f6', '#f59e0b', '#ef4444',
     '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316'
   ];
+  if (typeof categoryColorMap === "undefined") window.categoryColorMap = {};
 
-  // Resize the canvas smaller (optional: adjust CSS instead if preferred)
-  categoryCtx.canvas.height = 550; // smaller height
-  categoryCtx.canvas.width = 550;  // smaller width
+  // Assign color per category (keeps consistent color across filters/search)
+  categoryData.forEach((item, i) => {
+    if (!categoryColorMap[item.category]) {
+      categoryColorMap[item.category] = palette[i % palette.length];
+    }
+  });
 
-  // Create the chart
+  const colors = categoryData.map(c => categoryColorMap[c.category]);
+
+  // Set fixed chart canvas size (keeps donut stable)
+  categoryCtx.canvas.height = 550;
+  categoryCtx.canvas.width = 550;
+
+  // Select data metric for the chart
+  const chartValues = metric === "percentage"
+    ? categoryData.map(c => c.percentage)
+    : categoryData.map(c => c.count);
+
   categoryChart = new Chart(categoryCtx, {
     type: "doughnut",
     data: {
       labels: categoryData.map(c => c.category),
       datasets: [{
-        data: categoryData.map(c => c.percentage),
-        backgroundColor: colors.slice(0, categoryData.length),
+        data: chartValues,
+        backgroundColor: colors,
         borderColor: "#fff",
         borderWidth: 2
       }]
     },
     options: {
-      cutout: "60%", // slightly smaller inner hole
-      responsive: true, // use canvas size defined above
+      cutout: "60%",
+      responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false }, // hide default legend
-        tooltip: {
-          callbacks: {
-            label: (context) => `${context.label}: ${context.parsed}%`
+      plugins: { legend: { display: false } },
+      animation: { duration: 300 },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const label = context.label;
+            const value = metric === "percentage"
+              ? `${context.parsed}%`
+              : `${context.parsed} items`;
+            return `${label}: ${value}`;
           }
         }
       }
     }
   });
 
-  // Generate custom legend
+  // Build custom legend
   const legendContainer = document.getElementById("foodLegend");
   legendContainer.innerHTML = "";
 
   categoryData.forEach((item, i) => {
-    legendContainer.innerHTML += `
-      <div class="legend-item" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <div style="display:flex;align-items:center;gap:6px;">
-          <div class="legend-color" style="width:16px;height:16px;border-radius:4px;background-color:${colors[i]}"></div>
-          <span class="legend-label">${item.category}</span>
-        </div>
-        <span class="legend-value">${item.percentage}%</span>
+    const color = colors[i];
+    const legendItem = document.createElement("div");
+    legendItem.classList.add("legend-item");
+    legendItem.style.display = "flex";
+    legendItem.style.justifyContent = "space-between";
+    legendItem.style.alignItems = "center";
+    legendItem.style.marginBottom = "6px";
+    legendItem.style.cursor = "pointer";
+    legendItem.style.transition = "opacity 0.3s";
+
+    const valueDisplay = metric === "percentage"
+      ? `${item.percentage}%`
+      : `${item.count} items`;
+
+    legendItem.innerHTML = `
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div class="legend-color"
+             style="width:16px;height:16px;border-radius:4px;background-color:${color}"></div>
+        <span class="legend-label">${item.category}</span>
       </div>
+      <span class="legend-value">${valueDisplay}</span>
     `;
+
+    // ✅ Toggle visibility on click
+    legendItem.addEventListener("click", () => {
+      const category = item.category;
+      const dataIndex = categoryChart.data.labels.indexOf(category);
+      if (dataIndex !== -1) {
+        const dataset = categoryChart.data.datasets[0];
+        const dataObj = _lastCategoryData.find(d => d.category === category);
+        dataObj.hidden = !dataObj.hidden;
+
+        // Hide the data slice visually
+        dataset.data[dataIndex] = dataObj.hidden
+          ? NaN
+          : (metric === "percentage" ? dataObj.percentage : dataObj.count);
+
+        legendItem.style.opacity = dataObj.hidden ? "0.4" : "1";
+        categoryChart.update();
+      }
+    });
+
+    legendContainer.appendChild(legendItem);
   });
+}
+
+
+// --- CATEGORY FILTER LOGIC FIX ---
+function renderCategoryWithFilters() {
+  if (!_allCategoryData || _allCategoryData.length === 0) return;
+
+  const search = document.getElementById("categorySearch")?.value?.toLowerCase() || "";
+  const topNValue = document.getElementById("topN")?.value?.toLowerCase() || "all";
+  const metric = document.getElementById("categoryMetric")?.value || "percentage";
+
+  // Start from full dataset each time
+  let filtered = _allCategoryData.filter(c =>
+    c.category.toLowerCase().includes(search)
+  );
+
+  // Sort descending by selected metric
+  filtered.sort((a, b) => (b[metric] || 0) - (a[metric] || 0));
+
+  // Handle topN filter (skip slicing for "all")
+  if (topNValue !== "all") {
+    const topN = parseInt(topNValue, 10);
+    if (!isNaN(topN)) filtered = filtered.slice(0, topN);
+  }
+
+  // Redraw the chart with consistent colors
+  drawCategory(filtered, metric);
+
+  // Update label text
+  const labelEl = document.getElementById("categoryLabel");
+  if (labelEl) {
+    labelEl.textContent =
+      metric === "percentage" ? "Category by Percentage" : "Category by Count";
+  }
 }
 
 
@@ -182,7 +347,28 @@ function showCategory() {
       .then(res => res.json())
       .then(data => {
         if (data.category && data.category.length > 0) {
-          drawCategory(data.category);
+          // cache for filtering
+          _allCategoryData = data.category.map(d => ({ ...d }));
+          _lastCategoryData = [..._allCategoryData];
+          drawCategory(_lastCategoryData);
+          // set default filters UI values if present
+          document.getElementById('topN').value = '5';
+          document.getElementById('categoryMetric').value = 'percentage';
+
+          // wire filter apply button
+          const applyBtn = document.getElementById('applyCategoryFilter');
+          if (applyBtn) {
+            applyBtn.onclick = () => renderCategoryWithFilters();
+          }
+
+          // also wire quick input triggers
+          const searchInput = document.getElementById('categorySearch');
+          if (searchInput) {
+            let t;
+            searchInput.oninput = () => { clearTimeout(t); t = setTimeout(renderCategoryWithFilters, 300); };
+          }
+
+          renderCategoryWithFilters();
         } else {
           const ctx = document.getElementById("categoryChart").getContext("2d");
           showNoDataMessage(ctx);
@@ -198,7 +384,58 @@ function showTrend() {
   document.getElementById("categoryBtn").classList.remove("active");
   document.getElementById("trendSection").style.display = "block";
   document.getElementById("categorySection").style.display = "none";
+  // Charts may render incorrectly if their canvas was previously hidden or the
+  // layout changed (this happens on refresh or when navigating back). Resize
+  // and update charts after a short delay to allow layout to settle.
+  setTimeout(() => {
+    try {
+      if (trendChart) { trendChart.resize(); trendChart.update(); }
+      if (donationChart) { donationChart.resize(); donationChart.update(); }
+      if (categoryChart) { categoryChart.resize(); categoryChart.update(); }
+    } catch (err) {
+      console.warn('Error resizing charts on showTrend:', err);
+    }
+  }, 120);
 }
+
+// Ensure charts respond when the window size changes (helps when user resizes
+// the browser or returns from another page). This also helps after refresh.
+window.addEventListener('resize', () => {
+  try {
+    if (trendChart) trendChart.resize();
+    if (donationChart) donationChart.resize();
+    if (categoryChart) categoryChart.resize();
+  } catch (e) {
+    // non-fatal
+  }
+});
+
+// Also re-run resize/update when fonts are ready and on full window load.
+// Some browsers (and Google Fonts) load after DOMContentLoaded causing Chart.js
+// to measure before final font metrics are available which leads to the
+// compressed/squashed rendering you reported.
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => {
+    setTimeout(() => {
+      try {
+        if (trendChart) { trendChart.resize(); trendChart.update(); }
+        if (donationChart) { donationChart.resize(); donationChart.update(); }
+        if (categoryChart) { categoryChart.resize(); categoryChart.update(); }
+      } catch (e) {}
+    }, 120);
+  }).catch(() => {});
+}
+
+window.addEventListener('load', () => {
+  // final safety resize after everything (images, fonts, assets) finished
+  setTimeout(() => {
+    try {
+      if (trendChart) { trendChart.resize(); trendChart.update(); }
+      if (donationChart) { donationChart.resize(); donationChart.update(); }
+      if (categoryChart) { categoryChart.resize(); categoryChart.update(); }
+    } catch (e) {}
+  }, 200);
+});
 
 function showNoDataMessage(context) {
   const canvas = context.canvas;
@@ -211,3 +448,6 @@ function showNoDataMessage(context) {
 }
 let trendChart = null;
 let categoryChart = null;
+let _allCategoryData = [];
+const categoryColorMap = {};
+
