@@ -384,7 +384,31 @@ $result = $stmt->get_result();
   </div>
 
 <script src="script.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Check if we should open edit donation popup from notification click
+    const shouldOpenEditDonatePopup = sessionStorage.getItem('shouldOpenEditDonatePopup');
+    const editDonationData = sessionStorage.getItem('editDonationData');
 
+    if (shouldOpenEditDonatePopup === 'true' && editDonationData) {
+      try {
+        const donationData = JSON.parse(editDonationData);
+        // Clear sessionStorage
+        sessionStorage.removeItem('shouldOpenEditDonatePopup');
+        sessionStorage.removeItem('editDonationData');
+        
+        // Open the edit donation popup with the donation data
+        setTimeout(() => {
+          openEditDonatePopup(donationData);
+        }, 500); // Small delay to ensure DOM is ready
+      } catch (error) {
+        console.error('Error parsing donation data:', error);
+        sessionStorage.removeItem('shouldOpenEditDonatePopup');
+        sessionStorage.removeItem('editDonationData');
+      }
+    }
+  });
+</script>
 
 </body>
 </html>

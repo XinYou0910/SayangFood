@@ -112,7 +112,7 @@ $result = $stmt->get_result();
               <div class="notification-title"><?= htmlspecialchars($row['notification_type']) ?></div>
               <div class="notification-message"><?= htmlspecialchars($row['message']) ?></div>
               <div class="notification-actions">
-                <a href="#">View</a>
+                <a href="#" class="view-notification" data-id="<?= $row['notification_id'] ?>" data-type="<?= htmlspecialchars($row['notification_type']) ?>">View</a>
                 <a href="#" class="mark-read" data-id="<?= $row['notification_id'] ?>">Mark As Read</a>
                 <a href="#" class="delete-notification" data-id="<?= $row['notification_id'] ?>">Delete</a>
               </div>
@@ -139,6 +139,73 @@ $result = $stmt->get_result();
     } else {
       window.location.href = "login.html";
     }
+
+    // View notification (fetch details and open item)
+    document.querySelectorAll('.view-notification').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const notificationId = this.dataset.id;
+        const notificationType = this.dataset.type;
+
+        // Fetch notification details
+        fetch(`notification_detail.php?id=${notificationId}`)
+          .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+          })
+          .then(data => {
+            if (data.error) {
+              // Error case: item not found or deleted
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.error || 'Unable to fetch item details',
+                timer: 3000,
+                showConfirmButton: true
+              });
+              return;
+            }
+
+            // Mark notification as read
+            fetch('notification_actions.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: `action=mark_read&id=${notificationId}`
+            });
+
+            // Route based on notification type
+            const notifTypeNormalized = notificationType.toLowerCase().trim();
+
+            if (notifTypeNormalized === 'inventory') {
+              // Go to inventory_list.php and open view popup
+              if (data.item_data) {
+                // Store item data in sessionStorage to be retrieved on inventory page
+                sessionStorage.setItem('viewItemData', JSON.stringify(data.item_data));
+                sessionStorage.setItem('shouldOpenViewPopup', 'true');
+                window.location.href = 'inventory_list.php';
+              }
+            } else if (notifTypeNormalized === 'donation') {
+              // Go to donation_list.php and open edit popup
+              if (data.item_data) {
+                // Store donation data in sessionStorage to be retrieved on donation page
+                sessionStorage.setItem('editDonationData', JSON.stringify(data.item_data));
+                sessionStorage.setItem('shouldOpenEditDonatePopup', 'true');
+                window.location.href = 'donation_list.php';
+              }
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Failed to fetch item details',
+              timer: 3000,
+              showConfirmButton: true
+            });
+          });
+      });
+    });
 
     // Mark as read (single)
     document.querySelectorAll('.mark-read').forEach(btn => {
