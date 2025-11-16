@@ -301,7 +301,15 @@ async function filterInventoryForQuery(term){
           index: window.demoMeals[slot].length - 1,
           meal_name: m.meal_name,
           remark: m.meal_remark || '',
-          ingredients: Array.isArray(m.ingredients) ? m.ingredients : []
+          ingredients: (Array.isArray(m.ingredients) ? m.ingredients.map(it => ({
+            name: it.item_name_snapshot || it.item_name || '',
+            qty_value: it.required_qty_value ?? it.inv_quantity_value ?? null,
+            qty_unit: it.required_qty_unit || it.inv_quantity_unit || '',
+            qty_text: it.required_qty_text || it.inv_quantity_text || '',
+            availability: it.availability || '',
+            expiry_date: it.expiry_date || null,
+            storage_place: it.storage_place || null
+          })) : [])
         };
       });
 
@@ -345,52 +353,135 @@ async function filterInventoryForQuery(term){
   }
 
   function showMealDetailModal(name, snapshot) {
-    // create a simple modal element (if not exists)
+    // ensure there is a backdrop element (reuse addMealBackdrop if present)
+    let backdrop = document.getElementById('addMealBackdrop');
+    if (!backdrop) {
+      backdrop = document.createElement('div');
+      backdrop.id = 'addMealBackdrop';
+      document.body.appendChild(backdrop);
+    } else if (backdrop.parentNode !== document.body) {
+      document.body.appendChild(backdrop);
+    }
+
+    // style backdrop (hidden by default elsewhere)
+    Object.assign(backdrop.style, {
+      display: 'block',
+      position: 'fixed',
+      inset: '0',
+      background: 'rgba(0,0,0,0.45)',
+      zIndex: '11990',
+      cursor: 'default'
+    });
+
+    // create dialog panel
     let dlg = document.getElementById('mealDetailDlg');
     if (!dlg) {
       dlg = document.createElement('div');
       dlg.id = 'mealDetailDlg';
-      dlg.style.position = 'fixed';
-      dlg.style.inset = '0';
-      dlg.style.zIndex = 12000;
-      dlg.style.display = 'flex';
-      dlg.style.alignItems = 'center';
-      dlg.style.justifyContent = 'center';
+      Object.assign(dlg.style, {
+        position: 'fixed',
+        inset: '0',
+        zIndex: '12000',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'auto'
+      });
+
       dlg.innerHTML = `
-        <div style="width:min(720px,92%); max-height:80vh; overflow:auto; background:#fff; border-radius:10px; box-shadow:0 30px 80px rgba(0,0,0,0.28); padding:18px; position:relative;">
-          <button id="mealDetailClose" style="position:absolute; right:12px; top:10px; border:none; background:transparent; font-size:22px; cursor:pointer;">&times;</button>
-          <h3 style="margin-top:0; color:var(--primary-green);">${escapeHtml(name)}</h3>
+        <div id="mealDetailPanel" style="width:min(900px,92%); max-height:82vh; overflow:auto; background:#fff; border-radius:10px; box-shadow:0 30px 80px rgba(0,0,0,0.28); padding:22px; position:relative; font-family:inherit; z-index:12001;">
+          <button id="mealDetailClose" style="position:absolute; right:14px; top:10px; border:none; background:transparent; font-size:22px; cursor:pointer;">&times;</button>
+          <h2 id="mealDetailTitle" style="margin:0 0 12px 0; color:var(--primary-green); font-family:'Noto Serif', serif;"></h2>
           <div id="mealDetailBody"></div>
         </div>
       `;
       document.body.appendChild(dlg);
-      dlg.addEventListener('click', (ev) => {
-        if (ev.target === dlg) dlg.remove();
-      });
-      dlg.querySelector('#mealDetailClose').addEventListener('click', ()=>dlg.remove());
+
+      // close when click on backdrop area (dlg) but not when clicking panel
+      dlg.addEventListener('click', (ev) => { if (ev.target === dlg) closeDetail(); });
+      dlg.querySelector('#mealDetailClose').addEventListener('click', closeDetail);
+    } else {
+      dlg.style.display = 'flex';
     }
 
+    // prevent background scrolling while details open
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+
+    const panel = dlg.querySelector('#mealDetailPanel');
+    const titleEl = dlg.querySelector('#mealDetailTitle');
     const body = dlg.querySelector('#mealDetailBody');
     if (!body) return;
+
+    titleEl.textContent = name || '';
+
+    // Build content (same as previous)
     let html = '';
-    if (snapshot && snapshot.ingredients && snapshot.ingredients.length) {
-      html += '<h4>Ingredients</h4><ul>';
-      snapshot.ingredients.forEach(it => {
-        const label = escapeHtml(it.name || '');
-        const qty = escapeHtml(it.qty_value || it.qty || '');
-        const unit = escapeHtml(it.qty_unit || it.qty_unit || it.unit || '');
-        html += `<li>${label} ${qty ? `— ${qty}` : ''} ${unit ? ` ${unit}` : ''}</li>`;
+    const ingredients = (snapshot && Array.isArray(snapshot.ingredients)) ? snapshot.ingredients : [];
+    if (ingredients.length > 0) {
+      html += `<div style="margin-bottom:12px;"><strong style="display:block;margin-bottom:8px;font-size:16px;">Ingredients</strong>
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="text-align:left; color:#3b4a43;">
+              <th style="padding:8px;border-bottom:1px solid #eee; width:40%;">Item</th>
+              <th style="padding:8px;border-bottom:1px solid #eee; width:12%;">Qty</th>
+              <th style="padding:8px;border-bottom:1px solid #eee; width:12%;">Unit</th>
+              <th style="padding:8px;border-bottom:1px solid #eee; width:18%;">Expiry Date</th>
+              <th style="padding:8px;border-bottom:1px solid #eee; width:18%;">Storage</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+      ingredients.forEach(it => {
+        const nm = escapeHtml(it.name || it.item_name_snapshot || '');
+        const qty = (it.qty_value != null && it.qty_value !== '') ? escapeHtml(String(it.qty_value)) : escapeHtml(it.qty_text || '');
+        const unit = escapeHtml(it.qty_unit || it.required_qty_unit || it.inv_quantity_unit || '');
+        const expiry = it.expiry_date ? escapeHtml(it.expiry_date) : '<span style="color:#9aa6b2">—</span>';
+        const storage = it.storage_place ? escapeHtml(it.storage_place) : '<span style="color:#9aa6b2">—</span>';
+        html += `<tr>
+          <td style="padding:8px;border-bottom:1px solid #f4f4f4;">${nm}</td>
+          <td style="padding:8px;border-bottom:1px solid #f4f4f4;">${qty}</td>
+          <td style="padding:8px;border-bottom:1px solid #f4f4f4;">${unit}</td>
+          <td style="padding:8px;border-bottom:1px solid #f4f4f4;">${expiry}</td>
+          <td style="padding:8px;border-bottom:1px solid #f4f4f4;">${storage}</td>
+        </tr>`;
       });
-      html += '</ul>';
+
+      html += `</tbody></table></div>`;
     } else {
       html += '<p class="muted">No ingredient details available.</p>';
     }
+
     if (snapshot && snapshot.remark) {
-      html += `<h4>Remark</h4><p>${escapeHtml(snapshot.remark)}</p>`;
+      html += `
+      <div style="margin-top:18px; padding-top:12px; border-top:1px solid #e5e7eb;">
+        <strong style="display:block;margin-bottom:8px;font-size:16px;">Remark</strong>
+        <p style="margin:0;color:#2e3d36;">${escapeHtml(snapshot.remark)}</p>
+      </div>`;
     }
+
     body.innerHTML = html;
-    dlg.style.display = 'flex';
+
+    // cleanup function
+    function closeDetail() {
+      // remove dialog
+      const existing = document.getElementById('mealDetailDlg');
+      if (existing) existing.remove();
+
+      // hide backdrop only if add-meal modal is not open
+      const addMealModal = document.getElementById('addMealModal');
+      const addOpen = addMealModal && addMealModal.getAttribute('aria-hidden') === 'false' && addMealModal.style.display !== 'none';
+      if (!addOpen && backdrop) {
+        backdrop.style.display = 'none';
+        backdrop.style.background = '';
+      }
+
+      // restore scrolling
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    }
   }
+
 
   // New DOMContentLoaded that loads existing meals for today before renderMeals
   document.addEventListener("DOMContentLoaded", async () => {
@@ -443,7 +534,53 @@ async function filterInventoryForQuery(term){
     return;
   }
 
-  const backdrop = document.getElementById('addMealBackdrop');
+  let backdrop = document.getElementById('addMealBackdrop');
+
+  // ensure backdrop lives directly under body (so modal can sit above it)
+  (function ensureBackdropAndStacking(){
+    const BACKDROP_Z = 11990;
+    const MODAL_Z   = 12001;
+
+    if (!backdrop) {
+      // create one if missing
+      backdrop = document.createElement('div');
+      backdrop.id = 'addMealBackdrop';
+      document.body.appendChild(backdrop);
+    } else {
+      // move existing node to body root to avoid being inside modal or other container
+      if (backdrop.parentNode !== document.body) document.body.appendChild(backdrop);
+    }
+
+    // basic backdrop style (hidden by default)
+    Object.assign(backdrop.style, {
+      display: 'none',
+      position: 'fixed',
+      inset: '0',
+      background: 'rgba(0,0,0,0.45)',
+      zIndex: String(BACKDROP_Z),
+      backdropFilter: 'none',      // remove any blur applied here
+      pointerEvents: 'auto'
+    });
+
+    // ensure modal is above backdrop
+    Object.assign(modal.style, {
+      position: modal.style.position || 'fixed',
+      inset: modal.style.inset || '0',
+      display: modal.style.display || 'none',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: String(MODAL_Z)
+    });
+
+    // Ensure modal content panel (if exists) has solid background and higher stacking
+    const panel = modal.querySelector('.modal-panel') || modal.querySelector('.modal-dialog') || modal;
+    if (panel) {
+      panel.style.background = panel.style.background || '#fff';
+      panel.style.position = panel.style.position || 'relative';
+      panel.style.zIndex = String(MODAL_Z + 1);
+    }
+  })();
+
   const closeBtn = document.getElementById('addMealClose');
   const form = document.getElementById('addMealForm');
   const ingredientsContainer = form?.querySelector('.grid-form-two') || null; // where ingredient rows go
@@ -745,14 +882,38 @@ async function filterInventoryForQuery(term){
     createIngredientRow();
     if (titleEl) titleEl.textContent = `Add Meal for ${slotLabel(activeSlot)}`;
 
+    // show dark backdrop
+    if (backdrop) {
+      backdrop.style.display = 'block';
+      backdrop.style.position = 'fixed';
+      backdrop.style.inset = '0';
+      backdrop.style.background = 'rgba(0,0,0,0.45)'; // darker overlay
+      backdrop.style.zIndex = '11990';
+    }
+
     modal.setAttribute('aria-hidden','false');
     modal.style.display = 'flex';
+    modal.style.zIndex = '12000';
+
+    // prevent background scrolling
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
   }
 
   function closeModal(){
     activeSlot = null;
     modal.setAttribute('aria-hidden','true');
     modal.style.display = 'none';
+
+    // hide backdrop
+    if (backdrop) {
+      backdrop.style.display = 'none';
+      backdrop.style.background = ''; // reset if needed
+    }
+
+    // restore scrolling
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
   }
 
   // hook plus buttons in meal slots

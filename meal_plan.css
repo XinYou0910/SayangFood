@@ -678,3 +678,10 @@ html, body {
 
 /* visually separate tile rows from the + button */
 .slot-controls { margin-top: 12px; }
+
+/* meal detail modal enhancements */
+#mealDetailDlg > div {
+  border-radius: 10px;
+  padding: 22px;
+}
+#mealDetailDlg h2 { font-size: 20px; color: var(--primary-green); font-weight: 800; margin-bottom: 10px; }

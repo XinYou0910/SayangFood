@@ -30,47 +30,41 @@ $stmt->execute([$user_id, $date]);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $out = [];
-if ($rows) {
-  // prepare ingredient query against your table meal_plan_item
-  $stmt2 = $pdo->prepare('SELECT item_id, item_name_snapshot, required_qty_value, required_qty_unit, required_qty_text, availability FROM meal_plan_item WHERE meal_id = ? ORDER BY mp_item_id ASC');
+foreach ($rows as $r) {
+  $meal = [
+    'meal_id' => $r['meal_id'],
+    'meal_name' => $r['meal_name'],
+    'meal_slot' => $r['meal_slot'],
+    'meal_remark' => $r['meal_remark'],
+    'ingredients' => []
+  ];
 
-  foreach ($rows as $r) {
-    // normalize slot to capitalized form (frontend maps lower-case prefixes)
-    $slot = isset($r['meal_slot']) ? $r['meal_slot'] : '';
-    $slot_norm = ucfirst(strtolower($slot));
+  // fetch meal_plan_item rows and join to food_item_inventory to get expiry/storage if available
+  $stmt2 = $pdo->prepare('
+    SELECT 
+      mpi.mp_item_id AS mp_item_id,
+      mpi.item_id,
+      mpi.item_name_snapshot,
+      mpi.required_qty_value,
+      mpi.required_qty_unit,
+      mpi.required_qty_text,
+      mpi.availability,
+      fi.quantity_value AS inv_quantity_value,
+      fi.quantity_unit  AS inv_quantity_unit,
+      fi.quantity       AS inv_quantity_text,
+      fi.expiry_date,
+      fi.storage_place
+    FROM meal_plan_item mpi
+    LEFT JOIN food_item_inventory fi ON mpi.item_id = fi.item_id AND fi.user_id = :uid
+    WHERE mpi.meal_id = :mid
+    ORDER BY mpi.mp_item_id ASC
+  ');
+  $stmt2->execute([':mid' => $r['meal_id'], ':uid' => $user_id]);
+  $ings = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+  if ($ings) $meal['ingredients'] = $ings;
 
-    $meal = [
-      'meal_id'     => $r['meal_id'],
-      'meal_name'   => $r['meal_name'],
-      'meal_slot'   => $slot_norm,
-      'meal_remark' => $r['meal_remark'] ?? '',
-      'ingredients' => []
-    ];
-
-    // fetch ingredient rows from meal_plan_item (your DB)
-    try {
-      $stmt2->execute([$r['meal_id']]);
-      $ings = $stmt2->fetchAll(PDO::FETCH_ASSOC);
-      if ($ings) {
-        // map DB column names to what the frontend expects
-        $meal['ingredients'] = array_map(function($row){
-          return [
-            'item_id'    => $row['item_id'] ?? null,
-            'name'       => $row['item_name_snapshot'] ?? ($row['item_name'] ?? ''),
-            'qty_value'  => $row['required_qty_value'] ?? null,
-            'qty_unit'   => $row['required_qty_unit'] ?? ($row['required_qty_unit'] ?? ''),
-            'qty_text'   => $row['required_qty_text'] ?? ($row['required_qty_text'] ?? ''),
-            'availability' => $row['availability'] ?? null
-          ];
-        }, $ings);
-      }
-    } catch (Exception $e) {
-      // if ingredient table or columns differ, ignore and return empty ingredients
-      $meal['ingredients'] = [];
-    }
-
-    $out[] = $meal;
-  }
+  $out[] = $meal;
 }
 
 echo json_encode(['ok'=>true, 'meals' => $out]);
+exit;
