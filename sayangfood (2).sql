@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 31, 2025 at 05:03 AM
+-- Generation Time: Nov 13, 2025 at 06:24 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -52,20 +52,6 @@ INSERT INTO `donation` (`donation_id`, `user_id`, `item_id`, `donation_date`, `p
 -- --------------------------------------------------------
 
 --
--- Table structure for table `food_analytics`
---
-
-CREATE TABLE `food_analytics` (
-  `analytic_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `report_type` varchar(20) NOT NULL,
-  `report_period_start` datetime NOT NULL,
-  `report_period_end` datetime NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `food_item_inventory`
 --
 
@@ -87,9 +73,9 @@ CREATE TABLE `food_item_inventory` (
 
 INSERT INTO `food_item_inventory` (`item_id`, `user_id`, `item_name`, `item_category`, `quantity`, `expiry_date`, `item_status`, `storage_place`, `item_remark`) VALUES
 (2, 42, 'Chicken breast', 'Meat', '1 kg', '2025-10-17', 'Used', 'Freezer', ''),
-(10, 52, 'Salmon Fish', 'Seafood', '500 g', '2025-10-29', 'Planned for Meal', 'Freezer', 'For Dinner'),
+(10, 52, 'Salmon Fish', 'Seafood', '500 g', '2025-10-29', 'Expired', 'Freezer', 'For Dinner'),
 (11, 52, 'Luncheon Meat (Chicken)', 'Meat', '1 Can', '2025-12-15', 'Available', 'Cabinet', ''),
-(12, 52, 'Milk', 'Dairy', '1 litres', '2025-10-22', 'Planned for Meal', 'Refrigerator', 'For Breakfast'),
+(12, 52, 'Milk', 'Dairy', '1 litres', '2025-10-22', 'Expired', 'Refrigerator', 'For Breakfast'),
 (13, 52, 'Jasmine Rice', 'Grains', '5 kg', '2025-11-26', 'Available', 'Storage Box', ''),
 (14, 52, 'Broccoli', 'Vegetable', '200 g', '2025-10-20', 'Donated', 'Refrigerator', 'Finish it as soon  as possible'),
 (15, 52, 'Carrot', 'Vegetable', '1 packs', '2025-10-21', 'Donated', 'Refrigerator', ''),
@@ -99,11 +85,11 @@ INSERT INTO `food_item_inventory` (`item_id`, `user_id`, `item_name`, `item_cate
 (19, 52, 'Potato', 'Vegetable', '2 kg', '2025-10-30', 'Donated', 'Storage Box', ''),
 (20, 52, 'Ginger', 'Vegetable', '500 g', '2025-10-26', 'Donated', 'Storage Box', ''),
 (21, 52, 'Tuna', 'Seafood', '1 Can', '2025-12-17', 'Planned for Meal', 'Cabinet', ''),
-(22, 52, 'Tomato', 'Vegetable', '5 pcs', '2025-10-25', 'Available', 'Refrigerator', ''),
+(22, 52, 'Tomato', 'Vegetable', '5 pcs', '2025-10-25', 'Expired', 'Refrigerator', ''),
 (23, 52, 'Strawberries', 'Fruit', '300 g', '2025-10-16', 'Donated', 'Refrigerator', ''),
 (24, 52, 'Cheese', 'Dairy', '1 packs', '2025-10-13', 'Expired', 'Refrigerator', ''),
 (26, 52, 'Chicken Drumstick', 'Meat', '3 pcs', '2025-10-22', 'Donated', 'Freezer', ''),
-(27, 52, 'Chicken Drumstick', 'Meat', '3 kg', '2025-10-31', 'Planned for Meal', 'Refrigerator', 'dinner today');
+(27, 52, 'Chicken Drumstick', 'Meat', '3 kg', '2025-10-31', 'Expired', 'Refrigerator', 'dinner today');
 
 -- --------------------------------------------------------
 
@@ -181,13 +167,6 @@ ALTER TABLE `donation`
   ADD KEY `fk_donation_item` (`item_id`);
 
 --
--- Indexes for table `food_analytics`
---
-ALTER TABLE `food_analytics`
-  ADD PRIMARY KEY (`analytic_id`),
-  ADD KEY `fk_foodanalytics_user` (`user_id`);
-
---
 -- Indexes for table `food_item_inventory`
 --
 ALTER TABLE `food_item_inventory`
@@ -229,12 +208,6 @@ ALTER TABLE `donation`
   MODIFY `donation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
--- AUTO_INCREMENT for table `food_analytics`
---
-ALTER TABLE `food_analytics`
-  MODIFY `analytic_id` int(11) NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT for table `food_item_inventory`
 --
 ALTER TABLE `food_item_inventory`
@@ -268,12 +241,6 @@ ALTER TABLE `users`
 ALTER TABLE `donation`
   ADD CONSTRAINT `fk_donation_item` FOREIGN KEY (`item_id`) REFERENCES `food_item_inventory` (`item_id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_donation_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Constraints for table `food_analytics`
---
-ALTER TABLE `food_analytics`
-  ADD CONSTRAINT `fk_foodanalytics_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `food_item_inventory`
