@@ -208,29 +208,32 @@ if (!isset($_SESSION['user_id'])) {
       if (shouldOpenMealDetail === 'true' && mealPlanData) {
         try {
           const meal = JSON.parse(mealPlanData);
+          console.log('[Notification] Meal data loaded:', meal);
           // Clear sessionStorage
           sessionStorage.removeItem('shouldOpenMealDetail');
           sessionStorage.removeItem('mealPlanData');
           
           // Navigate to the meal's date and open detail
+          // Use longer timeout to ensure all JS is initialized
           setTimeout(() => {
+            console.log('[Notification] setTimeout fired, setting meal date:', meal.meal_date);
+            
             // Set the selected date to the meal's date
-            if (meal.meal_date && window.setSelectedDate) {
-              window.setSelectedDate(meal.meal_date);
-            }
-            
-            // Store meal for detail view
-            window.mealToDisplay = meal;
-            
-            // If there's a function to open meal detail, call it
-            if (typeof window.openMealDetail === 'function') {
-              window.openMealDetail(meal);
+            if (meal.meal_date && typeof window.setMealDate === 'function') {
+              console.log('[Notification] Calling window.setMealDate()');
+              window.setMealDate(meal.meal_date);
             } else {
-              // Fallback: create and display a simple meal detail modal
-              console.log('Meal detail:', meal);
-              alert(`Meal: ${meal.meal_name}\nDate: ${meal.meal_date}\nSlot: ${meal.meal_slot}`);
+              console.error('[Notification] setMealDate not available or no meal_date');
             }
-          }, 500);
+            
+            // Open meal detail modal with ingredients
+            if (typeof window.openMealDetailFromNotification === 'function') {
+              console.log('[Notification] Calling window.openMealDetailFromNotification()');
+              window.openMealDetailFromNotification(meal);
+            } else {
+              console.error('[Notification] openMealDetailFromNotification not available');
+            }
+          }, 1000);  // Increased from 500ms to 1000ms
         } catch (error) {
           console.error('Error parsing meal data:', error);
           sessionStorage.removeItem('shouldOpenMealDetail');

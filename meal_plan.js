@@ -529,6 +529,65 @@ async function filterInventoryForQuery(term){
     renderExpiring();
     renderMeals();
     attachMealTileClickHandlers();
+    
+    // If we arrived from a notification, open the meal detail and navigate to its date
+    try {
+      const shouldOpen = sessionStorage.getItem('shouldOpenMealDetail');
+      const mealPlanData = sessionStorage.getItem('mealPlanData');
+      if (shouldOpen === 'true' && mealPlanData) {
+        console.log('[meal_plan] notification present, processing mealPlanData');
+        let meal = null;
+        try { meal = JSON.parse(mealPlanData); } catch (e) { console.error('[meal_plan] failed to parse mealPlanData', e); }
+        // clear storage so it doesn't trigger again
+        sessionStorage.removeItem('shouldOpenMealDetail');
+        sessionStorage.removeItem('mealPlanData');
+
+        if (meal && meal.meal_date) {
+          // set selected date
+          try {
+            const [y,m,d] = meal.meal_date.split('-').map(Number);
+            state.selected = new Date(y, m-1, d);
+            renderStrip(); renderDayTitle();
+            // reload meals for this date
+            await loadMealsForDate(state.selected);
+            renderMeals();
+            attachMealTileClickHandlers();
+          } catch(err) {
+            console.error('[meal_plan] error setting selected date', err);
+          }
+        }
+
+        // prepare snapshot and fetch ingredients if meal_id present
+        const snapshot = { meal_name: meal?.meal_name || '', slot: meal?.meal_slot || '', remark: meal?.meal_remark || '', ingredients: [] };
+        if (meal && meal.meal_id) {
+          try {
+            const resp = await fetch(`api/get_meal_ingredients.php?meal_id=${encodeURIComponent(meal.meal_id)}&user_id=${encodeURIComponent(window.CURRENT_USER_ID||0)}`);
+            if (resp.ok) {
+              const json = await resp.json();
+              if (json && json.ok && Array.isArray(json.ingredients)) {
+                snapshot.ingredients = json.ingredients.map(it => ({
+                  name: it.item_name || it.item_name_snapshot || '',
+                  qty_value: it.required_qty_value ?? null,
+                  qty_unit: it.required_qty_unit || '',
+                  qty_text: it.required_qty_text || '',
+                  expiry_date: it.expiry_date || null,
+                  storage_place: it.storage_place || null
+                }));
+              }
+            }
+          } catch (err) { console.error('[meal_plan] failed to fetch meal ingredients', err); }
+        }
+
+        // show detail modal
+        try {
+          if (typeof showMealDetailModal === 'function') {
+            showMealDetailModal(snapshot.meal_name || meal?.meal_name || '', snapshot);
+          } else {
+            alert(`Meal: ${meal?.meal_name || snapshot.meal_name}\nDate: ${meal?.meal_date || ''}\nSlot: ${meal?.meal_slot || ''}`);
+          }
+        } catch (err) { console.error('[meal_plan] error opening meal detail modal', err); }
+      }
+    } catch (e) { console.error('[meal_plan] notification processing error', e); }
   });
 
   // also ensure we reload meals whenever the strip/date changes
@@ -557,6 +616,87 @@ async function filterInventoryForQuery(term){
       payload.meals[slot] = arr;
     });
     return payload;
+  };
+
+  // Expose function to set selected date and reload meals
+  window.setMealDate = function(dateStr) {
+    try {
+      console.log('[setMealDate] Called with:', dateStr);
+      // Parse date string (format: YYYY-MM-DD)
+      const [year, month, day] = dateStr.split('-').map(Number);
+      console.log('[setMealDate] Parsed:', { year, month, day });
+      state.selected = new Date(year, month - 1, day);
+      console.log('[setMealDate] state.selected set to:', state.selected);
+      
+      // Re-render UI
+      console.log('[setMealDate] Calling renderStrip()');
+      renderStrip();
+      console.log('[setMealDate] Calling renderDayTitle()');
+      renderDayTitle();
+      
+      // Reload meals for this date
+      console.log('[setMealDate] Calling reloadMealsForCurrentDate()');
+      reloadMealsForCurrentDate();
+      console.log('[setMealDate] Complete');
+    } catch (e) {
+      console.error('[setMealDate] Error:', e, e.stack);
+    }
+  };
+
+  // Expose function to open meal detail modal from notification
+  window.openMealDetailFromNotification = function(mealData) {
+    try {
+      console.log('[openMealDetailFromNotification] Called with:', mealData);
+      
+      if (!mealData || !mealData.meal_name) {
+        console.error('[openMealDetailFromNotification] Invalid meal data');
+        return;
+      }
+
+      // Build snapshot structure from meal data
+      const snapshot = {
+        meal_name: mealData.meal_name,
+        slot: mealData.meal_slot || 'lunch',
+        index: 0,
+        remark: mealData.meal_remark || '',
+        ingredients: []
+      };
+
+      // The meal data from notification doesn't have ingredients loaded yet
+      // We need to fetch them from the meal_plan_item table via API
+      const mealId = mealData.meal_id;
+      
+      if (mealId) {
+        // Fetch ingredients for this meal
+        fetch(`api/get_meal_ingredients.php?meal_id=${encodeURIComponent(mealId)}&user_id=${encodeURIComponent(window.CURRENT_USER_ID || 0)}`)
+          .then(res => res.json())
+          .then(json => {
+            if (json && json.ok && Array.isArray(json.ingredients)) {
+              snapshot.ingredients = json.ingredients.map(it => ({
+                name: it.item_name_snapshot || it.item_name || '',
+                qty_value: it.required_qty_value ?? null,
+                qty_unit: it.required_qty_unit || '',
+                qty_text: it.required_qty_text || '',
+                expiry_date: it.expiry_date || null,
+                storage_place: it.storage_place || null
+              }));
+              console.log('[openMealDetailFromNotification] Ingredients loaded:', snapshot.ingredients);
+            }
+            // Show detail modal regardless
+            showMealDetailModal(mealData.meal_name, snapshot);
+          })
+          .catch(err => {
+            console.error('[openMealDetailFromNotification] Failed to fetch ingredients:', err);
+            // Show modal without ingredients
+            showMealDetailModal(mealData.meal_name, snapshot);
+          });
+      } else {
+        // No meal_id, show with empty ingredients
+        showMealDetailModal(mealData.meal_name, snapshot);
+      }
+    } catch (e) {
+      console.error('[openMealDetailFromNotification] Error:', e, e.stack);
+    }
   };
 
 })();

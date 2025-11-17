@@ -216,12 +216,24 @@ $result = $stmt->get_result();
               body: `action=mark_read&id=${notificationId}`
             }).catch(err => console.error('Failed to mark as read:', err));
 
-            // Navigate to appropriate page
-            if (notifTypeNormalized === 'inventory') {
+            // Debug: log the sessionStorage keys we're about to set/navigate with
+            try {
+              console.log('Session storage keys before navigation:', {
+                viewItemData: sessionStorage.getItem('viewItemData'),
+                editDonationData: sessionStorage.getItem('editDonationData'),
+                mealPlanData: sessionStorage.getItem('mealPlanData'),
+                shouldOpenViewPopup: sessionStorage.getItem('shouldOpenViewPopup'),
+                shouldOpenEditDonatePopup: sessionStorage.getItem('shouldOpenEditDonatePopup'),
+                shouldOpenMealDetail: sessionStorage.getItem('shouldOpenMealDetail')
+              });
+            } catch (e) { console.warn('SessionStorage unavailable', e); }
+
+            // Navigate to appropriate page (use substring matching for robustness)
+            if (notifTypeNormalized.includes('inventory') || notifTypeNormalized.includes('item')) {
               window.location.href = 'inventory_list.php';
-            } else if (notifTypeNormalized === 'donation') {
+            } else if (notifTypeNormalized.includes('donation')) {
               window.location.href = 'donation_list.php';
-            } else if (notifTypeNormalized === 'meal planning') {
+            } else if (notifTypeNormalized.includes('meal')) {
               window.location.href = 'meal_plan.php';
             }
           })
