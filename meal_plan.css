@@ -617,3 +617,60 @@ html, body {
   animation: spin 0.9s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 10px;
+}
+
+.btn-light {
+  padding: 8px 20px;
+  background: #fff;
+  border: 1px solid #cfcfcf;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.btn-light:hover {
+  background: #f4f4f4;
+}
+
+.btn-green {
+  padding: 8px 20px;
+  background: #4a7c59;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.btn-green:hover {
+  background: #3c6a4b;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+/* Center buttons in the choose-date-slot modal */
+#chooseDateSlotModal .modal-footer {
+  justify-content: center;   /* center horizontally */
+  gap: 14px;                 /* space between buttons */
+  padding: 18px 20px 22px;   /* comfortable padding (top/right/left/bottom) */
+  box-sizing: border-box;
+}
+
+/* Make sure the footer takes full modal width so centering is accurate */
+#chooseDateSlotModal .modal-panel .modal-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* Slight visual nudge so buttons sit a bit lower like your screenshot */
+#chooseDateSlotModal .modal-panel {
+  padding-bottom: 8px; /* reduce large panel padding if you prefer */
+}

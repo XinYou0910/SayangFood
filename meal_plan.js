@@ -885,8 +885,11 @@ async function filterInventoryForQuery(term){
       const recipeModal = document.getElementById('recipeDetailModal');
       const dateInput = document.getElementById('chooseDateSlotDate');
       const slotSelect = document.getElementById('chooseDateSlotSelect');
+      const remarkInput = document.getElementById('chooseDateSlotRemark'); // NEW
       const dateVal = dateInput.value;
       const slotVal = slotSelect.value || 'lunch';
+      const remarkVal = remarkInput ? (remarkInput.value || '') : ''; // NEW
+
       if (!dateVal) { alert('Please pick a date'); return; }
 
       const rid = recipeModal.dataset.currentRecipeId;
@@ -907,7 +910,7 @@ async function filterInventoryForQuery(term){
         meal_date: dateVal,
         meal_slot: slotVal,
         meal_name: recipeName,
-        remark: '',
+        remark: remarkVal, // now included
         ingredients: ingredients
       };
 

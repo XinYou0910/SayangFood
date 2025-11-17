@@ -227,17 +227,22 @@ if (!isset($_SESSION['user_id'])) {
       <div class="modal-body" style="padding:12px;">
         <label style="display:block;margin-bottom:8px;font-weight:700;">Date</label>
         <input id="chooseDateSlotDate" type="date" style="width:100%;padding:8px 10px;margin-bottom:12px;border-radius:6px;border:1px solid #ddd;">
+
         <label style="display:block;margin-bottom:8px;font-weight:700;">Slot</label>
-        <select id="chooseDateSlotSelect" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #ddd;">
+        <select id="chooseDateSlotSelect" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #ddd;margin-bottom:12px;">
           <option value="breakfast">Breakfast</option>
           <option value="lunch" selected>Lunch</option>
           <option value="dinner">Dinner</option>
           <option value="other">Other</option>
         </select>
+
+        <!-- NEW: remark input -->
+        <label style="display:block;margin-bottom:8px;font-weight:700;">Remark (optional)</label>
+        <textarea id="chooseDateSlotRemark" placeholder="Add a note (e.g. make for kids, bring to workplace...)" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd; min-height:80px; box-sizing:border-box; resize:vertical; font-family:inherit;"></textarea>
       </div>
-      <footer class="modal-footer" style="gap:10px;">
-        <button id="chooseDateSlotCancel" class="action-btn">Cancel</button>
-        <button id="chooseDateSlotConfirm" class="action-btn">Add</button>
+      <footer class="modal-footer">
+        <button id="chooseDateSlotCancel" class="btn-light">Cancel</button>
+        <button id="chooseDateSlotConfirm" class="btn-green">Add</button>
       </footer>
     </div>
   </div>
