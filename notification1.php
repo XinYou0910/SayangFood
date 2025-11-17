@@ -85,7 +85,10 @@ $result = $stmt->get_result();
       </div>
 
       <div class="notification-list">
-        <?php while ($row = $result->fetch_assoc()): ?>
+        <?php if ($result->num_rows === 0): ?>
+          <div class="no-notifications" style="text-align:center;color:#b00020;font-weight:500;padding:18px;">No new notification</div>
+        <?php else: ?>
+          <?php while ($row = $result->fetch_assoc()): ?>
           <?php
             $statusClass = '';
             if ($row['notification_status'] === 'Unread') {
@@ -125,7 +128,8 @@ $result = $stmt->get_result();
               <?php endif; ?>
             </div>
           </div>
-        <?php endwhile; ?>
+          <?php endwhile; ?>
+        <?php endif; ?>
       </div>
       <!-- We'll add notification content here later -->
     </div>
