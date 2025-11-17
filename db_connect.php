@@ -1,4 +1,7 @@
 <?php
+// Set timezone for PHP
+date_default_timezone_set('Asia/Kuala_Lumpur');
+
 // Database connection for XAMPP
 $host     = "localhost";   // XAMPP default
 $username = "root";        // XAMPP default MySQL user
@@ -12,4 +15,7 @@ $conn = new mysqli($host, $username, $password, $database);
 if ($conn->connect_error) {
     die("❌ Connection failed: " . $conn->connect_error);
 }
+
+// Set MySQL timezone to match PHP
+$conn->query("SET time_zone = '+08:00'");
 ?>

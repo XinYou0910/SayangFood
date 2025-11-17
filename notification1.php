@@ -7,8 +7,8 @@ if (!isset($_SESSION['user_id'])) {
 include 'db_connect.php';
 // Fetch notifications for current user
 $currentUserId = $_SESSION['user_id'];
-// Use correct table and columns
-$sql = "SELECT * FROM notification WHERE user_id = ? ORDER BY timestamp DESC";
+// Use correct table and columns - Sort by timestamp DESC (newest first), then by notification_id DESC for tiebreaker
+$sql = "SELECT * FROM notification WHERE user_id = ? ORDER BY timestamp DESC, notification_id DESC";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $currentUserId);
 $stmt->execute();
@@ -147,9 +147,10 @@ $result = $stmt->get_result();
         e.preventDefault();
         const notificationId = this.dataset.id;
         const notificationType = this.dataset.type;
+        console.log('View clicked:', { notificationId, notificationType, rawId: this.getAttribute('data-id'), element: this });
 
         // Fetch notification details
-        fetch(`notification_detail.php?id=${notificationId}`)
+        fetch(`notification_detail.php?id=${notificationId}`, { credentials: 'same-origin' })
           .then(res => {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return res.json();
@@ -167,25 +168,26 @@ $result = $stmt->get_result();
               return;
             }
 
-            // Route based on notification type
-            const notifTypeNormalized = notificationType.toLowerCase().trim();
+            // Route based on notification type (tolerant matching)
+            const notifTypeNormalized = (notificationType || '').toLowerCase().trim();
             let hasValidData = false;
 
-            if (notifTypeNormalized === 'inventory') {
+            // Accept variants like 'inventory', 'item', 'food inventory'
+            if (notifTypeNormalized.includes('inventory') || notifTypeNormalized.includes('item')) {
               // Go to inventory_list.php and open view popup
               if (data.item_data && Object.keys(data.item_data).length > 0) {
                 hasValidData = true;
                 sessionStorage.setItem('viewItemData', JSON.stringify(data.item_data));
                 sessionStorage.setItem('shouldOpenViewPopup', 'true');
               }
-            } else if (notifTypeNormalized === 'donation') {
+            } else if (notifTypeNormalized.includes('donation')) {
               // Go to donation_list.php and open edit popup
               if (data.item_data && Object.keys(data.item_data).length > 0) {
                 hasValidData = true;
                 sessionStorage.setItem('editDonationData', JSON.stringify(data.item_data));
                 sessionStorage.setItem('shouldOpenEditDonatePopup', 'true');
               }
-            } else if (notifTypeNormalized === 'meal planning') {
+            } else if (notifTypeNormalized.includes('meal')) {
               // Go to meal_plan.php and open meal details
               if (data.item_data && Object.keys(data.item_data).length > 0) {
                 hasValidData = true;
@@ -209,6 +211,7 @@ $result = $stmt->get_result();
             // Mark notification as read (fire and forget)
             fetch('notification_actions.php', {
               method: 'POST',
+              credentials: 'same-origin',
               headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
               body: `action=mark_read&id=${notificationId}`
             }).catch(err => console.error('Failed to mark as read:', err));
@@ -242,6 +245,7 @@ $result = $stmt->get_result();
         const id = this.dataset.id;
         fetch('notification_actions.php', {
           method: 'POST',
+          credentials: 'same-origin',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: `action=mark_read&id=${id}`
         })
@@ -292,6 +296,7 @@ $result = $stmt->get_result();
           if (result.isConfirmed) {
             fetch('notification_actions.php', {
               method: 'POST',
+              credentials: 'same-origin',
               headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
               body: `action=delete&id=${id}`
             })
@@ -332,6 +337,7 @@ $result = $stmt->get_result();
       e.preventDefault();
       fetch('notification_actions.php', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'action=mark_all_read'
       })
@@ -379,6 +385,7 @@ $result = $stmt->get_result();
         if (result.isConfirmed) {
           fetch('notification_actions.php', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: 'action=delete_read'
           })
