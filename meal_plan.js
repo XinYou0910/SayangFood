@@ -2033,17 +2033,63 @@ async function filterInventoryForQuery(term){
 })();
 
 function fixIngredientModalZ() {
-    const weekly = document.getElementById("weeklyCalendarModal");
-    const ingModal = document.getElementById("recipeDetailModal");
+  const weekly = document.getElementById("weeklyCalendarModal");
+  const ingModal = document.getElementById("recipeDetailModal");
+  if (!ingModal) return;
 
-    if (!weekly || !ingModal) return;
+  // Move modal to body to escape parent stacking contexts
+  if (ingModal.parentNode !== document.body) {
+    try { document.body.appendChild(ingModal); } catch (e) { /* ignore */ }
+  }
 
-    weekly.style.zIndex = "8000";
-    ingModal.style.zIndex = "100000";
+  // Ensure modal has fixed positioning
+  ingModal.style.position = ingModal.style.position || 'fixed';
+  ingModal.style.inset = ingModal.style.inset || '0';
+  ingModal.style.display = ingModal.style.display || 'flex';
+  ingModal.setAttribute('aria-hidden', 'false');
 
-    const panel = ingModal.querySelector(".modal-panel");
-    const backdrop = ingModal.querySelector(".modal-backdrop");
+  // Find or create a backdrop and ensure it is placed before the modal in the DOM
+  let backdrop = document.getElementById('global-modal-backdrop') || ingModal.querySelector('.modal-backdrop');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    try { document.body.insertBefore(backdrop, ingModal); } catch (e) { /* ignore */ }
+  } else if (backdrop.parentNode !== document.body) {
+    try { document.body.appendChild(backdrop); } catch (e) { /* ignore */ }
+  }
 
-    if (backdrop) backdrop.style.zIndex = "100000";
-    if (panel) panel.style.zIndex = "100001";
+  // Large z-index values to guarantee visibility above other UI
+  const BACKDROP_Z = 2147483638;
+  const PANEL_Z    = 2147483647;
+  const MODAL_Z    = 2147483646;
+
+  try {
+    backdrop.style.position = 'fixed';
+    backdrop.style.inset = '0';
+    backdrop.style.background = 'rgba(0,0,0,0.45)';
+    backdrop.style.zIndex = String(BACKDROP_Z);
+    backdrop.style.display = 'block';
+    backdrop.style.pointerEvents = 'auto';
+  } catch (e) {}
+
+  try {
+    ingModal.style.zIndex = String(MODAL_Z);
+    ingModal.style.pointerEvents = 'auto';
+  } catch (e) {}
+
+  try {
+    const panel = ingModal.querySelector('.modal-panel') || ingModal.querySelector('.modal-dialog') || ingModal;
+    if (panel) {
+      panel.style.position = panel.style.position || 'relative';
+      panel.style.zIndex = String(PANEL_Z);
+    }
+  } catch (e) {}
+
+  // Lower weekly calendar z-index slightly if present
+  if (weekly) {
+    try {
+      const current = Number(weekly.style.zIndex) || 0;
+      if (!current || current > 8000) weekly.style.zIndex = '8000';
+    } catch (e) {}
+  }
 }
