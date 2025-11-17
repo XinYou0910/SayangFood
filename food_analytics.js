@@ -2,6 +2,7 @@ const ctx = document.getElementById("foodChart").getContext("2d");
 let currentChart = null;
 let lastTrendData = [];
 let currentChartMode = "all";   // "all" | "saved" | "waste" | "donation"
+let lastQueryString = ""; 
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -96,6 +97,7 @@ function loadAnalytics(options = {}) {
     params.append('range', range);
   }
 
+lastQueryString = params.toString();
   fetch(`food_analytics_data.php?${params.toString()}`)
     .then(res => {
       if (!res.ok) {
@@ -112,17 +114,19 @@ function loadAnalytics(options = {}) {
         return;
       }
 
-            updateSummary(data);
+          updateSummary(data);
 
       if (data.trend && data.trend.length > 0) {
-        lastTrendData = data.trend;                 // store for later
-        drawTrend(lastTrendData, currentChartMode); // draw with current mode
+        lastTrendData = data.trend;
+        drawTrend(lastTrendData, currentChartMode || "all");
       } else {
+        console.warn('No trend data available for selected period');
         lastTrendData = [];
-        console.warn('No trend data available');
+        // Force chart to show a "no data" message
+        drawTrend([], currentChartMode || "all");
       }
 
-      // Update "Expiry soon" table (if you added this earlier)
+      // expiry table will already show "No items near expiry" for empty list
       if (typeof updateExpirySoon === "function") {
         updateExpirySoon(data.expiry_soon || []);
       }
@@ -179,138 +183,165 @@ function updateSummary(data) {
 
 
 function drawTrend(trendData, mode = "all") {
-  const trendCtx = document.getElementById("foodChart").getContext("2d");
+  const canvas = document.getElementById("foodChart");
+  if (!canvas) return;
 
-  if (trendChart) trendChart.destroy();
+  const trendCtx = canvas.getContext("2d");
+
+  // Destroy any existing chart
+  if (trendChart) {
+    trendChart.destroy();
+    trendChart = null;
+  }
+
+  // === No data for this range ===
+if (!trendData || trendData.length === 0) {
+  const titleEl = document.getElementById("chartTitle");
+  const subEl   = document.getElementById("chartSubtitle");
+
+  if (titleEl) titleEl.textContent = "Visual Report";
+  if (subEl)   subEl.textContent   = "No data for the selected dates";
+
+  // ✅ clear the whole canvas: x, y, width, height
+  trendCtx.clearRect(0, 0, trendCtx.canvas.width, trendCtx.canvas.height);
+
+  return;
+}
+
+
+
+  // === Existing chart logic below (use your current code here) ===
 
   const labels = trendData.map(d => d.date);
 
-  // Build datasets based on mode
-  const datasets = [];
   const savedData   = trendData.map(d => d.saved   || 0);
   const wastedData  = trendData.map(d => d.wasted  || 0);
   const donatedData = trendData.map(d => d.donated || 0);
 
-  if (mode === "all") {
-    datasets.push(
-        {
-      label: 'Food Saved',
-      data: savedData,
-      borderColor: '#10b981',
-      backgroundColor: 'rgba(16,185,129,0.1)',
-      fill: true,
-      tension: 0.4,
-      pointRadius: 5,        // was 3
-      pointHoverRadius: 8,   // bigger on hover
-      pointHitRadius: 14     // big invisible hit area
-    },
-    {
-      label: 'Food Wasted',
-      data: wastedData,
-      borderColor: '#ef4444',
-      backgroundColor: 'rgba(239,68,68,0.1)',
+  const datasets = [];
+
+  if (mode === "donation") {
+    datasets.push({
+      label: "Donations",
+      data: donatedData,
+      borderColor: "#1d4ed8",
+      backgroundColor: "rgba(37,99,235,0.6)",
       fill: true,
       tension: 0.4,
       pointRadius: 5,
       pointHoverRadius: 8,
       pointHitRadius: 14
-    }
-
-    );
-  } else if (mode === "saved") {
-    datasets.push({
-      label: 'Food Saved',
-      data: savedData,
-      borderColor: '#10b981',
-      backgroundColor: 'rgba(16,185,129,0.1)',
-      fill: true,
-      tension: 0.4,
-      pointRadius: 3
     });
   } else if (mode === "waste") {
     datasets.push({
-      label: 'Food Wasted',
+      label: "Food Wasted",
       data: wastedData,
-      borderColor: '#ef4444',
-      backgroundColor: 'rgba(239,68,68,0.1)',
+      borderColor: "#ef4444",
+      backgroundColor: "rgba(239,68,68,0.1)",
       fill: true,
       tension: 0.4,
-      pointRadius: 3
+      pointRadius: 5,
+      pointHoverRadius: 8,
+      pointHitRadius: 14
     });
-    } else if (mode === "donation") {
-      datasets.push({
-        label: 'Donations',
-        data: donatedData,
-        borderColor: '#1d4ed8',              // darker border
-        backgroundColor: 'rgba(37,99,235,0.6)', // much darker fill
+  } else if (mode === "saved") {
+    datasets.push({
+      label: "Food Saved",
+      data: savedData,
+      borderColor: "#10b981",
+      backgroundColor: "rgba(16,185,129,0.1)",
+      fill: true,
+      tension: 0.4,
+      pointRadius: 5,
+      pointHoverRadius: 8,
+      pointHitRadius: 14
+    });
+  } else { // "all"
+    datasets.push(
+      {
+        label: "Food Saved",
+        data: savedData,
+        borderColor: "#10b981",
+        backgroundColor: "rgba(16,185,129,0.1)",
         fill: true,
         tension: 0.4,
-        pointRadius: 3
-      });
-    }
+        pointRadius: 5,
+        pointHoverRadius: 8,
+        pointHitRadius: 14
+      },
+      {
+        label: "Food Wasted",
+        data: wastedData,
+        borderColor: "#ef4444",
+        backgroundColor: "rgba(239,68,68,0.1)",
+        fill: true,
+        tension: 0.4,
+        pointRadius: 5,
+        pointHoverRadius: 8,
+        pointHitRadius: 14
+      }
+    );
+  }
 
+  const chartType = mode === "donation" ? "bar" : "line";
 
-  // Choose chart type (keep donations as bar if you prefer)
-  const chartType = mode === "donation" ? 'bar' : 'line';
-
-trendChart = new Chart(trendCtx, {
-  type: chartType,
-  data: {
-    labels,
-    datasets
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-
-    // 👇 makes it easy to hover anywhere vertically on that date
-    interaction: {
-      mode: 'index',
-      intersect: false
-    },
-    plugins: {
-      legend: { position: 'top' },
-      tooltip: {
-        mode: 'index',
-        intersect: false,
-        callbacks: {
-          label: (ctx) => {
-            const label = ctx.dataset.label || '';
-            const value = ctx.parsed.y ?? ctx.parsed;
-            return `${label}: ${value} items`;
+  trendChart = new Chart(trendCtx, {
+    type: chartType,
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: "index",
+        intersect: false
+      },
+      plugins: {
+        legend: { position: "top" },
+        tooltip: {
+          mode: "index",
+          intersect: false,
+          callbacks: {
+            label: (ctx) => {
+              const label = ctx.dataset.label || "";
+              const value = ctx.parsed.y ?? ctx.parsed;
+              return `${label}: ${value} items`;
+            }
           }
         }
+      },
+      scales: {
+        y: { beginAtZero: true }
       }
-    },
-    scales: {
-      y: { beginAtZero: true }
     }
-  }
-});
+  });
 
-
-  // Update title + subtitle
-  const titleEl = document.getElementById('chartTitle');
-  const subEl   = document.getElementById('chartSubtitle');
+  const titleEl = document.getElementById("chartTitle");
+  const subEl   = document.getElementById("chartSubtitle");
 
   if (titleEl && subEl) {
     if (mode === "saved") {
-      titleEl.textContent = 'Saved Food Trend';
-      subEl.textContent   = 'Daily food saved for selected range';
+      titleEl.textContent = "Saved Food Trend";
+      subEl.textContent   = "Daily food saved for selected range";
     } else if (mode === "waste") {
-      titleEl.textContent = 'Food Waste Trend';
-      subEl.textContent   = 'Daily food wasted for selected range';
+      titleEl.textContent = "Food Waste Trend";
+      subEl.textContent   = "Daily food wasted for selected range";
     } else if (mode === "donation") {
-      titleEl.textContent = 'Donation Trend';
-      subEl.textContent   = 'Daily donations for selected range';
-    } else { // "all"
-      titleEl.textContent = 'Visual Report';
-      subEl.textContent   = 'Daily saved vs wasted items';
+      titleEl.textContent = "Donation Trend";
+      subEl.textContent   = "Daily donations for selected range";
+    } else {
+      titleEl.textContent = "Visual Report";
+      subEl.textContent   = "Daily saved vs wasted items";
     }
   }
 
-  setTimeout(() => { try { trendChart.resize(); trendChart.update(); } catch(e){} }, 150);
+  setTimeout(() => {
+    try {
+      trendChart.resize();
+      trendChart.update();
+    } catch (e) {}
+  }, 150);
 }
+
 
 
 // Draw a donation chart (bar) as a separate full-size report
@@ -344,13 +375,40 @@ function drawDonationChart(trendData) {
 
 
 function drawCategory(categoryData, metric = "percentage") {
-  const categoryCtx = document.getElementById("categoryChart").getContext("2d");
+  const canvas = document.getElementById("categoryChart");
+  if (!canvas) return;
+
+  const categoryCtx = canvas.getContext("2d");
 
   // Destroy previous chart if exists
-  if (categoryChart) categoryChart.destroy();
+  if (categoryChart) {
+    categoryChart.destroy();
+    categoryChart = null;
+  }
 
+  // ====== NO DATA CASE ======
   if (!categoryData || categoryData.length === 0) {
-    showNoDataMessage(categoryCtx);
+    // Clear canvas (x, y, width, height → 4 args)
+    categoryCtx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Optional: show a small message in the middle of the donut area
+    categoryCtx.font = "16px Poppins";
+    categoryCtx.fillStyle = "#9ca3af";
+    categoryCtx.textAlign = "center";
+    categoryCtx.textBaseline = "middle";
+    categoryCtx.fillText(
+      "No category data for the selected dates",
+      canvas.width / 2,
+      canvas.height / 2
+    );
+
+    // Also clear legend so old categories disappear
+    const legendContainer = document.getElementById("foodLegend");
+    if (legendContainer) {
+      legendContainer.innerHTML =
+        '<p class="empty-row">No data for this range.</p>';
+    }
+
     return;
   }
 
@@ -531,29 +589,28 @@ function showCategory() {
   document.getElementById("trendSection").style.display = "none";
   document.getElementById("categorySection").style.display = "flex";
 
-  const range = document.getElementById("filterRange").value;
+  // If nothing has run yet, fall back to quick range
+  const fallbackRange = document.getElementById("filterRange").value || 30;
+  const query = lastQueryString || `range=${fallbackRange}`;
 
-  // Force redraw after unhide (helps with invisible chart)
   setTimeout(() => {
-    fetch(`food_analytics_data.php?range=${range}`)
+    fetch(`food_analytics_data.php?${query}`)
       .then(res => res.json())
       .then(data => {
         if (data.category && data.category.length > 0) {
-          // cache for filtering
           _allCategoryData = data.category.map(d => ({ ...d }));
           _lastCategoryData = [..._allCategoryData];
-          drawCategory(_lastCategoryData);
-          // set default filters UI values if present
+
+          drawCategory(_lastCategoryData, document.getElementById("categoryMetric")?.value || "percentage");
+
           document.getElementById('topN').value = '5';
           document.getElementById('categoryMetric').value = 'percentage';
 
-          // wire filter apply button
           const applyBtn = document.getElementById('applyCategoryFilter');
           if (applyBtn) {
             applyBtn.onclick = () => renderCategoryWithFilters();
           }
 
-          // also wire quick input triggers
           const searchInput = document.getElementById('categorySearch');
           if (searchInput) {
             let t;
@@ -562,13 +619,14 @@ function showCategory() {
 
           renderCategoryWithFilters();
         } else {
-          const ctx = document.getElementById("categoryChart").getContext("2d");
-          showNoDataMessage(ctx);
+          // no category data for this filter → clear chart & legend
+          drawCategory([], document.getElementById("categoryMetric")?.value || "percentage");
         }
       })
       .catch(err => console.error("Error loading category:", err));
   }, 100);
 }
+
 
 function showTrend() {
   console.log("Switching to trend view");
