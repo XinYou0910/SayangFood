@@ -49,15 +49,15 @@ $result = $stmt->get_result();
 
       <div class="dropdown-container" id="dropdownMenu">
         <button class="submenu-item" data-page="inventory_list.php" onclick="window.location.href='inventory_list.php'">Inventory</button>
-        <button class="submenu-item" data-page="weekly_meal.php" onclick="window.location.href='weekly_meal.php'">Weekly Meal</button>
+        <button class="submenu-item" data-page="meal_plan.php" onclick="window.location.href='meal_plan.php'">Meal Plan</button>
         <button class="submenu-item" data-page="donation_list.php" onclick="window.location.href='donation_list.php'">Donations</button>
       </div>
 
-      <button class="menu-item">
+      <button class="menu-item" onclick="location.href='food_analytics.html'">
         <img src="pic/data-analytics.png" alt="Analytics Icon" class="icon"> Food Analytics
       </button>
 
-      <button class="menu-item">
+      <button class="menu-item" onclick="location.href='notification1.php'">
         <img src="pic/notification.png" alt="Notification Icon" class="icon"> Notification
       </button>
 
