@@ -42,29 +42,30 @@ if ($startParam && $endParam) {
 // =======================================================
 // EXPIRY SOON (next 7 days from today)
 // =======================================================
-$expirySoonQuery = "
-  SELECT 
-    item_name,
-    quantity,
-    expiry_date
-  FROM food_item_inventory
-  WHERE expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-    AND item_status NOT IN ('Used', 'Expired', 'Donated')
-  ORDER BY expiry_date ASC
-  LIMIT 10
-";
+  $expirySoonQuery = "
+    SELECT 
+      item_name,
+      quantity,        -- this already contains '1 kg', '500 g', etc
+      expiry_date
+    FROM food_item_inventory
+    WHERE expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+      AND item_status NOT IN ('Used', 'Expired', 'Donated')
+    ORDER BY expiry_date ASC
+    LIMIT 10
+  ";
 
-$expirySoon = [];
-$expiryRes = $conn->query($expirySoonQuery);
-if ($expiryRes) {
-    while ($row = $expiryRes->fetch_assoc()) {
-        $expirySoon[] = [
-            'item_name'   => $row['item_name'],
-            'quantity'    => (int)$row['quantity'],   // adjust column name if needed
-            'expiry_date' => $row['expiry_date']
-        ];
-    }
-}
+  $expirySoon = [];
+  $expiryRes = $conn->query($expirySoonQuery);
+  if ($expiryRes) {
+      while ($row = $expiryRes->fetch_assoc()) {
+          $expirySoon[] = [
+              'item_name'   => $row['item_name'],
+              'quantity'    => $row['quantity'],   // 👈 no casting, keep the full string
+              'expiry_date' => $row['expiry_date']
+          ];
+      }
+  }
+
 
 
 // --------------------------

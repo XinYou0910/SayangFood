@@ -1,5 +1,8 @@
 const ctx = document.getElementById("foodChart").getContext("2d");
 let currentChart = null;
+let lastTrendData = [];
+let currentChartMode = "all";   // "all" | "saved" | "waste" | "donation"
+
 
 document.addEventListener("DOMContentLoaded", () => {
   // default: last 30 days
@@ -9,7 +12,50 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("applyCustomFilter").addEventListener("click", applyCustomDateFilter);
   document.getElementById("trendBtn").addEventListener("click", showTrend);
   document.getElementById("categoryBtn").addEventListener("click", showCategory);
+
+  // === New: card click behaviour ===
+  const savingCard   = document.getElementById("card-saving");
+  const wasteCard    = document.getElementById("card-waste");
+  const donationCard = document.getElementById("card-donation");
+
+  if (savingCard) {
+    savingCard.addEventListener("click", () => switchChartMode("saved"));
+  }
+  if (wasteCard) {
+    wasteCard.addEventListener("click", () => switchChartMode("waste"));
+  }
+  if (donationCard) {
+    donationCard.addEventListener("click", () => switchChartMode("donation"));
+  }
+
+  // Mark "all" (saved+waste) as initial active – use saving card as default
+  setActiveCard("card-saving");
 });
+
+function setActiveCard(cardId) {
+  document.querySelectorAll(".dashboard-cards .card").forEach(c => {
+    c.classList.remove("card-active");
+  });
+  const el = document.getElementById(cardId);
+  if (el) el.classList.add("card-active");
+}
+
+function switchChartMode(mode) {
+  currentChartMode = mode;
+
+  // map mode to card id
+  if (mode === "saved" || mode === "all") {
+    setActiveCard("card-saving");
+  } else if (mode === "waste") {
+    setActiveCard("card-waste");
+  } else if (mode === "donation") {
+    setActiveCard("card-donation");
+  }
+
+  if (lastTrendData && lastTrendData.length > 0) {
+    drawTrend(lastTrendData, currentChartMode);
+  }
+}
 
 
 // example quick filter
@@ -69,13 +115,17 @@ function loadAnalytics(options = {}) {
             updateSummary(data);
 
       if (data.trend && data.trend.length > 0) {
-        drawTrend(data.trend);
+        lastTrendData = data.trend;                 // store for later
+        drawTrend(lastTrendData, currentChartMode); // draw with current mode
       } else {
+        lastTrendData = [];
         console.warn('No trend data available');
       }
 
-      // Update "Expiry soon" table
-      updateExpirySoon(data.expiry_soon || []);
+      // Update "Expiry soon" table (if you added this earlier)
+      if (typeof updateExpirySoon === "function") {
+        updateExpirySoon(data.expiry_soon || []);
+      }
 
     })
     .catch(err => {
@@ -105,12 +155,13 @@ function updateExpirySoon(list) {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${item.item_name}</td>
-      <td>${item.quantity}</td>
+      <td>${item.quantity}</td>       <!-- 👈 uses the full string, e.g. '1 kg' -->
       <td>${item.expiry_date}</td>
     `;
     tbody.appendChild(tr);
   });
 }
+
 
 
 function updateSummary(data) {
@@ -127,52 +178,140 @@ function updateSummary(data) {
 }
 
 
-function drawTrend(trendData) {
+function drawTrend(trendData, mode = "all") {
   const trendCtx = document.getElementById("foodChart").getContext("2d");
 
   if (trendChart) trendChart.destroy();
 
-  // Original trend chart: saved & wasted as lines
-  trendChart = new Chart(trendCtx, {
-    type: 'line',
-    data: {
-      labels: trendData.map(d => d.date),
-      datasets: [
-        {
-          label: 'Food Saved',
-          data: trendData.map(d => d.saved || 0),
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16,185,129,0.1)',
-          fill: true,
-          tension: 0.4,
-          pointRadius: 3
-        },
-        {
-          label: 'Food Wasted',
-          data: trendData.map(d => d.wasted || 0),
-          borderColor: '#ef4444',
-          backgroundColor: 'rgba(239,68,68,0.1)',
-          fill: true,
-          tension: 0.4,
-          pointRadius: 3
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { position: 'top' } },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
+  const labels = trendData.map(d => d.date);
 
-  // Restore original chart title
+  // Build datasets based on mode
+  const datasets = [];
+  const savedData   = trendData.map(d => d.saved   || 0);
+  const wastedData  = trendData.map(d => d.wasted  || 0);
+  const donatedData = trendData.map(d => d.donated || 0);
+
+  if (mode === "all") {
+    datasets.push(
+        {
+      label: 'Food Saved',
+      data: savedData,
+      borderColor: '#10b981',
+      backgroundColor: 'rgba(16,185,129,0.1)',
+      fill: true,
+      tension: 0.4,
+      pointRadius: 5,        // was 3
+      pointHoverRadius: 8,   // bigger on hover
+      pointHitRadius: 14     // big invisible hit area
+    },
+    {
+      label: 'Food Wasted',
+      data: wastedData,
+      borderColor: '#ef4444',
+      backgroundColor: 'rgba(239,68,68,0.1)',
+      fill: true,
+      tension: 0.4,
+      pointRadius: 5,
+      pointHoverRadius: 8,
+      pointHitRadius: 14
+    }
+
+    );
+  } else if (mode === "saved") {
+    datasets.push({
+      label: 'Food Saved',
+      data: savedData,
+      borderColor: '#10b981',
+      backgroundColor: 'rgba(16,185,129,0.1)',
+      fill: true,
+      tension: 0.4,
+      pointRadius: 3
+    });
+  } else if (mode === "waste") {
+    datasets.push({
+      label: 'Food Wasted',
+      data: wastedData,
+      borderColor: '#ef4444',
+      backgroundColor: 'rgba(239,68,68,0.1)',
+      fill: true,
+      tension: 0.4,
+      pointRadius: 3
+    });
+    } else if (mode === "donation") {
+      datasets.push({
+        label: 'Donations',
+        data: donatedData,
+        borderColor: '#1d4ed8',              // darker border
+        backgroundColor: 'rgba(37,99,235,0.6)', // much darker fill
+        fill: true,
+        tension: 0.4,
+        pointRadius: 3
+      });
+    }
+
+
+  // Choose chart type (keep donations as bar if you prefer)
+  const chartType = mode === "donation" ? 'bar' : 'line';
+
+trendChart = new Chart(trendCtx, {
+  type: chartType,
+  data: {
+    labels,
+    datasets
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+
+    // 👇 makes it easy to hover anywhere vertically on that date
+    interaction: {
+      mode: 'index',
+      intersect: false
+    },
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+        callbacks: {
+          label: (ctx) => {
+            const label = ctx.dataset.label || '';
+            const value = ctx.parsed.y ?? ctx.parsed;
+            return `${label}: ${value} items`;
+          }
+        }
+      }
+    },
+    scales: {
+      y: { beginAtZero: true }
+    }
+  }
+});
+
+
+  // Update title + subtitle
   const titleEl = document.getElementById('chartTitle');
-  if (titleEl) titleEl.textContent = 'Visual Report';
-  // Small delayed update helps Chart.js recompute sizes when fonts or layout
-  // finish loading (fixes the 'invisible / squashed' render seen after refresh).
+  const subEl   = document.getElementById('chartSubtitle');
+
+  if (titleEl && subEl) {
+    if (mode === "saved") {
+      titleEl.textContent = 'Saved Food Trend';
+      subEl.textContent   = 'Daily food saved for selected range';
+    } else if (mode === "waste") {
+      titleEl.textContent = 'Food Waste Trend';
+      subEl.textContent   = 'Daily food wasted for selected range';
+    } else if (mode === "donation") {
+      titleEl.textContent = 'Donation Trend';
+      subEl.textContent   = 'Daily donations for selected range';
+    } else { // "all"
+      titleEl.textContent = 'Visual Report';
+      subEl.textContent   = 'Daily saved vs wasted items';
+    }
+  }
+
   setTimeout(() => { try { trendChart.resize(); trendChart.update(); } catch(e){} }, 150);
 }
+
 
 // Draw a donation chart (bar) as a separate full-size report
 let donationChart = null;
@@ -187,7 +326,7 @@ function drawDonationChart(trendData) {
       datasets: [{
         label: 'Total Donation',
         data: trendData.map(d => d.donated || 0),
-        backgroundColor: 'rgba(59,130,246,0.9)',
+        backgroundColor: 'rgba(10, 96, 235, 0.9)',
         borderColor: '#2563eb',
         borderWidth: 1
       }]
@@ -352,10 +491,6 @@ function drawCategory(categoryData, metric = "percentage") {
   });
 }
 
-
-
-
-
 // --- CATEGORY FILTER LOGIC FIX ---
 function renderCategoryWithFilters() {
   if (!_allCategoryData || _allCategoryData.length === 0) return;
@@ -388,7 +523,6 @@ function renderCategoryWithFilters() {
       metric === "percentage" ? "Category by Percentage" : "Category by Count";
   }
 }
-
 
 function showCategory() {
   console.log("Switching to category view");

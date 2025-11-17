@@ -89,20 +89,21 @@
 
 
     <!-- Summary Cards -->
-    <div class="dashboard-cards">
-      <div class="card">
-        <h2>Total Food Saving</h2>
-        <p id="total-saving">-- KG</p>
-      </div>
-      <div class="card">
-        <h2>Total Food Waste</h2>
-        <p id="total-waste">-- KG</p>
-      </div>
-      <div class="card">
-        <h2>Total Donation Made</h2>
-        <p id="total-donation">--</p>
-      </div>
-    </div>
+<div class="dashboard-cards">
+  <div class="card" id="card-saving">
+    <h2>Total Food Saving</h2>
+    <p id="total-saving">-- KG</p>
+  </div>
+  <div class="card" id="card-waste">
+    <h2>Total Food Waste</h2>
+    <p id="total-waste">-- KG</p>
+  </div>
+  <div class="card" id="card-donation">
+    <h2>Total Donation Made</h2>
+    <p id="total-donation">--</p>
+  </div>
+</div>
+
 
     <!-- Chart Controls -->
     <div class="chart-toggle">
@@ -117,7 +118,7 @@
     <div class="chart-toolbar">
       <div class="chart-left">
         <h3 id="chartTitle">Visual Report</h3>
-        <p class="chart-sub">Daily saved vs wasted items</p>
+<p class="chart-sub" id="chartSubtitle">Daily saved vs wasted items</p>
       </div>
     </div>
     <canvas id="foodChart"></canvas>
