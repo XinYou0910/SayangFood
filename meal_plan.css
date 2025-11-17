@@ -674,3 +674,209 @@ html, body {
 #chooseDateSlotModal .modal-panel {
   padding-bottom: 8px; /* reduce large panel padding if you prefer */
 }
+
+/* ---------- Weekly modal: full viewport ---------- */
+#weeklyCalendarModal {
+  align-items: stretch;
+  padding: 12px 8px;
+  box-sizing: border-box;
+}
+
+/* outer panel */
+#weeklyCalendarModal .modal-panel.weekly-modal-panel {
+  width: min(1200px, 96%);
+  margin: 20px auto;
+  height: calc(100vh - 80px);
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.18);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------------- HEADER ---------------- */
+
+#weeklyCalendarModal .modal-header.weekly-header-centered {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  padding: 14px 22px;
+  gap: 16px;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+}
+
+/* 1. Weekly Meal Plan pill → solid themed green */
+.weekly-header-left .weekly-title {
+  display: inline-block;
+  background: #4a7c59;           /* solid green */
+  color: #ffffff;
+  border-radius: 20px;
+  padding: 8px 18px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* 2. Center header: arrows + range */
+.weekly-header-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.weekly-header-center .modal-arrow {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.18);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#weekRangeLabel {
+  font-size: 17px;              /* bigger */
+  font-weight: 800;
+}
+
+/* 3. Right side: Add a Meal (orange) + close */
+.weekly-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-add-meal-top {
+  background: #f39c12;          /* themed orange */
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(243,156,18,0.25);
+}
+
+#weeklyCalendarModal .modal-close {
+  border: none;
+  background: transparent;
+  font-size: 26px;
+  cursor: pointer;
+  padding: 6px;
+}
+
+/* ---------------- TABLE AREA ---------------- */
+
+#weeklyCalendarModal .modal-body {
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+}
+
+.week-table {
+  width: 100%;
+  border-collapse: collapse;
+  height: 100%;
+  table-layout: fixed;
+  font-family: 'Noto Serif', serif;
+}
+
+/* Header row — reduce large empty spacing */
+.week-table thead th {
+  text-align: center;
+  padding: 10px 6px;          /* smaller */
+  font-size: 15px;
+  font-weight: 800;
+  border-bottom: 2px solid rgba(0,0,0,0.18);
+  background: #fafafa;
+}
+
+/* Body should divide height equally into 7 */
+.week-table thead { display: table-header-group; }
+
+.week-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.week-table thead th {
+  padding: 10px 6px;
+  background: #fafafa;
+  border-bottom: 2px solid rgba(0,0,0,0.18);
+}
+
+.week-table tbody {
+  display: table-row-group;      /* ← FIX */
+}
+
+.week-table tbody tr {
+  height: calc((100vh - 350px) / 7);   /* ← EVEN ROWS WITHOUT SCROLL */
+}
+
+.week-table td {
+  border-right: 1px solid rgba(0,0,0,0.12);
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+  padding: 10px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* 4. Table Borders — visible but not too strong */
+.week-table td {
+  border-right: 1px solid rgba(0,0,0,0.12);
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+  padding: 12px 8px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.week-table td:first-child {
+  font-weight: 700;
+  font-size: 15px;
+  text-align: left;
+  background: #fdfdfd;
+}
+
+/* assure rightmost border removed */
+.week-table td:last-child {
+  border-right: none;
+}
+
+/* meal tile */
+.week-meal-tile {
+  padding: 6px 12px;
+  background: #f7fbf8;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  color: #2b4e3f;
+  display: inline-block;
+}
+
+/* responsive tweak */
+@media (max-width:1000px) {
+  #weeklyCalendarModal .modal-panel.weekly-modal-panel { width: 96%; height: calc(100vh - 60px); }
+  .week-table tbody { height: calc(100% - 52px); }
+  .week-table thead th { font-size:14px; }
+  .week-table tbody td:first-child { width:120px; font-size:14px; }
+}
+
+#recipeDetailModal {
+    z-index: 15000 !important;
+}
+
+#recipeDetailModal .modal-panel {
+    z-index: 15001 !important;
+}
+
+/* Force recipe backdrop above weekly calendar backdrop */
+#recipeDetailModalBackdrop {
+    z-index: 14990 !important;
+}

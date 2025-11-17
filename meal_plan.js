@@ -1,12 +1,11 @@
-//
 // Username hydrate
-//
-(() => {
+(function(){
   const u = localStorage.getItem("user_name");
   const el = document.getElementById("username");
   if (u && el) el.textContent = u;
 })();
 
+// ====== Utilities ======
 function formatLocalDate(d) {
   if (!(d instanceof Date)) d = new Date(d);
   const yyyy = d.getFullYear();
@@ -15,9 +14,6 @@ function formatLocalDate(d) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-//
-// Utility helpers
-//
 function escapeHtml(s){
   return String(s || '').replace(/[&<>"']/g, m => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
@@ -56,7 +52,6 @@ function convertToBase(value, unit) {
       return { value: v * massUnits[key], kind: 'mass' };
     }
   }
-  // sometimes unit stored as 'g' or 'kg' inside longer string like 'g (packet)'
   for (const key of Object.keys(massUnits)) {
     if (u.includes(key)) return { value: v * massUnits[key], kind: 'mass' };
   }
@@ -83,8 +78,21 @@ function convertToBase(value, unit) {
   const pieceKeys = ['pcs','pc','piece','pieces','unit','units'];
   if (pieceKeys.includes(u) || pieceKeys.some(k => u.includes(k))) return { value: v, kind: 'pieces' };
 
-  // unknown unit: return raw number
   return { value: v, kind: 'unknown' };
+}
+
+// === safe stub to avoid "attachMealTileClickHandlers is not defined" errors ===
+if (typeof window.attachMealTileClickHandlers === 'undefined') {
+  window.attachMealTileClickHandlers = function() {
+    // placeholder: real implementation will be assigned later
+    // keep this tolerant if the real handler isn't ready yet
+    try {
+      // try to call the real implementation if already present
+      if (typeof window.__real_attachMealTileClickHandlers === 'function') {
+        return window.__real_attachMealTileClickHandlers();
+      }
+    } catch(_) {}
+  };
 }
 
 // ------------------------ Inventory loader + filter ------------------------
@@ -99,7 +107,6 @@ async function loadInventory(){
   if (!uid) return [];
 
   try {
-    // relative to /sayangfood/
     const res  = await fetch(`api/get_inventory.php?user_id=${encodeURIComponent(uid)}&_=${Date.now()}`, {
       cache: 'no-store'
     });
@@ -112,7 +119,6 @@ async function loadInventory(){
       return [];
     }
 
-    // get rows from { ok:true, rows:[...] }
     let rows = [];
     if (Array.isArray(json)) {
       rows = json;
@@ -148,9 +154,6 @@ async function loadInventory(){
 
 /**
  * Filter inventory by search term.
- * - case-insensitive, accent-insensitive
- * - substring (typing "i" will match Rice, Onion, etc.)
- * - only items with status "Available"
  */
 async function filterInventoryForQuery(term){
   const inv = await loadInventory();
@@ -159,11 +162,8 @@ async function filterInventoryForQuery(term){
   const q = normalizeText(term || '');
 
   return inv.filter(r => {
-    // Only show available items
     if (r.item_status && r.item_status.toLowerCase() !== 'available') return false;
-
-    if (!q) return true; // if empty query, allow everything
-
+    if (!q) return true;
     const name = normalizeText(r.item_name);
     return name.includes(q);
   });
@@ -218,7 +218,6 @@ async function filterInventoryForQuery(term){
     if (pill && pill.dataset.date) {
       state.selected = new Date(pill.dataset.date);
       renderStrip(); renderDayTitle();
-      // reload saved meals for newly selected date
       if (typeof reloadMealsForCurrentDate === 'function') reloadMealsForCurrentDate();
     }
   });
@@ -234,25 +233,7 @@ async function filterInventoryForQuery(term){
     if (typeof reloadMealsForCurrentDate === 'function') reloadMealsForCurrentDate();
   });
 
-  (function(){
-    const calBtn = document.getElementById("calendarBtn");
-    const jump   = document.getElementById("jumpDate");
-    if (!calBtn || !jump) return;
-    calBtn.addEventListener("click", ()=>{
-      try { jump.showPicker?.(); } catch(_) {}
-      jump.click();
-    });
-    jump.addEventListener("change", ()=>{
-      if (!jump.value) return;
-      const [y,m,d] = jump.value.split("-").map(Number);
-      state.selected = new Date(y,m-1,d);
-      renderStrip(); renderDayTitle();
-      if (typeof reloadMealsForCurrentDate === 'function') reloadMealsForCurrentDate();
-    });
-  })();
-
-  // === UPDATED renderMeals: builds tiles without inline styles,
-  // sets count-* classes and toggles .slot.filled / .slot.empty ===
+  // === renderMeals ===
   function renderMeals(){
     ["breakfast","lunch","dinner","other"].forEach(slot=>{
       const container = document.getElementById(slot + "-list");
@@ -261,19 +242,16 @@ async function filterInventoryForQuery(term){
         return;
       }
 
-      // Ensure container has the meal-row base class used by CSS placement rules
       container.classList.add('meal-row');
 
       const arr = (window.demoMeals[slot] || []);
 
-      // create tiles HTML using classes (no inline styles)
       const tilesHtml = arr.map((n, idx) =>
         `<div class="meal-tile" tabindex="0" role="button" data-slot="${slot}" data-index="${idx}" data-name="${escapeHtml(n)}">${escapeHtml(n)}</div>`
       ).join('');
 
       container.innerHTML = tilesHtml || '';
 
-      // remove any previous count classes and add the correct one
       container.classList.remove('count-1','count-2','count-3','count-4','count-5plus');
       const count = arr.length;
       if (count === 1) container.classList.add('count-1');
@@ -282,7 +260,6 @@ async function filterInventoryForQuery(term){
       else if (count === 4) container.classList.add('count-4');
       else if (count >= 5) container.classList.add('count-5plus');
 
-      // update slot visual state (filled vs empty): toggle filled / empty classes
       const slotCard = container.closest('.slot');
       if (slotCard) {
         if (count > 0) {
@@ -295,8 +272,6 @@ async function filterInventoryForQuery(term){
       }
     });
   }
-
-  // === end renderMeals ===
 
   window.addMealToSlot = function(slot, name, meta){
     slot = slot || 'lunch';
@@ -318,7 +293,7 @@ async function filterInventoryForQuery(term){
     ).join('');
   }
 
-  // ----------------- UPDATED renderSuggestions & recipe modal flow -----------------
+  // ----------------- renderSuggestions & recipe modal flow -----------------
   async function renderSuggestions(){
     const wrap = document.getElementById("suggestionTiles");
     if (!wrap) return;
@@ -339,11 +314,9 @@ async function filterInventoryForQuery(term){
       console.error('[renderSuggestions] fetch error', e);
     }
 
-    // fallback static tiles if server returns nothing
     if (!items || items.length === 0) {
       const fallback = ["Fried Rice","Fried Noodle","Fried Chicken","Steam Egg","Pan Cake","Fried Vegetable"];
       wrap.innerHTML = fallback.map(n => `<div class="suggest-btn pending" data-name="${escapeHtml(n)}">${escapeHtml(n)}</div>`).join('');
-      // resolve availability quickly as 'available' (fallback)
       wrap.querySelectorAll('.suggest-btn').forEach(btn=>{
         btn.classList.remove('pending');
         btn.classList.add('available');
@@ -352,18 +325,15 @@ async function filterInventoryForQuery(term){
       return;
     }
 
-    // Build placeholder tiles (we'll enrich them asynchronously)
     wrap.innerHTML = items.slice(0,6).map(it =>
       `<div class="suggest-btn pending" data-recipe-id="${escapeHtml(String(it.recipe_id))}" data-name="${escapeHtml(it.recipe_name)}">${escapeHtml(it.recipe_name)}</div>`
     ).join('');
 
-    // For each tile: fetch recipe details, compute availability, then update class/style
     const inv = await loadInventory().catch(()=>[]);
     const tiles = Array.from(wrap.querySelectorAll('.suggest-btn'));
 
-    // helper to check recipe availability given recipe.ingredients and inventory
     function checkRecipeAvailable(ings, inventory) {
-      if (!Array.isArray(ings) || ings.length === 0) return true; // no ingredients => treat as available
+      if (!Array.isArray(ings) || ings.length === 0) return true;
       function normalize(s){ return (s||'').toString().toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 
       for (const ing of ings) {
@@ -371,7 +341,6 @@ async function filterInventoryForQuery(term){
         if (!name) continue;
         const q = normalize(name);
 
-        // find best match
         let matched = null;
         let bestScore = -Infinity;
 
@@ -380,10 +349,8 @@ async function filterInventoryForQuery(term){
           const iname = normalize(rawName);
           if (!iname) continue;
 
-          // match rules
           if (!(iname.includes(q) || q.includes(iname) || iname === q)) continue;
 
-          // numeric value extracted
           let invValRaw = null;
           if (it.quantity_value != null && String(it.quantity_value).trim() !== '') {
             invValRaw = parseFloat(it.quantity_value);
@@ -397,7 +364,6 @@ async function filterInventoryForQuery(term){
             ? convertToBase(invValRaw, invUnit)
             : { value: null, kind: 'unknown' };
 
-          // scoring → higher score = better match
           let score = 0;
           if ((it.item_status || '').toLowerCase() === 'available') score += 1000;
           if (invConv.value != null && !isNaN(invConv.value)) score += invConv.value;
@@ -412,24 +378,20 @@ async function filterInventoryForQuery(term){
 
         if (!matched) return false;
 
-        // numeric comparisons with unit conversion
         const reqValRaw = (ing.qty_value != null && String(ing.qty_value).trim() !== '') ? parseFloat(ing.qty_value) : null;
         const invValRaw = (matched.quantity_value != null && String(matched.quantity_value).trim() !== '') ? parseFloat(matched.quantity_value) : null;
-        const reqUnit = (ing.qty_unit || ing.qty_unit || ing.unit || '').toString();
+        const reqUnit = (ing.qty_unit || ing.unit || '').toString();
         const invUnit = (matched.quantity_unit || matched.qty_unit || matched.unit || '').toString();
 
-        // If both numeric and both units present, try converting
         if (reqValRaw != null && !isNaN(reqValRaw) && invValRaw != null && !isNaN(invValRaw)) {
           const reqConv = convertToBase(reqValRaw, reqUnit);
           const invConv = convertToBase(invValRaw, invUnit);
 
-          // If both kinds are same (mass vs mass, volume vs volume, pieces) we can compare converted values
           if (reqConv.value != null && invConv.value != null && reqConv.kind === invConv.kind && reqConv.kind !== 'unknown') {
-            if (invConv.value < reqConv.value) return false; // insufficient
-            else continue; // sufficient for this ingredient
+            if (invConv.value < reqConv.value) return false;
+            else continue;
           }
 
-          // If either kind is 'unknown' but numeric, do a fallback numeric compare (best-effort)
           if ((reqConv.kind === 'unknown' || invConv.kind === 'unknown')) {
             const reqNum = (reqConv && reqConv.value != null && !isNaN(reqConv.value)) ? reqConv.value : reqValRaw;
             const invNum = (invConv && invConv.value != null && !isNaN(invConv.value)) ? invConv.value : invValRaw;
@@ -437,16 +399,13 @@ async function filterInventoryForQuery(term){
             else continue;
           }
 
-          // If kinds mismatch (e.g. mass vs volume) we can't reliably compare => assume insufficient
           return false;
         }
 
-        // If numeric compare not possible but inventory item exists => treat as available
       }
       return true;
     }
 
-    // For each tile, fetch the recipe details (non-blocking)
     tiles.forEach(async (tile) => {
       const rid = tile.getAttribute('data-recipe-id');
       const name = tile.getAttribute('data-name') || tile.textContent.trim();
@@ -461,13 +420,11 @@ async function filterInventoryForQuery(term){
             recipe = j && j.ok && j.recipe ? j.recipe : (j && j.recipe ? j.recipe : null);
           }
         }
-        // If fetching recipe failed, fallback to treating as unavailable (safer) OR available depending on preference.
         const ings = recipe && Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
         const isAvailable = checkRecipeAvailable(ings, inv);
         tile.classList.remove('pending');
         tile.classList.add(isAvailable ? 'available' : 'unavailable');
 
-        // clicking a tile opens recipe modal (if id exists) or fallback by name
         tile.addEventListener('click', (ev) => {
           ev.stopPropagation();
           if (rid) return fetchAndShowRecipe(rid);
@@ -481,11 +438,9 @@ async function filterInventoryForQuery(term){
       }
     });
 
-    // populate full suggestions modal when present (we'll render entire list and run same availability checks)
     const allList = document.getElementById('allSuggestionsList');
     if (allList) {
       allList.innerHTML = items.map(it => `<div class="all-suggestion pending" data-recipe-id="${escapeHtml(String(it.recipe_id))}" data-name="${escapeHtml(it.recipe_name)}">${escapeHtml(it.recipe_name)}</div>`).join('');
-      // fetch availability for all items
       const allTiles = Array.from(allList.querySelectorAll('.all-suggestion'));
       allTiles.forEach(async (el) => {
         const rid = el.getAttribute('data-recipe-id');
@@ -515,7 +470,6 @@ async function filterInventoryForQuery(term){
     }
   }
 
-  // Hook the "..." button to show All Suggestions modal and wire modal close buttons
   (function hookSuggestionsModalControls(){
     const moreBtn = document.getElementById('moreSuggestionsBtn');
     const modal = document.getElementById('suggestionsModal');
@@ -525,7 +479,6 @@ async function filterInventoryForQuery(term){
     if (moreBtn && modal) {
       moreBtn.addEventListener('click', async (ev) => {
         ev.stopPropagation();
-        // re-render suggestions to refresh list (availability) before showing
         try { await renderSuggestions(); } catch(e){ console.warn('renderSuggestions failed on more click', e); }
         showModal(modal);
       });
@@ -534,7 +487,6 @@ async function filterInventoryForQuery(term){
     if (closeX) closeX.addEventListener('click', () => { hideModal(modal); });
     if (footerClose) footerClose.addEventListener('click', () => { hideModal(modal); });
 
-    // close when clicking backdrop (modal already has backdrop element)
     modal?.addEventListener('click', (ev) => {
       if (ev.target === modal) hideModal(modal);
     });
@@ -543,11 +495,8 @@ async function filterInventoryForQuery(term){
   (function hookSuggestionsModalClose(){
     const suggestionsModal = document.getElementById('suggestionsModal');
     if (!suggestionsModal) return;
-
-    // prefer existing hideModal if present
     const doHide = (modal) => {
       if (typeof hideModal === 'function') return hideModal(modal);
-      // fallback
       modal.setAttribute('aria-hidden','true');
       modal.style.display = 'none';
       document.documentElement.style.overflow = '';
@@ -557,11 +506,9 @@ async function filterInventoryForQuery(term){
     document.getElementById('closeModalBtn')?.addEventListener('click', () => doHide(suggestionsModal));
     document.getElementById('modalCloseFooter')?.addEventListener('click', () => doHide(suggestionsModal));
 
-    // also close when backdrop clicked (close modal when clicking outside panel)
     const backdrop = suggestionsModal.querySelector('.modal-backdrop') || document.getElementById('modalBackdrop');
     if (backdrop) {
       backdrop.addEventListener('click', (ev) => {
-        // ensure user clicked backdrop (not the panel)
         if (ev.target === backdrop) doHide(suggestionsModal);
       });
     }
@@ -608,7 +555,6 @@ async function filterInventoryForQuery(term){
         return;
       }
 
-      // load inventory to determine availability
       let inventory = [];
       try { inventory = await loadInventory(); } catch (e) { console.warn('[fetchAndShowRecipe] loadInventory failed', e); inventory = []; }
 
@@ -616,7 +562,6 @@ async function filterInventoryForQuery(term){
       title.textContent = recipe.recipe_name || 'Recipe';
       const ings = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
 
-      // match helper (case-insensitive substring)
       function findInventoryMatch(ingredientName) {
         if (!ingredientName) return null;
         const q = normalizeText(ingredientName).replace(/[^a-z0-9\s]/g, '');
@@ -628,7 +573,6 @@ async function filterInventoryForQuery(term){
           const iname = normalizeText(rawName).replace(/[^a-z0-9\s]/g, '');
           if (!iname) continue;
 
-          // allow substring or word intersection (Rice <> White Rice, Egg <> Eggs)
           let matchedName = false;
           if (iname.includes(q) || q.includes(iname) || iname === q) matchedName = true;
           else {
@@ -640,7 +584,6 @@ async function filterInventoryForQuery(term){
           }
           if (!matchedName) continue;
 
-          // compute numeric availability: try quantity_value first; fallback parse from quantity text
           let invValRaw = null;
           if (it.quantity_value != null && String(it.quantity_value).trim() !== '') {
             invValRaw = parseFloat(String(it.quantity_value).replace(/,/g,'.'));
@@ -652,7 +595,6 @@ async function filterInventoryForQuery(term){
           const invUnit = (it.quantity_unit || it.qty_unit || '').toString();
           const invConv = (invValRaw != null && !isNaN(invValRaw)) ? convertToBase(invValRaw, invUnit) : { value: null, kind: 'unknown' };
 
-          // scoring: prefer Available status, non-zero numeric, larger quantity, exact name match
           let score = 0;
           if ((it.item_status || '').toLowerCase() === 'available') score += 1000;
           if (invConv.value != null && !isNaN(invConv.value)) score += Math.min(invConv.value, 100000);
@@ -660,8 +602,8 @@ async function filterInventoryForQuery(term){
 
           if (score > bestScore) {
             bestScore = score;
-            best = Object.assign({}, it); // clone to avoid mutating original source
-            best._converted = invConv;   // attach converted quantity for later
+            best = Object.assign({}, it);
+            best._converted = invConv;
             best._raw_quantity_value = invValRaw;
             best._raw_quantity_unit = invUnit;
           }
@@ -670,20 +612,15 @@ async function filterInventoryForQuery(term){
         return best;
       }
 
-      // availability decision — uses converted value attached by findInventoryMatch (if present)
-      // returns { available: boolean, matched: inventoryRow | null }
       function checkAvailability(ing) {
         const name = ing.ingredient_name || ing.name || '';
         const matched = findInventoryMatch(name);
         if (!matched) return { available: false, matched: null };
 
-        // request numeric
         const reqValRaw = (ing.qty_value != null && String(ing.qty_value).trim() !== '') ? parseFloat(String(ing.qty_value).replace(/,/g,'.')) : null;
         const reqUnit = (ing.qty_unit || ing.unit || '').toString();
 
-        // prefer converted value produced during matching if available
         const invConv = (matched._converted && typeof matched._converted === 'object') ? matched._converted : (function(){
-          // fallback compute from stored fields
           let fallbackInvRaw = null;
           if (matched.quantity_value != null && String(matched.quantity_value).trim() !== '') fallbackInvRaw = parseFloat(String(matched.quantity_value).replace(/,/g,'.'));
           else if (matched.quantity && String(matched.quantity).trim() !== '') {
@@ -694,35 +631,29 @@ async function filterInventoryForQuery(term){
           return (fallbackInvRaw != null && !isNaN(fallbackInvRaw)) ? convertToBase(fallbackInvRaw, fallbackUnit) : { value: null, kind: 'unknown' };
         })();
 
-        // If both request and inventory numeric exist, compare via convertToBase for request
         if (reqValRaw != null && !isNaN(reqValRaw) && invConv.value != null && !isNaN(invConv.value)) {
           const reqConv = convertToBase(reqValRaw, reqUnit);
 
-          // debug: uncomment to see values in console
           console.debug('[checkAvailability]', name, 'reqRaw=', reqValRaw, reqUnit, '=>', reqConv, 'invConv=', invConv, 'matchedItem=', matched.item_name);
 
           if (reqConv.value != null && invConv.value != null && reqConv.kind === invConv.kind && reqConv.kind !== 'unknown') {
             return { available: invConv.value >= reqConv.value, matched };
           }
 
-          // fallback raw numeric compare if conversion unknown
           if (reqConv.kind === 'unknown' || invConv.kind === 'unknown') {
             const reqNum = (reqConv && reqConv.value != null && !isNaN(reqConv.value)) ? reqConv.value : reqValRaw;
             return { available: (invConv.value >= reqNum), matched };
           }
 
-          // cannot compare different kinds (mass vs volume) — treat as unavailable to be safe
           return { available: false, matched };
         }
 
-        // if numeric compare not possible but we found a matching item -> treat as available
         return { available: true, matched };
       }
 
       if (ings.length === 0) {
         body.innerHTML = `<p class="muted">No ingredient details available for this recipe.</p>`;
       } else {
-        // header order: Item | Qty | Unit | Availability (availability on right)
         let html = `<div style="margin-bottom:12px;"><strong style="display:block;margin-bottom:8px;font-size:16px;">Ingredients</strong>
           <table style="width:100%; border-collapse:collapse;">
             <thead><tr style="text-align:left;color:#3b4a43;">
@@ -734,7 +665,6 @@ async function filterInventoryForQuery(term){
 
         ings.forEach(it => {
           const nm = escapeHtml(it.ingredient_name || it.name || '');
-          // format numeric qty to 2 decimals where possible
           let qtyDisplay = '';
           if (it.qty_value != null && String(it.qty_value).trim() !== '' && !isNaN(parseFloat(it.qty_value))) {
             qtyDisplay = parseFloat(it.qty_value).toFixed(2);
@@ -748,16 +678,13 @@ async function filterInventoryForQuery(term){
           const avail = checkAvailability(it);
           let availCell = '';
           if (avail.available) {
-            // green checkbox — NOT disabled so accent-color renders; make it non-interactive
             availCell = `<div style="padding:6px; text-align:center;">
                           <input type="checkbox" checked tabindex="-1" aria-checked="true"
                                 style="accent-color:var(--primary-green); transform:scale(1.45); width:18px; height:18px; pointer-events:none;">
                         </div>`;
           } else if (avail.matched) {
-            // matched but insufficient quantity => red exclamation (20% larger)
             availCell = `<div style="padding:6px; text-align:center; color:#e74c3c; font-weight:800; font-size:24px; line-height:1;">!</div>`;
           } else {
-            // not matched => unchecked box (non-interactive)
             availCell = `<div style="padding:6px; text-align:center;">
                           <input type="checkbox" tabindex="-1" aria-checked="false"
                                 style="transform:scale(1.45); width:18px; height:18px; pointer-events:none;">
@@ -776,12 +703,10 @@ async function filterInventoryForQuery(term){
         body.innerHTML = html;
       }
 
-      // store fetched recipe on modal for the Use button
       modal.dataset.currentRecipeId = recipe.recipe_id;
       modal.dataset.currentRecipeName = recipe.recipe_name;
       modal.dataset.currentIngredients = JSON.stringify(ings);
 
-      // center modal footer buttons and style slightly larger
       const footer = modal.querySelector('.modal-footer');
       const cancelBtn = document.getElementById('recipeDetailCancel');
       const useBtn = document.getElementById('recipeUseBtn');
@@ -818,7 +743,6 @@ async function filterInventoryForQuery(term){
     }
   }
 
-  // fallback: show a simple modal by name (no recipe id)
   function fetchAndShowRecipeByName(name){
     const modal = document.getElementById('recipeDetailModal');
     const body = document.getElementById('recipeDetailBody');
@@ -832,34 +756,111 @@ async function filterInventoryForQuery(term){
     showModal(modal);
   }
 
-  // generic show/hide helpers
-  function showModal(modalEl){
+  // show modal (example)
+  function showModal(modalEl) {
     if (!modalEl) return;
-    const backdrop = modalEl.querySelector('.modal-backdrop') || document.getElementById(modalEl.id + 'Backdrop');
-    if (backdrop) backdrop.style.display = 'block';
-    modalEl.setAttribute('aria-hidden','false');
-    modalEl.style.display = 'flex';
+
+    // ensure modal element is a direct child of <body> to avoid stacking-context traps
+    try {
+      if (modalEl.parentNode !== document.body) {
+        document.body.appendChild(modalEl);
+      }
+    } catch (e) {
+      // ignore if append fails
+    }
+
+    // create a dedicated backdrop for this show call (unique id per call)
+    const BACKDROP_ID = 'global-modal-backdrop';
+    let backdrop = document.getElementById(BACKDROP_ID);
+    if (!backdrop) {
+      backdrop = document.createElement('div');
+      backdrop.id = BACKDROP_ID;
+      document.body.appendChild(backdrop);
+    } else if (backdrop.parentNode !== document.body) {
+      document.body.appendChild(backdrop);
+    }
+
+    // VERY HIGH z-index numbers to overcome existing modals/styling
+    // (use near max safe int for cross-browser)
+    const BACKDROP_Z = 2147483640;    // backdrop below the panel
+    const PANEL_Z    = 2147483645;    // panel content above backdrop
+    const MODAL_Z    = 2147483646;    // container above everything
+
+    Object.assign(backdrop.style, {
+      display: 'block',
+      position: 'fixed',
+      inset: '0',
+      background: 'rgba(0,0,0,0.45)',
+      pointerEvents: 'auto',
+      zIndex: String(BACKDROP_Z)
+    });
+
+    // find panel inside modal if present
+    const panel = modalEl.querySelector('.modal-panel') || modalEl.querySelector('.modal-dialog') || modalEl;
+
+    // position and z-index the modal container and panel above backdrop
+    try {
+      modalEl.style.display = 'flex';
+      modalEl.style.alignItems = modalEl.style.alignItems || 'center';
+      modalEl.style.justifyContent = modalEl.style.justifyContent || 'center';
+      modalEl.style.position = 'fixed';
+      modalEl.style.inset = '0';
+      modalEl.style.zIndex = String(MODAL_Z);
+      modalEl.setAttribute('aria-hidden', 'false');
+    } catch (e) {}
+
+    if (panel) {
+      panel.style.position = panel.style.position || 'relative';
+      panel.style.zIndex = String(PANEL_Z);
+    }
+
+    // lock scroll
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
+
+    // clicking outside the panel closes this modal
+    backdrop.onclick = function (ev) {
+      if (!panel) {
+        hideModal(modalEl);
+        return;
+      }
+      const rect = panel.getBoundingClientRect();
+      if (!(ev.clientX >= rect.left && ev.clientX <= rect.right && ev.clientY >= rect.top && ev.clientY <= rect.bottom)) {
+        hideModal(modalEl);
+      }
+    };
   }
-  function hideModal(modalEl){
+
+  document.dispatchEvent(new Event("shownWeekly"));
+
+  function hideModal(modalEl) {
     if (!modalEl) return;
-    const backdrop = modalEl.querySelector('.modal-backdrop') || document.getElementById(modalEl.id + 'Backdrop');
-    if (backdrop) backdrop.style.display = 'none';
-    modalEl.setAttribute('aria-hidden','true');
+
+    // hide modal
     modalEl.style.display = 'none';
+    modalEl.setAttribute('aria-hidden', 'true');
+
+    // hide the global backdrop
+    const backdrop = document.getElementById('global-modal-backdrop');
+    if (backdrop) {
+      backdrop.style.display = 'none';
+      backdrop.onclick = null;
+    }
+
+    // restore scrolling (if no other modals rely on this, this is fine)
     document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
   }
 
-  // hook recipe modal buttons (close / use / cancel)
+  window.showModal = showModal;
+  window.hideModal = hideModal;
+
   (function hookRecipeModalButtons(){
     const modal = document.getElementById('recipeDetailModal');
     if (!modal) return;
     document.getElementById('recipeDetailClose')?.addEventListener('click', ()=> hideModal(modal));
     document.getElementById('recipeDetailCancel')?.addEventListener('click', ()=> hideModal(modal));
 
-    // Use button -> open choose-date-slot modal
     document.getElementById('recipeUseBtn')?.addEventListener('click', ()=> {
       if (!modal.dataset.currentRecipeId) {
         alert('Recipe not loaded.');
@@ -876,7 +877,6 @@ async function filterInventoryForQuery(term){
       showModal(chooseModal);
     });
 
-    // choose modal actions
     const chooseModal = document.getElementById('chooseDateSlotModal');
     document.getElementById('chooseDateSlotClose')?.addEventListener('click', ()=> hideModal(chooseModal));
     document.getElementById('chooseDateSlotCancel')?.addEventListener('click', ()=> hideModal(chooseModal));
@@ -885,10 +885,10 @@ async function filterInventoryForQuery(term){
       const recipeModal = document.getElementById('recipeDetailModal');
       const dateInput = document.getElementById('chooseDateSlotDate');
       const slotSelect = document.getElementById('chooseDateSlotSelect');
-      const remarkInput = document.getElementById('chooseDateSlotRemark'); // NEW
+      const remarkInput = document.getElementById('chooseDateSlotRemark');
       const dateVal = dateInput.value;
       const slotVal = slotSelect.value || 'lunch';
-      const remarkVal = remarkInput ? (remarkInput.value || '') : ''; // NEW
+      const remarkVal = remarkInput ? (remarkInput.value || '') : '';
 
       if (!dateVal) { alert('Please pick a date'); return; }
 
@@ -910,7 +910,7 @@ async function filterInventoryForQuery(term){
         meal_date: dateVal,
         meal_slot: slotVal,
         meal_name: recipeName,
-        remark: remarkVal, // now included
+        remark: remarkVal,
         ingredients: ingredients
       };
 
@@ -948,7 +948,7 @@ async function filterInventoryForQuery(term){
   // -------------------- Load saved meals for a given date --------------------
   async function loadMealsForDate(dateObj) {
     if (!dateObj) return;
-    const yyyy = formatLocalDate(dateObj); // new
+    const yyyy = formatLocalDate(dateObj);
     const uid = window.CURRENT_USER_ID || 0;
     if (!uid) {
       console.warn('[loadMealsForDate] no CURRENT_USER_ID set');
@@ -971,7 +971,6 @@ async function filterInventoryForQuery(term){
         return;
       }
 
-      // Reset UI meal lists for this date
       window.demoMeals = { breakfast:[], lunch:[], dinner:[], other:[] };
       window.mealSnapshots = window.mealSnapshots || {};
 
@@ -984,7 +983,6 @@ async function filterInventoryForQuery(term){
         window.demoMeals[slot] = window.demoMeals[slot] || [];
         window.demoMeals[slot].push(m.meal_name || 'Untitled');
 
-        // store snapshot keyed by slot + index so we can show details later
         const key = `${slot}__${window.demoMeals[slot].length - 1}__${Date.now()}_${idx}`;
         window.mealSnapshots[key] = {
           slot,
@@ -1008,7 +1006,6 @@ async function filterInventoryForQuery(term){
     }
   }
 
-  // helper to reload for the currently selected date in state
   async function reloadMealsForCurrentDate() {
     try {
       await loadMealsForDate(state.selected);
@@ -1019,22 +1016,31 @@ async function filterInventoryForQuery(term){
     }
   }
 
+  // -------------------- meal-tile click handler (replace existing ones) --------------------
   function attachMealTileClickHandlers() {
-    // delegate clicks to document so newly-added tiles work
-    document.removeEventListener('click', _mealTileClickHandler);
-    document.addEventListener('click', _mealTileClickHandler);
+    // remove previous to avoid duplicate handlers
+    document.removeEventListener('click', _mealTileClickHandler, true);
+    // use capture phase so we get the event before other delegated listeners
+    document.addEventListener('click', _mealTileClickHandler, true);
   }
+
   function _mealTileClickHandler(e) {
-    const tile = e.target.closest('.meal-tile');
+    // match both the normal page tiles and weekly calendar tiles
+    const tile = e.target.closest('.meal-tile, .week-meal-tile');
     if (!tile) return;
+
+    // prevent other delegated click handlers (e.g. suggestion/recipe handlers) from running
+    e.stopPropagation();
+    // prevent default in case tile is inside an <a> or button
+    if (e.cancelable) e.preventDefault();
+
     const name = tile.dataset.name || tile.textContent.trim();
     const slot = tile.dataset.slot;
     const index = tile.dataset.index != null ? Number(tile.dataset.index) : null;
 
-    // find the snapshot (best-effort)
+    // find snapshot if available
     let snapshot = null;
     if (window.mealSnapshots) {
-      // Prefer exact match by slot+index
       for (const k of Object.keys(window.mealSnapshots)) {
         const s = window.mealSnapshots[k];
         if (!s) continue;
@@ -1042,8 +1048,8 @@ async function filterInventoryForQuery(term){
           if (s.slot === slot && Number(s.index) === index) { snapshot = s; break; }
         }
       }
-      // fallback: match by name
       if (!snapshot) {
+        // fallback: try to match by name
         for (const k of Object.keys(window.mealSnapshots)) {
           const s = window.mealSnapshots[k];
           if (s && s.meal_name === name) { snapshot = s; break; }
@@ -1051,12 +1057,11 @@ async function filterInventoryForQuery(term){
       }
     }
 
-    // show simple details modal (client-side)
+    // show meal detail dialog (your existing function)
     showMealDetailModal(name, snapshot);
   }
 
   function showMealDetailModal(name, snapshot) {
-    // ensure there is a backdrop element (reuse addMealBackdrop if present)
     let backdrop = document.getElementById('addMealBackdrop');
     if (!backdrop) {
       backdrop = document.createElement('div');
@@ -1065,8 +1070,6 @@ async function filterInventoryForQuery(term){
     } else if (backdrop.parentNode !== document.body) {
       document.body.appendChild(backdrop);
     }
-
-    // style backdrop (hidden by default elsewhere)
     Object.assign(backdrop.style, {
       display: 'block',
       position: 'fixed',
@@ -1076,7 +1079,6 @@ async function filterInventoryForQuery(term){
       cursor: 'default'
     });
 
-    // create dialog panel
     let dlg = document.getElementById('mealDetailDlg');
     if (!dlg) {
       dlg = document.createElement('div');
@@ -1100,14 +1102,12 @@ async function filterInventoryForQuery(term){
       `;
       document.body.appendChild(dlg);
 
-      // close when click on backdrop area (dlg) but not when clicking panel
       dlg.addEventListener('click', (ev) => { if (ev.target === dlg) closeDetail(); });
       dlg.querySelector('#mealDetailClose').addEventListener('click', closeDetail);
     } else {
       dlg.style.display = 'flex';
     }
 
-    // prevent background scrolling while details open
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
 
@@ -1118,7 +1118,6 @@ async function filterInventoryForQuery(term){
 
     titleEl.textContent = name || '';
 
-    // Build content (same as previous)
     let html = '';
     const ingredients = (snapshot && Array.isArray(snapshot.ingredients)) ? snapshot.ingredients : [];
     if (ingredients.length > 0) {
@@ -1165,13 +1164,10 @@ async function filterInventoryForQuery(term){
 
     body.innerHTML = html;
 
-    // cleanup function
     function closeDetail() {
-      // remove dialog
       const existing = document.getElementById('mealDetailDlg');
       if (existing) existing.remove();
 
-      // hide backdrop only if add-meal modal is not open
       const addMealModal = document.getElementById('addMealModal');
       const addOpen = addMealModal && addMealModal.getAttribute('aria-hidden') === 'false' && addMealModal.style.display !== 'none';
       if (!addOpen && backdrop) {
@@ -1179,32 +1175,21 @@ async function filterInventoryForQuery(term){
         backdrop.style.background = '';
       }
 
-      // restore scrolling
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
     }
   }
 
-
   // New DOMContentLoaded that loads existing meals for today before renderMeals
   document.addEventListener("DOMContentLoaded", async () => {
     renderStrip();
     renderDayTitle();
-    // load saved meals for the selected date
     await loadMealsForDate((function(){ return (new Date()); })());
     renderSuggestions();
     renderExpiring();
     renderMeals();
     attachMealTileClickHandlers();
   });
-
-  // also ensure we reload meals whenever the strip/date changes
-  function reloadMealsForCurrentDate() {
-    loadMealsForDate(state.selected).then(()=> {
-      renderMeals();
-      attachMealTileClickHandlers();
-    });
-  }
 
   window.collectPlanPayload = function(){
     const payload = { user_id: window.CURRENT_USER_ID || 0, meal_date: formatLocalDate(window.getSelectedDate ? window.getSelectedDate() : new Date()), meals: {} };
@@ -1226,7 +1211,7 @@ async function filterInventoryForQuery(term){
     return payload;
   };
 
-})();
+})(); // end main IIFE
 
 // ------------------------ Add Meal Modal (single header + ingredient rows) ------------------------
 (function(){
@@ -1238,33 +1223,28 @@ async function filterInventoryForQuery(term){
 
   let backdrop = document.getElementById('addMealBackdrop');
 
-  // ensure backdrop lives directly under body (so modal can sit above it)
   (function ensureBackdropAndStacking(){
     const BACKDROP_Z = 11990;
     const MODAL_Z   = 12001;
 
     if (!backdrop) {
-      // create one if missing
       backdrop = document.createElement('div');
       backdrop.id = 'addMealBackdrop';
       document.body.appendChild(backdrop);
     } else {
-      // move existing node to body root to avoid being inside modal or other container
       if (backdrop.parentNode !== document.body) document.body.appendChild(backdrop);
     }
 
-    // basic backdrop style (hidden by default)
     Object.assign(backdrop.style, {
       display: 'none',
       position: 'fixed',
       inset: '0',
       background: 'rgba(0,0,0,0.45)',
       zIndex: String(BACKDROP_Z),
-      backdropFilter: 'none',      // remove any blur applied here
+      backdropFilter: 'none',
       pointerEvents: 'auto'
     });
 
-    // ensure modal is above backdrop
     Object.assign(modal.style, {
       position: modal.style.position || 'fixed',
       inset: modal.style.inset || '0',
@@ -1274,7 +1254,6 @@ async function filterInventoryForQuery(term){
       zIndex: String(MODAL_Z)
     });
 
-    // Ensure modal content panel (if exists) has solid background and higher stacking
     const panel = modal.querySelector('.modal-panel') || modal.querySelector('.modal-dialog') || modal;
     if (panel) {
       panel.style.background = panel.style.background || '#fff';
@@ -1285,7 +1264,7 @@ async function filterInventoryForQuery(term){
 
   const closeBtn = document.getElementById('addMealClose');
   const form = document.getElementById('addMealForm');
-  const ingredientsContainer = form?.querySelector('.grid-form-two') || null; // where ingredient rows go
+  const ingredientsContainer = form?.querySelector('.grid-form-two') || null;
   const addIngredientBtn = document.getElementById('addIngredientBtn');
   const cancelBtn = document.getElementById('addMealCancel');
   const titleEl = document.getElementById('addMealTitle');
@@ -1295,7 +1274,6 @@ async function filterInventoryForQuery(term){
     return;
   }
 
-  // create a single header row (inserted once above ingredient rows)
   function ensureIngredientHeader() {
     let header = modal.querySelector('.ingredient-header');
     if (header) return header;
@@ -1308,7 +1286,7 @@ async function filterInventoryForQuery(term){
     header.style.marginBottom = '8px';
     header.style.padding = '4px 2px';
 
-    const colNum = document.createElement('div'); // empty space for badges
+    const colNum = document.createElement('div');
     colNum.style.width = '36px';
     colNum.style.flex = '0 0 36px';
     header.appendChild(colNum);
@@ -1328,15 +1306,11 @@ async function filterInventoryForQuery(term){
     colUnit.textContent = 'Unit';
     header.appendChild(colUnit);
 
-    // insert header at top of the ingredientsContainer's parent (we want it above the rows)
-    // if grid-form-two is the container itself, put header before it
     ingredientsContainer.parentNode.insertBefore(header, ingredientsContainer);
     return header;
   }
 
-  // create a single ingredient input row (no label row)
   async function createIngredientRow(prefillName = '', preQty = '', preUnit = '') {
-    // compute current index (1-based) for the badge
     const rowCount = ingredientsContainer.querySelectorAll('.ingredient-row').length + 1;
 
     const row = document.createElement('div');
@@ -1347,7 +1321,6 @@ async function filterInventoryForQuery(term){
     row.style.padding = '12px 0';
     row.style.borderBottom = '1px solid rgba(0,0,0,0.06)';
 
-    // LABEL (compact) - number + optional small heading text removed (we use shared header)
     const labelRow = document.createElement('div');
     labelRow.style.display = 'flex';
     labelRow.style.alignItems = 'center';
@@ -1370,7 +1343,6 @@ async function filterInventoryForQuery(term){
       flex: '0 0 28px'
     });
 
-    // inputRow contains: nameWrap (relative) | qty | unit | remove
     const inputRow = document.createElement('div');
     inputRow.style.display = 'flex';
     inputRow.style.gap = '12px';
@@ -1378,7 +1350,6 @@ async function filterInventoryForQuery(term){
     inputRow.style.width = '100%';
     inputRow.style.boxSizing = 'border-box';
 
-    // name wrapper (relative for suggest box)
     const nameWrap = document.createElement('div');
     nameWrap.style.position = 'relative';
     nameWrap.style.flex = '1';
@@ -1422,7 +1393,6 @@ async function filterInventoryForQuery(term){
     nameWrap.appendChild(hiddenId);
     nameWrap.appendChild(suggestBox);
 
-    // qty input
     const qtyInput = document.createElement('input');
     qtyInput.type = 'text';
     qtyInput.placeholder = 'e.g. 2';
@@ -1434,7 +1404,6 @@ async function filterInventoryForQuery(term){
     qtyInput.style.fontSize = '14px';
     qtyInput.value = preQty || '';
 
-    // unit input
     const unitInput = document.createElement('input');
     unitInput.type = 'text';
     unitInput.className = 'ingredient-unit';
@@ -1446,7 +1415,6 @@ async function filterInventoryForQuery(term){
     unitInput.style.fontSize = '14px';
     unitInput.value = preUnit || '';
 
-    // remove button
     const removeBtn = document.createElement('button');
     removeBtn.type = 'button';
     removeBtn.className = 'ingredient-remove';
@@ -1461,21 +1429,17 @@ async function filterInventoryForQuery(term){
       flex: '0 0 40px'
     });
 
-    // assemble inputRow
     inputRow.appendChild(nameWrap);
     inputRow.appendChild(qtyInput);
     inputRow.appendChild(unitInput);
     inputRow.appendChild(removeBtn);
 
-    // assemble labelRow (badge + inputRow)
     labelRow.appendChild(numberBadge);
     labelRow.appendChild(inputRow);
 
     row.appendChild(labelRow);
-    // append row to container
     ingredientsContainer.appendChild(row);
 
-    // attach suggestion behaviour to nameInput
     let suggTimeout = null;
     nameInput.addEventListener('input', () => {
       const v = nameInput.value.trim();
@@ -1556,7 +1520,6 @@ async function filterInventoryForQuery(term){
 
     removeBtn.addEventListener('click', () => {
       row.remove();
-      // renumber remaining badges
       Array.from(ingredientsContainer.querySelectorAll('.ingredient-row')).forEach((r, i) => {
         const b = r.querySelector('.ingredient-badge');
         if (b) b.textContent = (i + 1);
@@ -1576,7 +1539,6 @@ async function filterInventoryForQuery(term){
   function openModal(slot){
     activeSlot = slot || 'lunch';
     try { form.reset(); } catch(e){}
-    // clear existing ingredient rows and ensure header
     const existingHeader = modal.querySelector('.ingredient-header');
     if (existingHeader) existingHeader.remove();
     ingredientsContainer.innerHTML = '';
@@ -1584,12 +1546,11 @@ async function filterInventoryForQuery(term){
     createIngredientRow();
     if (titleEl) titleEl.textContent = `Add Meal for ${slotLabel(activeSlot)}`;
 
-    // show dark backdrop
     if (backdrop) {
       backdrop.style.display = 'block';
       backdrop.style.position = 'fixed';
       backdrop.style.inset = '0';
-      backdrop.style.background = 'rgba(0,0,0,0.45)'; // darker overlay
+      backdrop.style.background = 'rgba(0,0,0,0.45)';
       backdrop.style.zIndex = '11990';
     }
 
@@ -1597,7 +1558,6 @@ async function filterInventoryForQuery(term){
     modal.style.display = 'flex';
     modal.style.zIndex = '12000';
 
-    // prevent background scrolling
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
   }
@@ -1607,18 +1567,15 @@ async function filterInventoryForQuery(term){
     modal.setAttribute('aria-hidden','true');
     modal.style.display = 'none';
 
-    // hide backdrop
     if (backdrop) {
       backdrop.style.display = 'none';
-      backdrop.style.background = ''; // reset if needed
+      backdrop.style.background = '';
     }
 
-    // restore scrolling
     document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
   }
 
-  // hook plus buttons in meal slots
   document.addEventListener('click', ev => {
     const b = ev.target.closest('.slot-add');
     if (!b) return;
@@ -1632,12 +1589,10 @@ async function filterInventoryForQuery(term){
 
   addIngredientBtn?.addEventListener('click', e => {
     e.preventDefault();
-    // ensure header exists (if not created for some reason)
     ensureIngredientHeader();
     createIngredientRow();
   });
 
-  // submit form (same behavior as your previous code)
   form.addEventListener('submit', async ev => {
     ev.preventDefault();
 
@@ -1650,7 +1605,6 @@ async function filterInventoryForQuery(term){
       return;
     }
 
-    // collect ingredient rows
     const rows = Array.from(ingredientsContainer.querySelectorAll('.ingredient-row'));
     const ingredients = rows.map(row => {
       const nameInput = row.querySelector('.ingredient-name');
@@ -1671,10 +1625,8 @@ async function filterInventoryForQuery(term){
 
     const payload = {
       user_id: window.CURRENT_USER_ID || 0,
-      // prefer the currently-selected date in the calendar if available, fall back to today
       meal_date: (function(){
         try {
-          // pill.active dataset has full ISO date (we used to set data-date="${d.toISOString()}")
           const active = document.querySelector('.pill.active')?.dataset?.date;
           if (active) return formatLocalDate(new Date(active));
         } catch(_) {}
@@ -1693,7 +1645,6 @@ async function filterInventoryForQuery(term){
         body: JSON.stringify(payload)
       });
 
-      // Always read raw text first so we can log it if JSON parse fails
       const raw = await resp.text();
       console.log('[AddMeal] HTTP', resp.status, resp.statusText, 'Content-Type:', resp.headers.get('content-type'));
       console.log('[AddMeal] RAW RESPONSE:', raw);
@@ -1703,7 +1654,6 @@ async function filterInventoryForQuery(term){
         json = raw ? JSON.parse(raw) : null;
       } catch (parseErr) {
         console.error('[AddMeal] JSON parse error:', parseErr);
-        // Show raw server output to console and a friendly alert to user
         console.error('[AddMeal] Server returned invalid JSON. See RAW RESPONSE above.');
         alert('Server returned an unexpected response. Check browser console for details.');
         return;
@@ -1715,20 +1665,17 @@ async function filterInventoryForQuery(term){
         return;
       }
 
-      // Success path — prefer a server reload, fallback to local update
       if (typeof reloadMealsForCurrentDate === 'function') {
         try {
           await reloadMealsForCurrentDate();
         } catch (e) {
           console.error('[Add Meal] reload failed', e);
-          // fallback: minimal local update
           window.demoMeals[activeSlot] = window.demoMeals[activeSlot] || [];
           window.demoMeals[activeSlot].push(mealName);
           if (typeof renderMeals === 'function') renderMeals();
           if (typeof window.attachMealTileClickHandlers === 'function') window.attachMealTileClickHandlers();
         }
       } else {
-        // existing local-only fallback
         window.demoMeals[activeSlot] = window.demoMeals[activeSlot] || [];
         window.demoMeals[activeSlot].push(mealName);
         if (typeof renderMeals === 'function') renderMeals();
@@ -1739,8 +1686,7 @@ async function filterInventoryForQuery(term){
       closeModal();
       alert('Meal saved successfully!');
       console.log('[Add Meal] saved:', json);
-      
-      // Auto-refresh page to show latest meal plan
+
       location.reload();
 
     } catch (err) {
@@ -1749,41 +1695,48 @@ async function filterInventoryForQuery(term){
     }
   });
 
-  // ESC to close
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') closeModal();
   });
 
+  // re-export commonly used functions
   window.reloadMealsForCurrentDate = async function() {
-  try {
-    await loadMealsForDate(state.selected);
-    renderMeals();
-    attachMealTileClickHandlers && attachMealTileClickHandlers();
-  } catch (e) {
-    console.error('[window.reloadMealsForCurrentDate] error', e);
-    throw e;
-  }
-};
-window.attachMealTileClickHandlers = attachMealTileClickHandlers;
-window.getSelectedDate = function() { return new Date(state.selected); };
-})(); // end modal IIFE
+    try {
+      // try to call the main reload if present in global scope (it is defined above)
+      if (typeof window.__internal_reload === 'function') {
+        await window.__internal_reload();
+      } else {
+        // fallback to calling the earlier defined function (we defined reloadMealsForCurrentDate in main scope)
+        if (typeof reloadMealsForCurrentDate === 'function') await reloadMealsForCurrentDate();
+      }
+    } catch (e) {
+      console.error('[window.reloadMealsForCurrentDate] error', e);
+      throw e;
+    }
+  };
+  window.__real_attachMealTileClickHandlers = attachMealTileClickHandlers;
+  window.attachMealTileClickHandlers = window.__real_attachMealTileClickHandlers;
+  window.getSelectedDate = function() { 
+    try {
+      // try to read the pill.active dataset
+      const active = document.querySelector('.pill.active')?.dataset?.date;
+      if (active) return new Date(active);
+    } catch (_) {}
+    return new Date();
+  };
+})(); // end add-meal modal IIFE
 
+// ----------------- friendly hover styles injection -----------------
 (function addSlotHoverStyles(){
   const css = `
-    /* slot card hover / add button (orange background, white text like date pill) */
     .slot-card { transition: transform .12s ease; }
     .slot-card h1, .slot-card h2, .slot-card h3, .slot-card h4, .slot-card .slot-title {
       transition: color .12s ease;
       color: #333 !important;
     }
-    .slot-card:hover h1,
-    .slot-card:hover h2,
-    .slot-card:hover h3,
-    .slot-card:hover h4,
     .slot-card:hover .slot-title {
       color: #f39c12 !important;
     }
-
     .slot-card .slot-add {
       transition: background .12s ease, color .12s ease, box-shadow .12s ease, border-color .12s ease;
       background: #fff;
@@ -1791,8 +1744,6 @@ window.getSelectedDate = function() { return new Date(state.selected); };
       border: 1px solid rgba(0,0,0,0.08);
       box-shadow: none;
     }
-
-    /* hover / focus state: orange background + white text */
     .slot-card .slot-add:hover,
     .slot-card:hover .slot-add,
     .slot-card .slot-add:focus {
@@ -1801,14 +1752,10 @@ window.getSelectedDate = function() { return new Date(state.selected); };
       border-color: #f39c12 !important;
       box-shadow: 0 8px 24px rgba(243,156,18,0.18);
     }
-
-    /* accessibility focus ring */
     .slot-card .slot-add:focus {
       outline: none;
       box-shadow: 0 0 0 4px rgba(243,156,18,0.12);
     }
-
-    /* meal tile hover to feel interactive */
     .meal-tile { transition: transform .08s ease, box-shadow .12s ease; cursor: pointer; }
     .meal-tile:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
   `;
@@ -1821,10 +1768,8 @@ window.getSelectedDate = function() { return new Date(state.selected); };
 
   function markSlotParents(){
     document.querySelectorAll('.slot-add').forEach(btn=>{
-      let p = btn.closest('div');
       const candidate = btn.closest('div')?.querySelector('h3') ? btn.closest('div') : null;
-      if (candidate) p = candidate;
-      if (p) p.classList.add('slot-card');
+      if (candidate) candidate.classList.add('slot-card');
     });
   }
 
@@ -1834,3 +1779,271 @@ window.getSelectedDate = function() { return new Date(state.selected); };
     markSlotParents();
   }
 })();
+
+/// ------------------------ WEEKLY CALENDAR MODAL BEHAVIOR (REPLACEMENT) ------------------------
+(function () {
+  const modal = document.getElementById('weeklyCalendarModal');
+  const tableBody = document.getElementById('weekCalendarBody');
+  const tableEl = document.getElementById('weekCalendarTable');
+  const rangeLabel = document.getElementById('weekRangeLabel');
+  const prevBtn = document.getElementById('weekPrev');
+  const nextBtn = document.getElementById('weekNext');
+  const closeX = document.getElementById('weeklyCalendarClose');
+  const addBtnTop = document.getElementById('weeklyAddMealTop');
+  const calendarBtn = document.getElementById('calendarBtn');
+
+  if (!modal || !tableBody || !rangeLabel || !tableEl) {
+    console.warn('[WeeklyCalendar] Required elements missing');
+    return;
+  }
+
+  // ---- helpers ----
+  function startOfWeekMon(d) {
+    const x = new Date(d);
+    const dow = (x.getDay() + 6) % 7;
+    x.setHours(12, 0, 0, 0);
+    x.setDate(x.getDate() - dow);
+    return x;
+  }
+  function isoDate(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtRangeLabel(start) {
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    return `${start.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })} — ${end.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })}`;
+  }
+
+  // Monday of current week
+  let weekStart = startOfWeekMon(new Date());
+
+  // fetch meals for a single date (calls your backend)
+  async function fetchMealsForDate(dateStr) {
+    try {
+      const uid = window.CURRENT_USER_ID || 0;
+      const resp = await fetch(`api/get_meals.php?user_id=${encodeURIComponent(uid)}&date=${encodeURIComponent(dateStr)}&_=${Date.now()}`, { cache:'no-store' });
+      if (!resp.ok) return [];
+      const j = await resp.json();
+      if (!j || !j.ok || !Array.isArray(j.meals)) return [];
+      return j.meals;
+    } catch (e) {
+      console.warn('[fetchMealsForDate]', e);
+      return [];
+    }
+  }
+
+  // normalize slot string -> one of breakfast,lunch,dinner,other
+  function normalizeSlot(slot) {
+    if (!slot) return 'other';
+    const s = String(slot).toLowerCase();
+    if (s.startsWith('break')) return 'breakfast';
+    if (s.startsWith('lunc')) return 'lunch';
+    if (s.startsWith('dinn')) return 'dinner';
+    return 'other';
+  }
+
+  // build a day row DOM from the day's meals
+  function buildRowForDate(d, mealsForThisDate) {
+    const tr = document.createElement('tr');
+
+    // Day cell
+    const dayTd = document.createElement('td');
+    dayTd.style.padding = '10px';
+    dayTd.style.verticalAlign = 'middle';
+    dayTd.style.textAlign = 'left';
+    dayTd.innerHTML = `<strong>${d.toLocaleDateString('en-GB',{weekday:'long'})}</strong>`;
+    tr.appendChild(dayTd);
+
+    // prepare arrays grouped by slot (do not mutate global state)
+    const groups = { breakfast: [], lunch: [], dinner: [], other: [] };
+    (mealsForThisDate || []).forEach(m => {
+      const slot = normalizeSlot(m.meal_slot);
+      groups[slot].push({
+        name: m.meal_name || 'Untitled',
+        remark: m.meal_remark || '',
+        raw: m
+      });
+    });
+
+    // helper to create a td with centered column content and equal spacing
+    function makeSlotTd(items) {
+      const td = document.createElement('td');
+      td.style.verticalAlign = 'middle';
+      td.style.textAlign = 'center';
+      td.style.padding = '8px';
+
+      const wrap = document.createElement('div');
+
+      // make layout responsive: row when multiple tiles, column when single/none
+      wrap.style.display = 'flex';
+      wrap.style.flexDirection = (items && items.length > 1) ? 'row' : 'column';
+      wrap.style.flexWrap = 'wrap';
+      wrap.style.alignItems = 'center';
+      wrap.style.justifyContent = (items && items.length > 1) ? 'flex-start' : 'center';
+      wrap.style.gap = '10px';
+      wrap.style.minHeight = '46px';
+      wrap.style.padding = '6px';
+
+      if (!items || items.length === 0) {
+        // invisible spacer so empty cells keep height and center alignment
+        const spacer = document.createElement('div');
+        spacer.style.height = '6px';
+        spacer.style.opacity = '0';
+        wrap.appendChild(spacer);
+      } else {
+        items.forEach((it, idx) => {
+          const tile = document.createElement('div');
+          tile.className = 'week-meal-tile';
+          tile.setAttribute('role', 'button');
+          tile.setAttribute('tabindex', '0');
+          tile.textContent = it.name;
+
+          // make tiles inline-flex so they look nice in a horizontal row
+          tile.style.display = 'inline-flex';
+          tile.style.alignItems = 'center';
+          tile.style.justifyContent = 'center';
+          tile.style.margin = '6px 8px'; // small margin around each tile
+
+          // click opens detail modal using mealSnapshots (if present)
+          tile.addEventListener('click', () => {
+            let snapshot = null;
+            if (window.mealSnapshots) {
+              // try to find snapshot by exact meal_name and (optionally) same meal_date
+              for (const k of Object.keys(window.mealSnapshots)) {
+                const s = window.mealSnapshots[k];
+                if (!s) continue;
+                if (s.meal_name === it.name) { snapshot = s; break; }
+              }
+            }
+            showMealDetailModal(it.name, snapshot);
+          });
+          tile.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); tile.click(); } });
+
+          wrap.appendChild(tile);
+        });
+      }
+
+      td.appendChild(wrap);
+      return td;
+    }
+
+    tr.appendChild(makeSlotTd(groups.breakfast));
+    tr.appendChild(makeSlotTd(groups.lunch));
+    tr.appendChild(makeSlotTd(groups.dinner));
+    tr.appendChild(makeSlotTd(groups.other));
+
+    return tr;
+  }
+
+  // recalc tbody height and set each row height equally (removes blank gap)
+  function recalcTbodyAndRowHeights() {
+    try {
+      const thead = tableEl.querySelector('thead');
+      const tbody = tableEl.querySelector('tbody');
+      const wrapper = modal.querySelector('.week-table-wrap') || tableEl.parentElement;
+      if (!thead || !tbody || !wrapper) return;
+
+      // Remove any inline styles previously applied by JS so the CSS table rules take over.
+      tbody.style.display = '';
+      tbody.style.height = '';
+      tbody.style.overflow = '';
+
+      // Make each row a proper table-row and clear forced heights/widths.
+      Array.from(tbody.querySelectorAll('tr')).forEach(r => {
+        r.style.display = '';
+        r.style.width = '';
+        r.style.height = '';
+      });
+
+      // Nothing else — let CSS control equal row heights.
+    } catch (e) {
+      console.warn('[recalcTbodyAndRowHeights] error', e);
+    }
+  }
+
+  // render the whole week: fetch meals per day and append rows
+  async function renderWeek() {
+    rangeLabel.textContent = fmtRangeLabel(weekStart);
+    tableBody.innerHTML = '';
+
+    // compute dates for the week
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(weekStart);
+      d.setDate(d.getDate() + i);
+      d.setHours(12, 0, 0, 0);
+      dates.push(d);
+    }
+
+    // fetch all days in parallel (but keep order)
+    const promises = dates.map(d => fetchMealsForDate(isoDate(d)));
+    const results = await Promise.all(promises);
+
+    for (let i = 0; i < dates.length; i++) {
+      const row = buildRowForDate(dates[i], results[i]);
+      tableBody.appendChild(row);
+    }
+
+    // ensure layout + heights correct after DOM insertion
+    // small timeout lets the browser compute sizes
+    setTimeout(recalcTbodyAndRowHeights, 30);
+  }
+
+  // show / hide modal helpers (use existing showModal/hideModal if present)
+  function openWeeklyModal() {
+    if (typeof showModal === 'function') {
+      showModal(modal);
+    } else {
+      modal.style.display = 'flex';
+      modal.setAttribute('aria-hidden', 'false');
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+    }
+    // render after shown so measurements are correct
+    setTimeout(() => renderWeek().catch(console.warn), 40);
+  }
+  function closeWeeklyModal() {
+    if (typeof hideModal === 'function') {
+      hideModal(modal);
+    } else {
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    }
+  }
+
+  // wire buttons
+  if (calendarBtn) calendarBtn.addEventListener('click', (e) => { e.preventDefault(); openWeeklyModal(); });
+  prevBtn?.addEventListener('click', () => { weekStart.setDate(weekStart.getDate() - 7); renderWeek(); });
+  nextBtn?.addEventListener('click', () => { weekStart.setDate(weekStart.getDate() + 7); renderWeek(); });
+  closeX?.addEventListener('click', closeWeeklyModal);
+  addBtnTop?.addEventListener('click', () => {
+    const chooseModal = document.getElementById('chooseDateSlotModal');
+    const dateInput = document.getElementById('chooseDateSlotDate');
+    if (dateInput) dateInput.value = isoDate(weekStart);
+    if (typeof showModal === 'function') showModal(chooseModal);
+  });
+
+  // when window resizes, recompute heights if modal is visible
+  window.addEventListener('resize', () => { if (modal && modal.style.display !== 'none') recalcTbodyAndRowHeights(); });
+
+  // expose renderWeek if other code wants it
+  window.renderWeek = renderWeek;
+})();
+
+function fixIngredientModalZ() {
+    const weekly = document.getElementById("weeklyCalendarModal");
+    const ingModal = document.getElementById("recipeDetailModal");
+
+    if (!weekly || !ingModal) return;
+
+    weekly.style.zIndex = "8000";
+    ingModal.style.zIndex = "100000";
+
+    const panel = ingModal.querySelector(".modal-panel");
+    const backdrop = ingModal.querySelector(".modal-backdrop");
+
+    if (backdrop) backdrop.style.zIndex = "100000";
+    if (panel) panel.style.zIndex = "100001";
+}

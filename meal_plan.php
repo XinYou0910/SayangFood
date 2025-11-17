@@ -247,6 +247,53 @@ if (!isset($_SESSION['user_id'])) {
     </div>
   </div>
 
+  <!-- WEEKLY CALENDAR MODAL (open from calendar button) -->
+  <div id="weeklyCalendarModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="weeklyCalendarTitle">
+    <div class="modal-backdrop" id="weeklyCalendarBackdrop"></div>
+
+    <div class="modal-panel weekly-modal-panel" role="document">
+      <!-- header: left title, center arrows + range, right close -->
+      <header class="modal-header weekly-header-centered" aria-hidden="false">
+        <!-- left: Weekly Meal Plan pill -->
+        <div class="weekly-header-left">
+          <span class="weekly-title">Weekly Meal Plan</span>
+        </div>
+
+        <!-- center: prev / range / next -->
+        <div class="weekly-header-center" aria-hidden="false">
+          <button id="weekPrev" class="modal-arrow" aria-label="Previous week">‹</button>
+          <div id="weekRangeLabel" class="range-label" aria-live="polite" role="heading" aria-level="2"></div>
+          <button id="weekNext" class="modal-arrow" aria-label="Next week">›</button>
+        </div>
+
+        <!-- right: Add a Meal (orange) and close X -->
+        <div class="weekly-header-right">
+          <button id="weeklyAddMealTop" class="btn-add-meal-top" title="Add a meal">Add a Meal</button>
+          <button id="weeklyCalendarClose" class="modal-close" aria-label="Close weekly calendar">&times;</button>
+        </div>
+      </header>
+
+      <!-- body -->
+      <div class="modal-body" style="padding:8px 12px;">
+        <!-- IMPORTANT: .week-table-wrap must be present so CSS flex sizing works -->
+        <div class="week-table-wrap" style="width:100%; overflow:visible;">
+          <table id="weekCalendarTable" class="week-table" style="width:100%; border-collapse:collapse; table-layout:fixed;">
+            <thead>
+              <tr>
+                <th style="width:14%;">Day</th>
+                <th>Breakfast</th>
+                <th>Lunch</th>
+                <th>Dinner</th>
+                <th>Snacks</th>
+              </tr>
+            </thead>
+            <tbody id="weekCalendarBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="meal_plan.js?v=6"></script>
 </body>
 </html>
