@@ -42,8 +42,8 @@ if (!isset($_SESSION['user_id'])) {
         <button class="submenu-item" onclick="location.href='donation_list.php'">Donations</button>
       </div>
 
-      <button class="menu-item"><img class="icon" src="pic/data-analytics.png" alt=""> Food Analytics</button>
-      <button class="menu-item"><img class="icon" src="pic/notification.png"  alt=""> Notification</button>
+      <button class="menu-item" onclick="location.href='food_analytics.html'"><img class="icon" src="pic/data-analytics.png" alt=""> Food Analytics</button>
+      <button class="menu-item" onclick="location.href='notification1.php'"><img class="icon" src="pic/notification.png"  alt=""> Notification</button>
 
       <div class="profile">
         <img class="profile-img" src="pic/user.png" alt="">
