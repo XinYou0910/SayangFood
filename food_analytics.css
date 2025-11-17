@@ -171,14 +171,16 @@ body {
   margin: 0 0 8px 0;
   font-weight: 700;
 }
-/* Chart Section - Make Bigger */
+/* Chart Section - Visual report + Expiry soon */
 .charts {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* three equal large charts */
+  grid-template-columns: 2fr 1fr; /* big chart + narrower expiry card */
   gap: 20px;
   align-items: start;
   margin-top: 20px;
 }
+
+
 
 .chart-card {
   background: white;
@@ -201,12 +203,51 @@ body {
 }
 
 
-#foodChart,
-#donationChart{
+#foodChart {
   width: 100% !important;
   height: 380px !important;
   max-height: 380px !important;
 }
+
+.expiry-card {
+  min-height: 420px;
+}
+
+.expiry-table-wrapper {
+  max-height: 360px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+
+.expiry-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.expiry-table th,
+.expiry-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.expiry-table th {
+  text-align: left;
+  font-weight: 600;
+  background: #f9fafb;
+  color: #374151;
+}
+
+.expiry-table tr:hover {
+  background: #f9fafb;
+}
+
+.empty-row {
+  text-align: center;
+  color: #9ca3af;
+  font-style: italic;
+}
+
 
 .main-chart { min-height: 420px; }
 .small-title { font-size: 16px; text-align: center; margin-bottom: 10px; }
@@ -580,9 +621,11 @@ body {
   }
 }
 
-/* Medium screens: make two columns for charts */
 @media (max-width: 1100px) {
-  .charts { grid-template-columns: 1fr 1fr; }
-  .small-chart { padding: 12px; }
-  .small-chart canvas { height: 160px !important; }
+  /* On screens smaller than 1100px, stack the two cards in one column */
+  .charts {
+    grid-template-columns: 1fr;
+  }
 }
+
+ 

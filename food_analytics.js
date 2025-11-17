@@ -66,15 +66,17 @@ function loadAnalytics(options = {}) {
         return;
       }
 
-      updateSummary(data);
+            updateSummary(data);
 
       if (data.trend && data.trend.length > 0) {
         drawTrend(data.trend);
-        drawDonationChart(data.trend);
       } else {
         console.warn('No trend data available');
-        // Handle the case where no trend data is returned
       }
+
+      // Update "Expiry soon" table
+      updateExpirySoon(data.expiry_soon || []);
+
     })
     .catch(err => {
       console.error("Error loading analytics:", err);
@@ -82,6 +84,33 @@ function loadAnalytics(options = {}) {
     });
 }
 
+function updateExpirySoon(list) {
+  const tbody = document.getElementById("expirySoonBody");
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  if (!list || list.length === 0) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 3;
+    td.className = "empty-row";
+    td.textContent = "No items near expiry.";
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    return;
+  }
+
+  list.forEach(item => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${item.item_name}</td>
+      <td>${item.quantity}</td>
+      <td>${item.expiry_date}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
 
 
 function updateSummary(data) {
@@ -139,7 +168,7 @@ function drawTrend(trendData) {
 
   // Restore original chart title
   const titleEl = document.getElementById('chartTitle');
-  if (titleEl) titleEl.textContent = 'Food Trend';
+  if (titleEl) titleEl.textContent = 'Visual Report';
   // Small delayed update helps Chart.js recompute sizes when fonts or layout
   // finish loading (fixes the 'invisible / squashed' render seen after refresh).
   setTimeout(() => { try { trendChart.resize(); trendChart.update(); } catch(e){} }, 150);
@@ -411,11 +440,13 @@ function showTrend() {
   console.log("Switching to trend view");
   document.getElementById("trendBtn").classList.add("active");
   document.getElementById("categoryBtn").classList.remove("active");
-  document.getElementById("trendSection").style.display = "block";
-  document.getElementById("categorySection").style.display = "none";
-  // Charts may render incorrectly if their canvas was previously hidden or the
-  // layout changed (this happens on refresh or when navigating back). Resize
-  // and update charts after a short delay to allow layout to settle.
+
+  const trendSection = document.getElementById("trendSection");
+  const categorySection = document.getElementById("categorySection");
+
+  trendSection.style.display = "grid";   // 👈 was "block"
+  categorySection.style.display = "none";
+
   setTimeout(() => {
     try {
       if (trendChart) { trendChart.resize(); trendChart.update(); }
