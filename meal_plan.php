@@ -199,5 +199,48 @@ if (!isset($_SESSION['user_id'])) {
   </div>
 
   <script src="meal_plan.js?v=6"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Check if we should open meal detail from notification click
+      const shouldOpenMealDetail = sessionStorage.getItem('shouldOpenMealDetail');
+      const mealPlanData = sessionStorage.getItem('mealPlanData');
+
+      if (shouldOpenMealDetail === 'true' && mealPlanData) {
+        try {
+          const meal = JSON.parse(mealPlanData);
+          console.log('[Notification] Meal data loaded:', meal);
+          // Clear sessionStorage
+          sessionStorage.removeItem('shouldOpenMealDetail');
+          sessionStorage.removeItem('mealPlanData');
+          
+          // Navigate to the meal's date and open detail
+          // Use longer timeout to ensure all JS is initialized
+          setTimeout(() => {
+            console.log('[Notification] setTimeout fired, setting meal date:', meal.meal_date);
+            
+            // Set the selected date to the meal's date
+            if (meal.meal_date && typeof window.setMealDate === 'function') {
+              console.log('[Notification] Calling window.setMealDate()');
+              window.setMealDate(meal.meal_date);
+            } else {
+              console.error('[Notification] setMealDate not available or no meal_date');
+            }
+            
+            // Open meal detail modal with ingredients
+            if (typeof window.openMealDetailFromNotification === 'function') {
+              console.log('[Notification] Calling window.openMealDetailFromNotification()');
+              window.openMealDetailFromNotification(meal);
+            } else {
+              console.error('[Notification] openMealDetailFromNotification not available');
+            }
+          }, 1000);  // Increased from 500ms to 1000ms
+        } catch (error) {
+          console.error('Error parsing meal data:', error);
+          sessionStorage.removeItem('shouldOpenMealDetail');
+          sessionStorage.removeItem('mealPlanData');
+        }
+      }
+    });
+  </script>
 </body>
 </html>

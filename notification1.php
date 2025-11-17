@@ -7,8 +7,8 @@ if (!isset($_SESSION['user_id'])) {
 include 'db_connect.php';
 // Fetch notifications for current user
 $currentUserId = $_SESSION['user_id'];
-// Use correct table and columns
-$sql = "SELECT * FROM notification WHERE user_id = ? ORDER BY timestamp DESC";
+// Use correct table and columns - Sort by timestamp DESC (newest first), then by notification_id DESC for tiebreaker
+$sql = "SELECT * FROM notification WHERE user_id = ? ORDER BY timestamp DESC, notification_id DESC";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $currentUserId);
 $stmt->execute();
@@ -22,6 +22,7 @@ $result = $stmt->get_result();
   <title>SayangFood - Notifications</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="notification1.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
   <div id="pageContent">
@@ -146,16 +147,17 @@ $result = $stmt->get_result();
         e.preventDefault();
         const notificationId = this.dataset.id;
         const notificationType = this.dataset.type;
+        console.log('View clicked:', { notificationId, notificationType, rawId: this.getAttribute('data-id'), element: this });
 
         // Fetch notification details
-        fetch(`notification_detail.php?id=${notificationId}`)
+        fetch(`notification_detail.php?id=${notificationId}`, { credentials: 'same-origin' })
           .then(res => {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return res.json();
           })
           .then(data => {
+            // Check for error first
             if (data.error) {
-              // Error case: item not found or deleted
               Swal.fire({
                 icon: 'error',
                 title: 'Error',
@@ -166,32 +168,73 @@ $result = $stmt->get_result();
               return;
             }
 
-            // Mark notification as read
-            fetch('notification_actions.php', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: `action=mark_read&id=${notificationId}`
-            });
+            // Route based on notification type (tolerant matching)
+            const notifTypeNormalized = (notificationType || '').toLowerCase().trim();
+            let hasValidData = false;
 
-            // Route based on notification type
-            const notifTypeNormalized = notificationType.toLowerCase().trim();
-
-            if (notifTypeNormalized === 'inventory') {
+            // Accept variants like 'inventory', 'item', 'food inventory'
+            if (notifTypeNormalized.includes('inventory') || notifTypeNormalized.includes('item')) {
               // Go to inventory_list.php and open view popup
-              if (data.item_data) {
-                // Store item data in sessionStorage to be retrieved on inventory page
+              if (data.item_data && Object.keys(data.item_data).length > 0) {
+                hasValidData = true;
                 sessionStorage.setItem('viewItemData', JSON.stringify(data.item_data));
                 sessionStorage.setItem('shouldOpenViewPopup', 'true');
-                window.location.href = 'inventory_list.php';
               }
-            } else if (notifTypeNormalized === 'donation') {
+            } else if (notifTypeNormalized.includes('donation')) {
               // Go to donation_list.php and open edit popup
-              if (data.item_data) {
-                // Store donation data in sessionStorage to be retrieved on donation page
+              if (data.item_data && Object.keys(data.item_data).length > 0) {
+                hasValidData = true;
                 sessionStorage.setItem('editDonationData', JSON.stringify(data.item_data));
                 sessionStorage.setItem('shouldOpenEditDonatePopup', 'true');
-                window.location.href = 'donation_list.php';
               }
+            } else if (notifTypeNormalized.includes('meal')) {
+              // Go to meal_plan.php and open meal details
+              if (data.item_data && Object.keys(data.item_data).length > 0) {
+                hasValidData = true;
+                sessionStorage.setItem('mealPlanData', JSON.stringify(data.item_data));
+                sessionStorage.setItem('shouldOpenMealDetail', 'true');
+              }
+            }
+
+            // If no valid data found, show error
+            if (!hasValidData) {
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Unable to load item details. The item may have been deleted.',
+                timer: 3000,
+                showConfirmButton: true
+              });
+              return;
+            }
+
+            // Mark notification as read (fire and forget)
+            fetch('notification_actions.php', {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: `action=mark_read&id=${notificationId}`
+            }).catch(err => console.error('Failed to mark as read:', err));
+
+            // Debug: log the sessionStorage keys we're about to set/navigate with
+            try {
+              console.log('Session storage keys before navigation:', {
+                viewItemData: sessionStorage.getItem('viewItemData'),
+                editDonationData: sessionStorage.getItem('editDonationData'),
+                mealPlanData: sessionStorage.getItem('mealPlanData'),
+                shouldOpenViewPopup: sessionStorage.getItem('shouldOpenViewPopup'),
+                shouldOpenEditDonatePopup: sessionStorage.getItem('shouldOpenEditDonatePopup'),
+                shouldOpenMealDetail: sessionStorage.getItem('shouldOpenMealDetail')
+              });
+            } catch (e) { console.warn('SessionStorage unavailable', e); }
+
+            // Navigate to appropriate page (use substring matching for robustness)
+            if (notifTypeNormalized.includes('inventory') || notifTypeNormalized.includes('item')) {
+              window.location.href = 'inventory_list.php';
+            } else if (notifTypeNormalized.includes('donation')) {
+              window.location.href = 'donation_list.php';
+            } else if (notifTypeNormalized.includes('meal')) {
+              window.location.href = 'meal_plan.php';
             }
           })
           .catch(error => {
@@ -214,13 +257,36 @@ $result = $stmt->get_result();
         const id = this.dataset.id;
         fetch('notification_actions.php', {
           method: 'POST',
+          credentials: 'same-origin',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: `action=mark_read&id=${id}`
         })
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
         .then(data => {
-          if (data.success) location.reload();
-          else alert('Failed to mark as read');
+          if (data.success) {
+            location.reload();
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Failed to mark as read',
+              timer: 2000,
+              showConfirmButton: false
+            });
+          }
+        })
+        .catch(err => {
+          console.error('Error:', err);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to mark as read',
+            timer: 2000,
+            showConfirmButton: false
+          });
         });
       });
     });
@@ -230,18 +296,51 @@ $result = $stmt->get_result();
       btn.addEventListener('click', function(e) {
         e.preventDefault();
         const id = this.dataset.id;
-        if (confirm('Are you sure you want to delete this notification?')) {
-          fetch('notification_actions.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `action=delete&id=${id}`
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) location.reload();
-            else alert('Failed to delete notification');
-          });
-        }
+        Swal.fire({
+          icon: 'warning',
+          title: 'Delete Notification',
+          text: 'Are you sure you want to delete this notification?',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          confirmButtonText: 'Delete',
+          cancelButtonText: 'Cancel'
+        }).then(result => {
+          if (result.isConfirmed) {
+            fetch('notification_actions.php', {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: `action=delete&id=${id}`
+            })
+            .then(res => {
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              return res.json();
+            })
+            .then(data => {
+              if (data.success) {
+                location.reload();
+              } else {
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Error',
+                  text: 'Failed to delete notification',
+                  timer: 2000,
+                  showConfirmButton: false
+                });
+              }
+            })
+            .catch(err => {
+              console.error('Error:', err);
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to delete notification',
+                timer: 2000,
+                showConfirmButton: false
+              });
+            });
+          }
+        });
       });
     });
 
@@ -250,31 +349,87 @@ $result = $stmt->get_result();
       e.preventDefault();
       fetch('notification_actions.php', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'action=mark_all_read'
       })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then(data => {
-        if (data.success) location.reload();
-        else alert('Failed to mark all as read');
+        if (data.success) {
+          location.reload();
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to mark all as read',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        }
+      })
+      .catch(err => {
+        console.error('Error:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to mark all as read',
+          timer: 2000,
+          showConfirmButton: false
+        });
       });
     });
 
     // Delete read messages
     document.querySelector('.action-btn.edit-btn[onclick*="deleteReadMessages"]')?.addEventListener('click', function(e) {
       e.preventDefault();
-      if (confirm('Delete all read notifications?')) {
-        fetch('notification_actions.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: 'action=delete_read'
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) location.reload();
-          else alert('Failed to delete read notifications');
-        });
-      }
+      Swal.fire({
+        icon: 'warning',
+        title: 'Delete All Read Notifications',
+        text: 'Are you sure you want to delete all read notifications? This action cannot be undone.',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Delete All',
+        cancelButtonText: 'Cancel'
+      }).then(result => {
+        if (result.isConfirmed) {
+          fetch('notification_actions.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=delete_read'
+          })
+          .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+          })
+          .then(data => {
+            if (data.success) {
+              location.reload();
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to delete read notifications',
+                timer: 2000,
+                showConfirmButton: false
+              });
+            }
+          })
+          .catch(err => {
+            console.error('Error:', err);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Failed to delete read notifications',
+              timer: 2000,
+              showConfirmButton: false
+            });
+          });
+        }
+      });
     });
   });
 </script>
