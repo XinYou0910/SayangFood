@@ -39,6 +39,34 @@ if ($startParam && $endParam) {
     $startDate = date('Y-m-d', strtotime($endDate . " -{$daysBack} days"));
 }
 
+// =======================================================
+// EXPIRY SOON (next 7 days from today)
+// =======================================================
+  $expirySoonQuery = "
+    SELECT 
+      item_name,
+      quantity,        -- this already contains '1 kg', '500 g', etc
+      expiry_date
+    FROM food_item_inventory
+    WHERE expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+      AND item_status NOT IN ('Used', 'Expired', 'Donated')
+    ORDER BY expiry_date ASC
+    LIMIT 10
+  ";
+
+  $expirySoon = [];
+  $expiryRes = $conn->query($expirySoonQuery);
+  if ($expiryRes) {
+      while ($row = $expiryRes->fetch_assoc()) {
+          $expirySoon[] = [
+              'item_name'   => $row['item_name'],
+              'quantity'    => $row['quantity'],   // 👈 no casting, keep the full string
+              'expiry_date' => $row['expiry_date']
+          ];
+      }
+  }
+
+
 
 // --------------------------
 // Check DB connection
@@ -177,12 +205,14 @@ echo json_encode([
     'total_donation' => $summary['total_donation'],
     'trend'          => $trend,
     'category'       => $category,
+    'expiry_soon'    => $expirySoon,
     'debug'          => [
         'start_date' => $startDate,
         'end_date'   => $endDate,
         'range_days' => $range
     ]
 ], JSON_PRETTY_PRINT);
+
 
 $conn->close();
 ?>

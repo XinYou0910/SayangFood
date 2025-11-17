@@ -2,9 +2,14 @@
 /* Page base and fonts */
 body {
   font-family: 'Poppins', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', "Helvetica Neue", Arial;
-  background: linear-gradient(180deg, #f7fbff 0%, #ffffff 40%);
+  background: linear-gradient(180deg, #dff0d8 0%, #ffffff 60%); /* Soft light green (food related) */
+  background-image: linear-gradient(135deg, #cdf8c0 100%); /* Soft yellow to orange gradient (fresh food colors) */
+  background-attachment: fixed;
   color: #0f172a;
+  margin: 0;
+  padding: 0;
 }
+
 
 /* Improved Filter Section */
 .filter-bar {
@@ -137,8 +142,14 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 2px solid #e5e7eb;
   transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
 }
 
+.card.card-active {
+  border-color: #4CAF50;        /* highlight active card */
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+  transform: translateY(-3px);
+}
 
 .card:hover {
   transform: translateY(-2px);
@@ -166,14 +177,16 @@ body {
   margin: 0 0 8px 0;
   font-weight: 700;
 }
-/* Chart Section - Make Bigger */
+/* Chart Section - Visual report + Expiry soon */
 .charts {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* three equal large charts */
+  grid-template-columns: 2fr 1fr; /* big chart + narrower expiry card */
   gap: 20px;
   align-items: start;
   margin-top: 20px;
 }
+
+
 
 .chart-card {
   background: white;
@@ -196,12 +209,51 @@ body {
 }
 
 
-#foodChart,
-#donationChart{
+#foodChart {
   width: 100% !important;
   height: 380px !important;
   max-height: 380px !important;
 }
+
+.expiry-card {
+  min-height: 420px;
+}
+
+.expiry-table-wrapper {
+  max-height: 360px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+
+.expiry-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.expiry-table th,
+.expiry-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.expiry-table th {
+  text-align: left;
+  font-weight: 600;
+  background: #f9fafb;
+  color: #374151;
+}
+
+.expiry-table tr:hover {
+  background: #f9fafb;
+}
+
+.empty-row {
+  text-align: center;
+  color: #9ca3af;
+  font-style: italic;
+}
+
 
 .main-chart { min-height: 420px; }
 .small-title { font-size: 16px; text-align: center; margin-bottom: 10px; }
@@ -383,7 +435,7 @@ body {
 
 .chart-box{
   flex: 1 1 300px;   /* grow/shrink with minimum width */
-  max-width: 450px;  /* prevent too big on large screens */
+  max-width: 500px;  /* prevent too big on large screens */
   min-width: 250px;  /* prevent too small on small screens */
   height: 450px;     /* fixed height for chart */
   background: #fff;
@@ -392,7 +444,6 @@ body {
   box-shadow: 0 3px 6px rgba(0,0,0,0.1);
 }
 
-/* Category filters row */
 /* Improved Category Filter Section */
 .category-filters {
   display: flex;
@@ -465,9 +516,17 @@ body {
   }
 }
 
-
 /* Remove extra internal top padding so donut sits closer to filters */
 #categorySection .chart-box { padding-top: 0; }
+
+#categoryChart {
+  width: 100% !important;
+  max-width: 100%;  /* Let the chart container take up the full width of its parent */
+  height: 380px !important;  /* Ensure it's tall enough */
+  max-height: 380px !important;  /* Keep it from stretching too tall */
+  display: flex;  /* Prevent unnecessary overflow */
+  margin: 0 auto;  /* Center the chart */
+}
 
 .legend-box{
   flex: 1 1 300px;   /* grow/shrink with minimum width */
@@ -495,30 +554,43 @@ body {
 }
 
 #foodLegend {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px;
+  border-radius: 8px;
+  overflow: auto;
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
+  flex-wrap: wrap;
 }
 
-/* Each legend item spacing */
 .legend-item {
+  width: 100%;
+  max-width: 250px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: opacity 0.3s, transform 0.3s, background-color 0.3s;
+  padding: 6px 12px; /* Add some padding for spacing */
+  border-radius: 5px; /* Rounded corners for better appearance */
+}
+
+.legend-item.selected {
+  background-color: #e6f7ff; /* Light blue background when selected */
+  font-weight: bold; /* Bold the text when selected */
 }
 
 .legend-color {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 4px;
 }
 
 .legend-label {
-  font-weight: 500;
-  font-size: 14px;
+  margin-left: 10px;
 }
+
 
 .legend-value {
   font-weight: 600;
@@ -555,9 +627,11 @@ body {
   }
 }
 
-/* Medium screens: make two columns for charts */
 @media (max-width: 1100px) {
-  .charts { grid-template-columns: 1fr 1fr; }
-  .small-chart { padding: 12px; }
-  .small-chart canvas { height: 160px !important; }
+  /* On screens smaller than 1100px, stack the two cards in one column */
+  .charts {
+    grid-template-columns: 1fr;
+  }
 }
+
+ 
