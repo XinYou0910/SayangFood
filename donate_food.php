@@ -23,6 +23,27 @@
                 // Step 3: Update item status to "Donated" instead of deleting
                 $update_query = "UPDATE food_item_inventory SET item_status = 'Donated' WHERE item_id = '$item_id'";
                 
+                // Step 4: Get item name for notification
+                $item_name_query = "SELECT item_name FROM food_item_inventory WHERE item_id = '$item_id'";
+                $item_name_result = mysqli_query($conn, $item_name_query);
+                $item_name = '';
+                if ($item_name_result && mysqli_num_rows($item_name_result) > 0) {
+                    $item_row = mysqli_fetch_assoc($item_name_result);
+                    $item_name = $item_row['item_name'];
+                }
+                // Step 5: Create notification for donation ready
+                if (!empty($item_name)) {
+                    $now_timestamp = date('Y-m-d H:i:s');
+                    $notification_type = 'Donation';
+                    $message = "\"$item_name\" is ready for donation!";
+                    $insert_sql = "INSERT INTO notification (user_id, notification_type, message, notification_status, timestamp) VALUES (?, ?, ?, 'Unread', ?)";
+                    $stmt = $conn->prepare($insert_sql);
+                    if ($stmt) {
+                        $stmt->bind_param('isss', $user_id, $notification_type, $message, $now_timestamp);
+                        $stmt->execute();
+                        $stmt->close();
+                    }
+                }
                 if (mysqli_query($conn, $update_query)) {
                     echo "<script>alert('Donation confirmed! Item marked as Donated and moved to donation list.');
                         window.location.href='donation_list.php';</script>";
