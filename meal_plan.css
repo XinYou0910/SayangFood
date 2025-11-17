@@ -491,3 +491,129 @@ html, body {
   padding: 22px;
 }
 #mealDetailDlg h2 { font-size: 20px; color: var(--primary-green); font-weight: 800; margin-bottom: 10px; }
+
+/* base tile look */
+.suggest-btn {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #fff;
+  color: #2e3d36;                 /* dark text like other tiles */
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: background .12s ease, color .12s ease, box-shadow .12s ease, border-color .12s ease, transform .08s ease;
+  margin: 6px;                    /* keep spacing consistent */
+  box-shadow: none;
+}
+
+/* hover / focus state: orange background + white text (match .slot-add) */
+.suggest-btn:hover,
+.suggest-btn:focus {
+  background: #f39c12 !important;
+  color: #ffffff !important;
+  border-color: #f39c12 !important;
+  box-shadow: 0 8px 24px rgba(243,156,18,0.18);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+/* accessibility focus ring */
+.suggest-btn:focus {
+  box-shadow: 0 0 0 4px rgba(243,156,18,0.12);
+}
+
+.suggestions-card .suggestions-grid .suggest-btn,
+.suggestions-grid .suggest-btn {
+  display: inline-block;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #fff;
+  color: #2e3d36;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: background .12s ease, color .12s ease, box-shadow .12s ease, transform .08s ease, border-color .12s ease;
+  margin: 6px;
+  box-shadow: none;
+}
+
+/* stronger selector + important to override less-specific rules */
+.suggestions-card .suggestions-grid .suggest-btn:hover,
+.suggestions-card .suggestions-grid .suggest-btn:focus,
+.suggestions-grid .suggest-btn:hover,
+.suggestions-grid .suggest-btn:focus {
+  background: #f39c12 !important;
+  color: #ffffff !important;
+  border-color: #f39c12 !important;
+  box-shadow: 0 8px 24px rgba(243,156,18,0.18) !important;
+  transform: translateY(-2px);
+  outline: none;
+}
+
+/* keyboard focus ring */
+.suggestions-card .suggestions-grid .suggest-btn:focus {
+  box-shadow: 0 0 0 4px rgba(243,156,18,0.12) !important;
+}
+
+/* Suggestion tile availability color states (box background) */
+.suggest-btn {
+  /* keep previous base rules; these modify background/color when availability classes are added */
+  transition: background .12s ease, color .12s ease, box-shadow .12s ease, border-color .12s ease, transform .08s ease;
+}
+
+/* AVAILABLE (enough ingredients) - soft green box */
+.suggest-btn.available {
+  background: rgba(230, 250, 235, 1);
+  border-color: rgba(170, 235, 190, 1);
+  color: #154d2b !important;
+  box-shadow: 0 6px 18px rgba(34, 120, 60, 0.06);
+}
+
+/* UNAVAILABLE (missing or insufficient) - soft red/pink box */
+.suggest-btn.unavailable {
+  background: rgba(255, 240, 240, 1);
+  border-color: rgba(250, 200, 200, 1);
+  color: #7a1b1b !important;
+  box-shadow: 0 6px 18px rgba(180, 30, 30, 0.04);
+}
+
+/* keep hover behaviour but slightly darker for both states */
+.suggest-btn.available:hover,
+.suggest-btn.available:focus {
+  background: #dff4df !important;
+  color: #0f4622 !important;
+  box-shadow: 0 10px 26px rgba(34,120,60,0.12);
+  transform: translateY(-2px);
+}
+
+.suggest-btn.unavailable:hover,
+.suggest-btn.unavailable:focus {
+  background: #ffecec !important;
+  color: #5d1111 !important;
+  box-shadow: 0 10px 26px rgba(180,30,30,0.10);
+  transform: translateY(-2px);
+}
+
+/* When tiles are still being checked (loading state) */
+.suggest-btn.pending {
+  opacity: 0.9;
+  filter: saturate(.9);
+  position: relative;
+}
+.suggest-btn.pending::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin-top: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.06);
+  border-top-color: rgba(0,0,0,0.25);
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

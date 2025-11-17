@@ -198,6 +198,50 @@ if (!isset($_SESSION['user_id'])) {
     </div>
   </div>
 
+  <!-- Recipe Detail Modal -->
+  <div id="recipeDetailModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="recipeDetailTitle">
+    <div class="modal-backdrop" id="recipeDetailModalBackdrop"></div>
+    <div class="modal-panel" role="document" style="width:min(880px,92%); max-height:82vh;">
+      <header class="modal-header">
+        <h2 id="recipeDetailTitle">Recipe</h2>
+        <button id="recipeDetailClose" class="modal-close" aria-label="Close">&times;</button>
+      </header>
+      <div class="modal-body" id="recipeDetailBody">
+        <p class="muted">Loading...</p>
+      </div>
+      <footer class="modal-footer" style="gap:10px;">
+        <button id="recipeDetailCancel" class="action-btn">Close</button>
+        <button id="recipeUseBtn" class="action-btn">Use</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Choose Date & Slot Modal (shown after clicking Use) -->
+  <div id="chooseDateSlotModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="chooseDateSlotTitle">
+    <div class="modal-backdrop" id="chooseDateSlotModalBackdrop"></div>
+    <div class="modal-panel" role="document" style="width:420px; max-height:80vh;">
+      <header class="modal-header">
+        <h2 id="chooseDateSlotTitle">Add to meal plan</h2>
+        <button id="chooseDateSlotClose" class="modal-close" aria-label="Close">&times;</button>
+      </header>
+      <div class="modal-body" style="padding:12px;">
+        <label style="display:block;margin-bottom:8px;font-weight:700;">Date</label>
+        <input id="chooseDateSlotDate" type="date" style="width:100%;padding:8px 10px;margin-bottom:12px;border-radius:6px;border:1px solid #ddd;">
+        <label style="display:block;margin-bottom:8px;font-weight:700;">Slot</label>
+        <select id="chooseDateSlotSelect" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #ddd;">
+          <option value="breakfast">Breakfast</option>
+          <option value="lunch" selected>Lunch</option>
+          <option value="dinner">Dinner</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <footer class="modal-footer" style="gap:10px;">
+        <button id="chooseDateSlotCancel" class="action-btn">Cancel</button>
+        <button id="chooseDateSlotConfirm" class="action-btn">Add</button>
+      </footer>
+    </div>
+  </div>
+
   <script src="meal_plan.js?v=6"></script>
 </body>
 </html>

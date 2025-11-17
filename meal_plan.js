@@ -31,6 +31,62 @@ function normalizeText(s){
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 }
 
+function normalizeUnit(u) {
+  if (!u) return '';
+  return String(u).toLowerCase().trim().replace(/\./g,'');
+}
+
+function convertToBase(value, unit) {
+  const u = normalizeUnit(unit);
+  if (value == null || value === '' || isNaN(Number(value))) return { value: null, kind: 'unknown' };
+  const v = Number(value);
+
+  // Mass units -> grams
+  const massUnits = {
+    'g': 1,
+    'gram': 1,
+    'grams': 1,
+    'kg': 1000,
+    'kilogram': 1000,
+    'kilograms': 1000,
+    'mg': 0.001
+  };
+  for (const key of Object.keys(massUnits)) {
+    if (u === key || u === key + 's' || u === (key + '/g')) {
+      return { value: v * massUnits[key], kind: 'mass' };
+    }
+  }
+  // sometimes unit stored as 'g' or 'kg' inside longer string like 'g (packet)'
+  for (const key of Object.keys(massUnits)) {
+    if (u.includes(key)) return { value: v * massUnits[key], kind: 'mass' };
+  }
+
+  // Volume units -> milliliters
+  const volUnits = {
+    'ml': 1,
+    'milliliter': 1,
+    'milliliters': 1,
+    'l': 1000,
+    'liter': 1000,
+    'litre': 1000,
+    'liters': 1000,
+    'litres': 1000
+  };
+  for (const key of Object.keys(volUnits)) {
+    if (u === key || u === key + 's') return { value: v * volUnits[key], kind: 'volume' };
+  }
+  for (const key of Object.keys(volUnits)) {
+    if (u.includes(key)) return { value: v * volUnits[key], kind: 'volume' };
+  }
+
+  // pieces / pcs / unitless counts
+  const pieceKeys = ['pcs','pc','piece','pieces','unit','units'];
+  if (pieceKeys.includes(u) || pieceKeys.some(k => u.includes(k))) return { value: v, kind: 'pieces' };
+
+  // unknown unit: return raw number
+  return { value: v, kind: 'unknown' };
+}
+
 // ------------------------ Inventory loader + filter ------------------------
 
 let inventoryCache = null;
@@ -262,29 +318,629 @@ async function filterInventoryForQuery(term){
     ).join('');
   }
 
+  // ----------------- UPDATED renderSuggestions & recipe modal flow -----------------
   async function renderSuggestions(){
     const wrap = document.getElementById("suggestionTiles");
     if (!wrap) return;
-    let items = suggestionsStatic;
+
+    let items = [];
+
     try {
-      const resp = await fetch(`/api/get_suggestions.php?user_id=${encodeURIComponent(window.CURRENT_USER_ID || 0)}`);
-      const j    = await resp.json();
-      if (j && j.ok && Array.isArray(j.suggestions)) {
-        items = j.suggestions.map(s => (s.recipe_name || s));
+      const uid = window.CURRENT_USER_ID || 0;
+      const resp = await fetch(`api/get_suggestions.php?user_id=${encodeURIComponent(uid)}&_=${Date.now()}`, { cache:'no-store' });
+      if (resp.ok) {
+        const j = await resp.json();
+        if (j && j.ok && Array.isArray(j.suggestions)) items = j.suggestions;
+        else if (Array.isArray(j)) items = j;
+      } else {
+        console.warn('[renderSuggestions] server returned', resp.status);
       }
-    } catch(e) {}
-    const firstSix = items.slice(0,6);
-    wrap.innerHTML = firstSix.map(it =>
-      `<div class="suggest-btn" data-name="${escapeHtml(it)}">${escapeHtml(it)}</div>`
+    } catch (e) {
+      console.error('[renderSuggestions] fetch error', e);
+    }
+
+    // fallback static tiles if server returns nothing
+    if (!items || items.length === 0) {
+      const fallback = ["Fried Rice","Fried Noodle","Fried Chicken","Steam Egg","Pan Cake","Fried Vegetable"];
+      wrap.innerHTML = fallback.map(n => `<div class="suggest-btn pending" data-name="${escapeHtml(n)}">${escapeHtml(n)}</div>`).join('');
+      // resolve availability quickly as 'available' (fallback)
+      wrap.querySelectorAll('.suggest-btn').forEach(btn=>{
+        btn.classList.remove('pending');
+        btn.classList.add('available');
+        btn.addEventListener('click', () => fetchAndShowRecipeByName(btn.dataset.name));
+      });
+      return;
+    }
+
+    // Build placeholder tiles (we'll enrich them asynchronously)
+    wrap.innerHTML = items.slice(0,6).map(it =>
+      `<div class="suggest-btn pending" data-recipe-id="${escapeHtml(String(it.recipe_id))}" data-name="${escapeHtml(it.recipe_name)}">${escapeHtml(it.recipe_name)}</div>`
     ).join('');
-    wrap.onclick = ev => {
-      const b = ev.target.closest('.suggest-btn');
-      if (!b) return;
-      window.demoMeals.lunch = window.demoMeals.lunch || [];
-      window.demoMeals.lunch.push(b.dataset.name);
-      renderMeals();
-    };
+
+    // For each tile: fetch recipe details, compute availability, then update class/style
+    const inv = await loadInventory().catch(()=>[]);
+    const tiles = Array.from(wrap.querySelectorAll('.suggest-btn'));
+
+    // helper to check recipe availability given recipe.ingredients and inventory
+    function checkRecipeAvailable(ings, inventory) {
+      if (!Array.isArray(ings) || ings.length === 0) return true; // no ingredients => treat as available
+      function normalize(s){ return (s||'').toString().toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+
+      for (const ing of ings) {
+        const name = ing.ingredient_name || ing.name || '';
+        if (!name) continue;
+        const q = normalize(name);
+
+        // find best match
+        let matched = null;
+        let bestScore = -Infinity;
+
+        for (const it of inventory) {
+          const rawName = it.item_name || '';
+          const iname = normalize(rawName);
+          if (!iname) continue;
+
+          // match rules
+          if (!(iname.includes(q) || q.includes(iname) || iname === q)) continue;
+
+          // numeric value extracted
+          let invValRaw = null;
+          if (it.quantity_value != null && String(it.quantity_value).trim() !== '') {
+            invValRaw = parseFloat(it.quantity_value);
+          } else if (it.quantity && String(it.quantity).trim() !== '') {
+            const m = String(it.quantity).match(/([\d.,]+)/);
+            if (m) invValRaw = parseFloat(m[1].replace(/,/g,'.'));
+          }
+
+          const invUnit = (it.quantity_unit || it.qty_unit || '').toString();
+          const invConv = (invValRaw != null && !isNaN(invValRaw))
+            ? convertToBase(invValRaw, invUnit)
+            : { value: null, kind: 'unknown' };
+
+          // scoring → higher score = better match
+          let score = 0;
+          if ((it.item_status || '').toLowerCase() === 'available') score += 1000;
+          if (invConv.value != null && !isNaN(invConv.value)) score += invConv.value;
+          if (iname === q) score += 10;
+
+          if (score > bestScore) {
+            bestScore = score;
+            matched = it;
+            matched._converted = invConv;
+          }
+        }
+
+        if (!matched) return false;
+
+        // numeric comparisons with unit conversion
+        const reqValRaw = (ing.qty_value != null && String(ing.qty_value).trim() !== '') ? parseFloat(ing.qty_value) : null;
+        const invValRaw = (matched.quantity_value != null && String(matched.quantity_value).trim() !== '') ? parseFloat(matched.quantity_value) : null;
+        const reqUnit = (ing.qty_unit || ing.qty_unit || ing.unit || '').toString();
+        const invUnit = (matched.quantity_unit || matched.qty_unit || matched.unit || '').toString();
+
+        // If both numeric and both units present, try converting
+        if (reqValRaw != null && !isNaN(reqValRaw) && invValRaw != null && !isNaN(invValRaw)) {
+          const reqConv = convertToBase(reqValRaw, reqUnit);
+          const invConv = convertToBase(invValRaw, invUnit);
+
+          // If both kinds are same (mass vs mass, volume vs volume, pieces) we can compare converted values
+          if (reqConv.value != null && invConv.value != null && reqConv.kind === invConv.kind && reqConv.kind !== 'unknown') {
+            if (invConv.value < reqConv.value) return false; // insufficient
+            else continue; // sufficient for this ingredient
+          }
+
+          // If either kind is 'unknown' but numeric, do a fallback numeric compare (best-effort)
+          if ((reqConv.kind === 'unknown' || invConv.kind === 'unknown')) {
+            const reqNum = (reqConv && reqConv.value != null && !isNaN(reqConv.value)) ? reqConv.value : reqValRaw;
+            const invNum = (invConv && invConv.value != null && !isNaN(invConv.value)) ? invConv.value : invValRaw;
+            if (invNum < reqNum) return false;
+            else continue;
+          }
+
+          // If kinds mismatch (e.g. mass vs volume) we can't reliably compare => assume insufficient
+          return false;
+        }
+
+        // If numeric compare not possible but inventory item exists => treat as available
+      }
+      return true;
+    }
+
+    // For each tile, fetch the recipe details (non-blocking)
+    tiles.forEach(async (tile) => {
+      const rid = tile.getAttribute('data-recipe-id');
+      const name = tile.getAttribute('data-name') || tile.textContent.trim();
+      try {
+        let recipe = null;
+        if (rid) {
+          const rresp = await fetch(`api/get_recipe.php?recipe_id=${encodeURIComponent(rid)}&_=${Date.now()}`, { cache:'no-store' });
+          if (rresp.ok) {
+            const raw = await rresp.text();
+            let j = null;
+            try { j = raw ? JSON.parse(raw) : null; } catch(e) { j = null; }
+            recipe = j && j.ok && j.recipe ? j.recipe : (j && j.recipe ? j.recipe : null);
+          }
+        }
+        // If fetching recipe failed, fallback to treating as unavailable (safer) OR available depending on preference.
+        const ings = recipe && Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
+        const isAvailable = checkRecipeAvailable(ings, inv);
+        tile.classList.remove('pending');
+        tile.classList.add(isAvailable ? 'available' : 'unavailable');
+
+        // clicking a tile opens recipe modal (if id exists) or fallback by name
+        tile.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          if (rid) return fetchAndShowRecipe(rid);
+          return fetchAndShowRecipeByName(name);
+        });
+      } catch (err) {
+        console.error('[renderSuggestions] recipe check failed for', name, err);
+        tile.classList.remove('pending');
+        tile.classList.add('unavailable');
+        tile.addEventListener('click', () => fetchAndShowRecipeByName(name));
+      }
+    });
+
+    // populate full suggestions modal when present (we'll render entire list and run same availability checks)
+    const allList = document.getElementById('allSuggestionsList');
+    if (allList) {
+      allList.innerHTML = items.map(it => `<div class="all-suggestion pending" data-recipe-id="${escapeHtml(String(it.recipe_id))}" data-name="${escapeHtml(it.recipe_name)}">${escapeHtml(it.recipe_name)}</div>`).join('');
+      // fetch availability for all items
+      const allTiles = Array.from(allList.querySelectorAll('.all-suggestion'));
+      allTiles.forEach(async (el) => {
+        const rid = el.getAttribute('data-recipe-id');
+        const nm = el.getAttribute('data-name') || el.textContent.trim();
+        try {
+          let recipe = null;
+          if (rid) {
+            const rresp = await fetch(`api/get_recipe.php?recipe_id=${encodeURIComponent(rid)}&_=${Date.now()}`, { cache:'no-store' });
+            if (rresp.ok) {
+              const raw = await rresp.text();
+              let j = null;
+              try { j = raw ? JSON.parse(raw) : null; } catch(e){ j=null; }
+              recipe = j && j.ok && j.recipe ? j.recipe : (j && j.recipe ? j.recipe : null);
+            }
+          }
+          const ings = recipe && Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
+          const ok = checkRecipeAvailable(ings, inv);
+          el.classList.remove('pending');
+          el.classList.add(ok ? 'available' : 'unavailable');
+          el.addEventListener('click', () => { if (rid) fetchAndShowRecipe(rid); else fetchAndShowRecipeByName(nm); });
+        } catch(e){
+          el.classList.remove('pending');
+          el.classList.add('unavailable');
+          el.addEventListener('click', () => fetchAndShowRecipeByName(nm));
+        }
+      });
+    }
   }
+
+  // Hook the "..." button to show All Suggestions modal and wire modal close buttons
+  (function hookSuggestionsModalControls(){
+    const moreBtn = document.getElementById('moreSuggestionsBtn');
+    const modal = document.getElementById('suggestionsModal');
+    const closeX = document.getElementById('closeModalBtn'); // top-right X
+    const footerClose = document.getElementById('modalCloseFooter');
+
+    if (moreBtn && modal) {
+      moreBtn.addEventListener('click', async (ev) => {
+        ev.stopPropagation();
+        // re-render suggestions to refresh list (availability) before showing
+        try { await renderSuggestions(); } catch(e){ console.warn('renderSuggestions failed on more click', e); }
+        showModal(modal);
+      });
+    }
+
+    if (closeX) closeX.addEventListener('click', () => { hideModal(modal); });
+    if (footerClose) footerClose.addEventListener('click', () => { hideModal(modal); });
+
+    // close when clicking backdrop (modal already has backdrop element)
+    modal?.addEventListener('click', (ev) => {
+      if (ev.target === modal) hideModal(modal);
+    });
+  })();
+
+  (function hookSuggestionsModalClose(){
+    const suggestionsModal = document.getElementById('suggestionsModal');
+    if (!suggestionsModal) return;
+
+    // prefer existing hideModal if present
+    const doHide = (modal) => {
+      if (typeof hideModal === 'function') return hideModal(modal);
+      // fallback
+      modal.setAttribute('aria-hidden','true');
+      modal.style.display = 'none';
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    };
+
+    document.getElementById('closeModalBtn')?.addEventListener('click', () => doHide(suggestionsModal));
+    document.getElementById('modalCloseFooter')?.addEventListener('click', () => doHide(suggestionsModal));
+
+    // also close when backdrop clicked (close modal when clicking outside panel)
+    const backdrop = suggestionsModal.querySelector('.modal-backdrop') || document.getElementById('modalBackdrop');
+    if (backdrop) {
+      backdrop.addEventListener('click', (ev) => {
+        // ensure user clicked backdrop (not the panel)
+        if (ev.target === backdrop) doHide(suggestionsModal);
+      });
+    }
+  })();
+
+  // fetch recipe details and show recipe modal
+  async function fetchAndShowRecipe(recipeId){
+    const modal = document.getElementById('recipeDetailModal');
+    const body = document.getElementById('recipeDetailBody');
+    const title = document.getElementById('recipeDetailTitle');
+    if (!modal || !body || !title) {
+      console.warn('[fetchAndShowRecipe] recipe modal elements missing');
+      return;
+    }
+
+    title.textContent = 'Loading...';
+    body.innerHTML = '<p class="muted">Loading recipe details…</p>';
+    showModal(modal);
+
+    try {
+      const url = `api/get_recipe.php?recipe_id=${encodeURIComponent(recipeId)}&_=${Date.now()}`;
+      console.log('[fetchAndShowRecipe] GET', url);
+      const resp = await fetch(url, { cache: 'no-store' });
+
+      const raw = await resp.text();
+      console.log('[fetchAndShowRecipe] raw response:', raw.slice(0, 400));
+
+      let j = null;
+      try { j = raw ? JSON.parse(raw) : null; } catch (parseErr) {
+        console.error('[fetchAndShowRecipe] JSON parse error:', parseErr);
+        body.innerHTML = `<p class="muted">Server returned non-JSON response. Check browser console for raw output.</p>`;
+        title.textContent = 'Error';
+        return;
+      }
+
+      if (!j || !j.ok || !j.recipe) {
+        console.warn('[fetchAndShowRecipe] unexpected JSON payload:', j);
+        const msg = j && (j.error || j.msg || j.message) ? (j.error || j.msg || j.message) : 'No ingredient details available for this recipe.';
+        body.innerHTML = `<p class="muted">${escapeHtml(String(msg))}</p>`;
+        title.textContent = (j && j.recipe && j.recipe.recipe_name) ? j.recipe.recipe_name : 'Recipe';
+        delete modal.dataset.currentRecipeId;
+        modal.dataset.currentRecipeName = j && j.recipe && j.recipe.recipe_name ? j.recipe.recipe_name : '';
+        modal.dataset.currentIngredients = JSON.stringify([]);
+        return;
+      }
+
+      // load inventory to determine availability
+      let inventory = [];
+      try { inventory = await loadInventory(); } catch (e) { console.warn('[fetchAndShowRecipe] loadInventory failed', e); inventory = []; }
+
+      const recipe = j.recipe;
+      title.textContent = recipe.recipe_name || 'Recipe';
+      const ings = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
+
+      // match helper (case-insensitive substring)
+      function findInventoryMatch(ingredientName) {
+        if (!ingredientName) return null;
+        const q = normalizeText(ingredientName).replace(/[^a-z0-9\s]/g, '');
+        let best = null;
+        let bestScore = -Infinity;
+
+        for (const it of inventory) {
+          const rawName = it.item_name || '';
+          const iname = normalizeText(rawName).replace(/[^a-z0-9\s]/g, '');
+          if (!iname) continue;
+
+          // allow substring or word intersection (Rice <> White Rice, Egg <> Eggs)
+          let matchedName = false;
+          if (iname.includes(q) || q.includes(iname) || iname === q) matchedName = true;
+          else {
+            const inWords = iname.split(/\s+/);
+            const qWords = q.split(/\s+/);
+            for (const w of qWords) {
+              if (w.length > 1 && inWords.includes(w)) { matchedName = true; break; }
+            }
+          }
+          if (!matchedName) continue;
+
+          // compute numeric availability: try quantity_value first; fallback parse from quantity text
+          let invValRaw = null;
+          if (it.quantity_value != null && String(it.quantity_value).trim() !== '') {
+            invValRaw = parseFloat(String(it.quantity_value).replace(/,/g,'.'));
+          } else if (it.quantity && String(it.quantity).trim() !== '') {
+            const m = String(it.quantity).match(/([\d.,]+)/);
+            if (m) invValRaw = parseFloat(m[1].replace(/,/g,'.'));
+          }
+
+          const invUnit = (it.quantity_unit || it.qty_unit || '').toString();
+          const invConv = (invValRaw != null && !isNaN(invValRaw)) ? convertToBase(invValRaw, invUnit) : { value: null, kind: 'unknown' };
+
+          // scoring: prefer Available status, non-zero numeric, larger quantity, exact name match
+          let score = 0;
+          if ((it.item_status || '').toLowerCase() === 'available') score += 1000;
+          if (invConv.value != null && !isNaN(invConv.value)) score += Math.min(invConv.value, 100000);
+          if (iname === q) score += 10;
+
+          if (score > bestScore) {
+            bestScore = score;
+            best = Object.assign({}, it); // clone to avoid mutating original source
+            best._converted = invConv;   // attach converted quantity for later
+            best._raw_quantity_value = invValRaw;
+            best._raw_quantity_unit = invUnit;
+          }
+        }
+
+        return best;
+      }
+
+      // availability decision — uses converted value attached by findInventoryMatch (if present)
+      // returns { available: boolean, matched: inventoryRow | null }
+      function checkAvailability(ing) {
+        const name = ing.ingredient_name || ing.name || '';
+        const matched = findInventoryMatch(name);
+        if (!matched) return { available: false, matched: null };
+
+        // request numeric
+        const reqValRaw = (ing.qty_value != null && String(ing.qty_value).trim() !== '') ? parseFloat(String(ing.qty_value).replace(/,/g,'.')) : null;
+        const reqUnit = (ing.qty_unit || ing.unit || '').toString();
+
+        // prefer converted value produced during matching if available
+        const invConv = (matched._converted && typeof matched._converted === 'object') ? matched._converted : (function(){
+          // fallback compute from stored fields
+          let fallbackInvRaw = null;
+          if (matched.quantity_value != null && String(matched.quantity_value).trim() !== '') fallbackInvRaw = parseFloat(String(matched.quantity_value).replace(/,/g,'.'));
+          else if (matched.quantity && String(matched.quantity).trim() !== '') {
+            const m = String(matched.quantity).match(/([\d.,]+)/);
+            if (m) fallbackInvRaw = parseFloat(m[1].replace(/,/g,'.'));
+          }
+          const fallbackUnit = (matched.quantity_unit || matched.qty_unit || '').toString();
+          return (fallbackInvRaw != null && !isNaN(fallbackInvRaw)) ? convertToBase(fallbackInvRaw, fallbackUnit) : { value: null, kind: 'unknown' };
+        })();
+
+        // If both request and inventory numeric exist, compare via convertToBase for request
+        if (reqValRaw != null && !isNaN(reqValRaw) && invConv.value != null && !isNaN(invConv.value)) {
+          const reqConv = convertToBase(reqValRaw, reqUnit);
+
+          // debug: uncomment to see values in console
+          console.debug('[checkAvailability]', name, 'reqRaw=', reqValRaw, reqUnit, '=>', reqConv, 'invConv=', invConv, 'matchedItem=', matched.item_name);
+
+          if (reqConv.value != null && invConv.value != null && reqConv.kind === invConv.kind && reqConv.kind !== 'unknown') {
+            return { available: invConv.value >= reqConv.value, matched };
+          }
+
+          // fallback raw numeric compare if conversion unknown
+          if (reqConv.kind === 'unknown' || invConv.kind === 'unknown') {
+            const reqNum = (reqConv && reqConv.value != null && !isNaN(reqConv.value)) ? reqConv.value : reqValRaw;
+            return { available: (invConv.value >= reqNum), matched };
+          }
+
+          // cannot compare different kinds (mass vs volume) — treat as unavailable to be safe
+          return { available: false, matched };
+        }
+
+        // if numeric compare not possible but we found a matching item -> treat as available
+        return { available: true, matched };
+      }
+
+      if (ings.length === 0) {
+        body.innerHTML = `<p class="muted">No ingredient details available for this recipe.</p>`;
+      } else {
+        // header order: Item | Qty | Unit | Availability (availability on right)
+        let html = `<div style="margin-bottom:12px;"><strong style="display:block;margin-bottom:8px;font-size:16px;">Ingredients</strong>
+          <table style="width:100%; border-collapse:collapse;">
+            <thead><tr style="text-align:left;color:#3b4a43;">
+              <th style="padding:8px;border-bottom:1px solid #eee; width:60%;">Item</th>
+              <th style="padding:8px;border-bottom:1px solid #eee; width:12%; text-align:center;">Qty</th>
+              <th style="padding:8px;border-bottom:1px solid #eee; width:12%; text-align:center;">Unit</th>
+              <th style="padding:8px;border-bottom:1px solid #eee; width:16%; text-align:center;">Availability</th>
+            </tr></thead><tbody>`;
+
+        ings.forEach(it => {
+          const nm = escapeHtml(it.ingredient_name || it.name || '');
+          // format numeric qty to 2 decimals where possible
+          let qtyDisplay = '';
+          if (it.qty_value != null && String(it.qty_value).trim() !== '' && !isNaN(parseFloat(it.qty_value))) {
+            qtyDisplay = parseFloat(it.qty_value).toFixed(2);
+          } else if (it.qty_text && String(it.qty_text).trim() !== '') {
+            qtyDisplay = escapeHtml(it.qty_text);
+          } else {
+            qtyDisplay = '';
+          }
+          const unit = escapeHtml(it.qty_unit || '');
+
+          const avail = checkAvailability(it);
+          let availCell = '';
+          if (avail.available) {
+            // green checkbox — NOT disabled so accent-color renders; make it non-interactive
+            availCell = `<div style="padding:6px; text-align:center;">
+                          <input type="checkbox" checked tabindex="-1" aria-checked="true"
+                                style="accent-color:var(--primary-green); transform:scale(1.45); width:18px; height:18px; pointer-events:none;">
+                        </div>`;
+          } else if (avail.matched) {
+            // matched but insufficient quantity => red exclamation (20% larger)
+            availCell = `<div style="padding:6px; text-align:center; color:#e74c3c; font-weight:800; font-size:24px; line-height:1;">!</div>`;
+          } else {
+            // not matched => unchecked box (non-interactive)
+            availCell = `<div style="padding:6px; text-align:center;">
+                          <input type="checkbox" tabindex="-1" aria-checked="false"
+                                style="transform:scale(1.45); width:18px; height:18px; pointer-events:none;">
+                        </div>`;
+          }
+
+          html += `<tr>
+                    <td style="padding:12px 8px;border-bottom:1px solid #f4f4f4;vertical-align:middle;">${nm}</td>
+                    <td style="padding:12px 8px;border-bottom:1px solid #f4f4f4;vertical-align:middle;text-align:center;">${escapeHtml(qtyDisplay)}</td>
+                    <td style="padding:12px 8px;border-bottom:1px solid #f4f4f4;vertical-align:middle;text-align:center;">${unit}</td>
+                    <td style="padding:8px;border-bottom:1px solid #f4f4f4;vertical-align:middle;">${availCell}</td>
+                  </tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+        body.innerHTML = html;
+      }
+
+      // store fetched recipe on modal for the Use button
+      modal.dataset.currentRecipeId = recipe.recipe_id;
+      modal.dataset.currentRecipeName = recipe.recipe_name;
+      modal.dataset.currentIngredients = JSON.stringify(ings);
+
+      // center modal footer buttons and style slightly larger
+      const footer = modal.querySelector('.modal-footer');
+      const cancelBtn = document.getElementById('recipeDetailCancel');
+      const useBtn = document.getElementById('recipeUseBtn');
+      if (footer) {
+        footer.style.display = 'flex';
+        footer.style.justifyContent = 'center';
+        footer.style.gap = '16px';
+        footer.style.padding = '14px 16px';
+      }
+      if (cancelBtn) {
+        cancelBtn.style.padding = '10px 22px';
+        cancelBtn.style.border = '1px solid rgba(0,0,0,0.12)';
+        cancelBtn.style.background = '#fff';
+        cancelBtn.style.borderRadius = '10px';
+        cancelBtn.style.cursor = 'pointer';
+        cancelBtn.style.fontWeight = '600';
+        cancelBtn.style.fontSize = '15px';
+      }
+      if (useBtn) {
+        useBtn.style.padding = '10px 22px';
+        useBtn.style.border = 'none';
+        useBtn.style.background = 'var(--primary-green)';
+        useBtn.style.color = '#fff';
+        useBtn.style.borderRadius = '10px';
+        useBtn.style.cursor = 'pointer';
+        useBtn.style.fontWeight = '700';
+        useBtn.style.fontSize = '15px';
+      }
+
+    } catch (err) {
+      console.error('[fetchAndShowRecipe] error', err);
+      body.innerHTML = `<p class="muted">Error loading recipe details. Check console.</p>`;
+      title.textContent = 'Error';
+    }
+  }
+
+  // fallback: show a simple modal by name (no recipe id)
+  function fetchAndShowRecipeByName(name){
+    const modal = document.getElementById('recipeDetailModal');
+    const body = document.getElementById('recipeDetailBody');
+    const title = document.getElementById('recipeDetailTitle');
+    if (!modal || !body || !title) return;
+    title.textContent = name || 'Recipe';
+    body.innerHTML = `<p class="muted">No stored recipe details available. You can add this manually via "Add Meal".</p>`;
+    delete modal.dataset.currentRecipeId;
+    modal.dataset.currentRecipeName = name || '';
+    modal.dataset.currentIngredients = JSON.stringify([]);
+    showModal(modal);
+  }
+
+  // generic show/hide helpers
+  function showModal(modalEl){
+    if (!modalEl) return;
+    const backdrop = modalEl.querySelector('.modal-backdrop') || document.getElementById(modalEl.id + 'Backdrop');
+    if (backdrop) backdrop.style.display = 'block';
+    modalEl.setAttribute('aria-hidden','false');
+    modalEl.style.display = 'flex';
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+  }
+  function hideModal(modalEl){
+    if (!modalEl) return;
+    const backdrop = modalEl.querySelector('.modal-backdrop') || document.getElementById(modalEl.id + 'Backdrop');
+    if (backdrop) backdrop.style.display = 'none';
+    modalEl.setAttribute('aria-hidden','true');
+    modalEl.style.display = 'none';
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+  }
+
+  // hook recipe modal buttons (close / use / cancel)
+  (function hookRecipeModalButtons(){
+    const modal = document.getElementById('recipeDetailModal');
+    if (!modal) return;
+    document.getElementById('recipeDetailClose')?.addEventListener('click', ()=> hideModal(modal));
+    document.getElementById('recipeDetailCancel')?.addEventListener('click', ()=> hideModal(modal));
+
+    // Use button -> open choose-date-slot modal
+    document.getElementById('recipeUseBtn')?.addEventListener('click', ()=> {
+      if (!modal.dataset.currentRecipeId) {
+        alert('Recipe not loaded.');
+        return;
+      }
+      const chooseModal = document.getElementById('chooseDateSlotModal');
+      const dateInput = document.getElementById('chooseDateSlotDate');
+      try {
+        const selDate = window.getSelectedDate ? window.getSelectedDate() : new Date();
+        dateInput.value = formatLocalDate(selDate);
+      } catch (_) {
+        dateInput.value = formatLocalDate(new Date());
+      }
+      showModal(chooseModal);
+    });
+
+    // choose modal actions
+    const chooseModal = document.getElementById('chooseDateSlotModal');
+    document.getElementById('chooseDateSlotClose')?.addEventListener('click', ()=> hideModal(chooseModal));
+    document.getElementById('chooseDateSlotCancel')?.addEventListener('click', ()=> hideModal(chooseModal));
+
+    document.getElementById('chooseDateSlotConfirm')?.addEventListener('click', async ()=> {
+      const recipeModal = document.getElementById('recipeDetailModal');
+      const dateInput = document.getElementById('chooseDateSlotDate');
+      const slotSelect = document.getElementById('chooseDateSlotSelect');
+      const dateVal = dateInput.value;
+      const slotVal = slotSelect.value || 'lunch';
+      if (!dateVal) { alert('Please pick a date'); return; }
+
+      const rid = recipeModal.dataset.currentRecipeId;
+      const recipeName = recipeModal.dataset.currentRecipeName || 'Recipe';
+      let ings = [];
+      try { ings = JSON.parse(recipeModal.dataset.currentIngredients || '[]'); } catch(e) { ings = []; }
+
+      const ingredients = ings.map(it => ({
+        name: it.ingredient_name || it.name || '',
+        item_id: null,
+        qty_value: (it.qty_value != null ? it.qty_value : ''),
+        qty_unit: it.qty_unit || '',
+        qty_text: it.qty_text || ''
+      }));
+
+      const payload = {
+        user_id: window.CURRENT_USER_ID || 0,
+        meal_date: dateVal,
+        meal_slot: slotVal,
+        meal_name: recipeName,
+        remark: '',
+        ingredients: ingredients
+      };
+
+      try {
+        const resp = await fetch('api/add_meal.php', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const raw = await resp.text();
+        let j;
+        try { j = raw ? JSON.parse(raw) : null; } catch(e) {
+          console.error('[UseRecipe] server returned non-json:', raw);
+          alert('Server error while saving recipe. Check console.');
+          return;
+        }
+        if (!resp.ok || !j || !j.ok) {
+          console.error('[UseRecipe] save failed', j);
+          alert('Failed to save meal: ' + (j && (j.message || j.error) ? (j.message || j.error) : 'Unknown'));
+          return;
+        }
+
+        hideModal(chooseModal);
+        hideModal(recipeModal);
+        alert('Recipe added to meal plan.');
+        try { await reloadMealsForCurrentDate(); } catch(_) { renderMeals(); }
+      } catch (err) {
+        console.error('[UseRecipe] error', err);
+        alert('Unable to contact server. Check console.');
+      }
+    });
+  })();
+  // ----------------- end renderSuggestions & recipe modal flow -----------------
 
   // -------------------- Load saved meals for a given date --------------------
   async function loadMealsForDate(dateObj) {
