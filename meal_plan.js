@@ -110,13 +110,9 @@ async function filterInventoryForQuery(term){
 (function () {
   const state = { selected: new Date() };
 
-  const suggestionsStatic = ["Fried Rice","Fried Noodle","Fried Chicken","Steam Egg","Pan Cake","Fried Vegetable"];
-  const expiring = [
-    {name:"Milk", qty:"500ml", left:"3 days"},
-    {name:"Eggs", qty:"12 pcs", left:"2 days"},
-    {name:"Spinach", qty:"0.2kg", left:"1 day"},
-    {name:"Tofu", qty:"0.5kg", left:"4 days"}
-  ];
+const suggestionsStatic = ["Fried Rice","Fried Noodle","Fried Chicken","Steam Egg","Pan Cake","Fried Vegetable"];
+// expiry items will now be loaded from food_analytics_data.php
+
 
   // UI meals store (names only)
   window.demoMeals = window.demoMeals || { breakfast:[], lunch:[], dinner:[], other:[] };
@@ -246,13 +242,63 @@ async function filterInventoryForQuery(term){
     renderMeals();
   };
 
-  function renderExpiring(){
-    const tb = document.getElementById("expiringList");
-    if (!tb) return;
-    tb.innerHTML = expiring.map(e =>
-      `<tr><td>${escapeHtml(e.name)}</td><td>${escapeHtml(e.qty)}</td><td>${escapeHtml(e.left)}</td></tr>`
-    ).join('');
+async function renderExpiring() {
+  const tb = document.getElementById("expiringList");
+  if (!tb) return;
+
+  // show a temporary loading row
+  tb.innerHTML = `
+    <tr>
+      <td colspan="3" class="empty-row">Loading items near expiry…</td>
+    </tr>
+  `;
+
+  let list = [];
+  try {
+    // same source as food analytics – adjust path if needed
+    const res  = await fetch(`food_analytics_data.php?range=30`, { cache: "no-store" });
+    const data = await res.json();
+    list = Array.isArray(data.expiry_soon) ? data.expiry_soon : [];
+  } catch (err) {
+    console.error("[meal_plan] failed to load expiry_soon:", err);
   }
+
+  // no data case
+  if (!list || list.length === 0) {
+    tb.innerHTML = `
+      <tr>
+        <td colspan="3" class="empty-row">No items near expiry.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  // helper to compute "X day(s)" from expiry_date
+  const todayMs = (new Date()).setHours(0,0,0,0);
+
+  tb.innerHTML = list.map(item => {
+    const name  = escapeHtml(item.item_name || "");
+    const qty   = escapeHtml(item.quantity || "");        // e.g. "1 kg"
+    const exp   = item.expiry_date ? new Date(item.expiry_date) : null;
+
+    let daysLeftLabel = "-";
+    if (exp && !isNaN(exp)) {
+      const diffDays = Math.max(0, Math.round((exp.setHours(0,0,0,0) - todayMs) / 86400000));
+      if (diffDays === 0) daysLeftLabel = "Today";
+      else if (diffDays === 1) daysLeftLabel = "1 day";
+      else daysLeftLabel = `${diffDays} days`;
+    }
+
+    return `
+      <tr>
+        <td>${name}</td>
+        <td>${qty}</td>
+        <td>${daysLeftLabel}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
 
   async function renderSuggestions(){
     const wrap = document.getElementById("suggestionTiles");
