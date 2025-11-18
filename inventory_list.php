@@ -119,11 +119,11 @@ $result = $stmt->get_result();
         <button class="submenu-item" data-page="donation_list.php" onclick="window.location.href='donation_list.php'">Donations</button>
       </div>
 
-      <button class="menu-item">
+      <button class="menu-item" onclick="location.href='food_analytics.html'">
         <img src="pic/data-analytics.png" alt="Analytics Icon" class="icon"> Food Analytics
       </button>
 
-      <button class="menu-item">
+      <button class="menu-item" onclick="location.href='notification1.php'">
         <img src="pic/notification.png" alt="Notification Icon" class="icon"> Notification
       </button>
 
@@ -703,6 +703,28 @@ $result = $stmt->get_result();
     } else {
       // Optional: redirect if not logged in
       window.location.href = "login.html";
+    }
+
+    // Check if we should open view popup from notification click
+    const shouldOpenViewPopup = sessionStorage.getItem('shouldOpenViewPopup');
+    const viewItemData = sessionStorage.getItem('viewItemData');
+
+    if (shouldOpenViewPopup === 'true' && viewItemData) {
+      try {
+        const itemData = JSON.parse(viewItemData);
+        // Clear sessionStorage
+        sessionStorage.removeItem('shouldOpenViewPopup');
+        sessionStorage.removeItem('viewItemData');
+        
+        // Open the view popup with the item data
+        setTimeout(() => {
+          openViewPopup(itemData);
+        }, 500); // Small delay to ensure DOM is ready
+      } catch (error) {
+        console.error('Error parsing item data:', error);
+        sessionStorage.removeItem('shouldOpenViewPopup');
+        sessionStorage.removeItem('viewItemData');
+      }
     }
   });
 </script>

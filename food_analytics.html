@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SayangFood - Food Analytics</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="dashboard_page.css">
   <link rel="stylesheet" href="food_analytics.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -33,17 +34,18 @@
       <span class="arrow" id="arrowIcon">▼</span>
     </button>
 
-    <div class="dropdown-container">
-      <button onclick="location.href='inventory_list.php'">Inventory</button>
-      <button>Weekly Meal</button>
-      <button onclick="location.href='donation_list.php'">Donations</button>
-    </div>
+<div id="dropdownMenu" class="dropdown-container">
+  <button onclick="location.href='inventory_list.php'">Inventory</button>
+  <button onclick="location.href='meal_plan.php'">Meal Plan</button>
+  <button onclick="location.href='donation_list.php'">Donations</button>
+</div>
+
 
     <button class="menu-item active">
       <img src="pic/data-analytics.png" alt="Analytics Icon" class="icon"> Food Analytics
     </button>
 
-    <button class="menu-item">
+    <button class="menu-item" onclick="location.href='notification1.php'">
       <img src="pic/notification.png" alt="Notification Icon" class="icon"> Notification
     </button>
 
@@ -64,34 +66,44 @@
       <p>Advanced analytics and predictive insights for waste management.</p>
     </div>
 
-    <div class="filter-controls">
-      <select id="filterRange">
-        <option value="7">7 days</option>
-        <option value="30" selected>1 month</option>
-        <option value="365">12 months</option>
-      </select>
-      <button id="filterBtn" class="filter-btn">Filter</button>
-    </div>
+<div class="filter-bar">
+  <!-- Quick filter (7, 30, 90 days) -->
+  <div class="quick-filter">
+    <label for="filterRange">Quick range:</label>
+    <select id="filterRange">
+      <option value="7">Last 7 days</option>
+      <option value="30" selected>Last 30 days</option>
+      <option value="90">Last 90 days</option>
+    </select>
+    <button id="filterBtn">Apply</button>
+  </div>
+
+  <!-- Custom date range with calendar -->
+  <div class="custom-filter">
+    <span>or custom range:</span>
+    <input type="date" id="startDate">
+    <input type="date" id="endDate">
+    <button id="applyCustomFilter">Apply</button>
+  </div>
+</div>
+
 
     <!-- Summary Cards -->
-    <div class="dashboard-cards">
-      <div class="card">
-        <h2>Total Food Saving</h2>
-        <p id="total-saving">-- KG</p>
-      </div>
-      <div class="card">
-        <h2>Total Food Waste</h2>
-        <p id="total-waste">-- KG</p>
-      </div>
-      <div class="card">
-        <h2>Total Donation Made</h2>
-        <p id="total-donation">--</p>
-      </div>
-      <div class="card">
-        <h2>Total Food Usage</h2>
-        <p id="total-usage">-- KG</p>
-      </div>
-    </div>
+<div class="dashboard-cards">
+  <div class="card" id="card-saving">
+    <h2>Total Food Saving</h2>
+    <p id="total-saving">-- KG</p>
+  </div>
+  <div class="card" id="card-waste">
+    <h2>Total Food Waste</h2>
+    <p id="total-waste">-- KG</p>
+  </div>
+  <div class="card" id="card-donation">
+    <h2>Total Donation Made</h2>
+    <p id="total-donation">--</p>
+  </div>
+</div>
+
 
     <!-- Chart Controls -->
     <div class="chart-toggle">
@@ -99,26 +111,89 @@
       <button id="categoryBtn">By Category</button>
     </div>
 
- <!-- Chart Section -->
+<!-- Chart Section -->
 <div class="charts" id="trendSection">
-  <div class="chart-card">
-    <h3 id="chartTitle">Food Trend</h3>
+  <!-- Left: Visual report chart -->
+  <div class="chart-card main-chart">
+    <div class="chart-toolbar">
+      <div class="chart-left">
+        <h3 id="chartTitle">Visual Report</h3>
+<p class="chart-sub" id="chartSubtitle">Daily saved vs wasted items</p>
+      </div>
+    </div>
     <canvas id="foodChart"></canvas>
+  </div>
+
+  <!-- Right: Expiry soon table -->
+  <div class="chart-card expiry-card">
+    <div class="chart-toolbar">
+      <div class="chart-left">
+        <h3 class="small-title">Expiry soon</h3>
+        <p class="chart-sub">Items close to expiry</p>
+      </div>
+    </div>
+
+    <div class="expiry-table-wrapper">
+      <table class="expiry-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Expiry date</th>
+          </tr>
+        </thead>
+        <tbody id="expirySoonBody">
+          <tr>
+            <td colspan="3" class="empty-row">No items near expiry.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
+
 <!-- Category Chart Section (hidden by default) -->
 <div class="food-analytics-container" id="categorySection" style="display: none;">
-  <!-- Donut Chart Box -->
-  <div class="chart-box">
-    <h3 class="chart-title">Food Category Distribution</h3>
-    <canvas id="categoryChart"></canvas>
+  <!-- Filters for category chart -->
+  <div class="category-filters">
+    <div style="display:flex;gap:8px;align-items:center;">
+      <label for="categorySearch" style="font-size:13px;color:#374151;font-weight:600;">Search</label>
+      <input id="categorySearch" type="text" placeholder="Search category" style="padding:8px;border-radius:8px;border:1px solid #e5e7eb;min-width:200px;">
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <label for="topN" style="font-size:13px;color:#374151;font-weight:600;">Top</label>
+      <select id="topN" style="padding:8px;border-radius:8px;border:1px solid #e5e7eb;">
+      <option value="all">All</option>
+      <option value="3">Top 3</option>
+      <option value="5" selected>Top 5</option>
+      <option value="10">Top 10</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <label style="font-size:13px;color:#374151;font-weight:600;">Metric</label>
+      <select id="categoryMetric" style="padding:8px;border-radius:8px;border:1px solid #e5e7eb;">
+        <option value="percentage" selected>Percentage</option>
+        <option value="count">Count</option>
+      </select>
+    </div>
+    <div style="margin-left:auto;">
+      <button id="applyCategoryFilter" class="toolbar-btn">Apply</button>
+    </div>
   </div>
 
-  <!-- Legend Box -->
-  <div class="legend-box">
-    <h3 class="legend-title">Category Breakdown</h3>
-    <div id="foodLegend"></div>
+  <!-- Donut Chart Box -->
+  <div class="category-center">
+    <div class="chart-box">
+      <h3 class="chart-title">Food Category Distribution</h3>
+      <canvas id="categoryChart"></canvas>
+    </div>
+
+    <!-- Legend Box -->
+    <div class="legend-box">
+      <h3 class="legend-title">Category Breakdown</h3>
+      <div id="foodLegend"></div>
+    </div>
   </div>
 </div>
 
