@@ -198,6 +198,102 @@ if (!isset($_SESSION['user_id'])) {
     </div>
   </div>
 
+  <!-- Recipe Detail Modal -->
+  <div id="recipeDetailModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="recipeDetailTitle">
+    <div class="modal-backdrop" id="recipeDetailModalBackdrop"></div>
+    <div class="modal-panel" role="document" style="width:min(880px,92%); max-height:82vh;">
+      <header class="modal-header">
+        <h2 id="recipeDetailTitle">Recipe</h2>
+        <button id="recipeDetailClose" class="modal-close" aria-label="Close">&times;</button>
+      </header>
+      <div class="modal-body" id="recipeDetailBody">
+        <p class="muted">Loading...</p>
+      </div>
+      <footer class="modal-footer" style="gap:10px;">
+        <button id="recipeDetailCancel" class="action-btn">Close</button>
+        <button id="recipeUseBtn" class="action-btn">Use</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Choose Date & Slot Modal (shown after clicking Use) -->
+  <div id="chooseDateSlotModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="chooseDateSlotTitle">
+    <div class="modal-backdrop" id="chooseDateSlotModalBackdrop"></div>
+    <div class="modal-panel" role="document" style="width:420px; max-height:80vh;">
+      <header class="modal-header">
+        <h2 id="chooseDateSlotTitle">Add to meal plan</h2>
+        <button id="chooseDateSlotClose" class="modal-close" aria-label="Close">&times;</button>
+      </header>
+      <div class="modal-body" style="padding:12px;">
+        <label style="display:block;margin-bottom:8px;font-weight:700;">Date</label>
+        <input id="chooseDateSlotDate" type="date" style="width:100%;padding:8px 10px;margin-bottom:12px;border-radius:6px;border:1px solid #ddd;">
+
+        <label style="display:block;margin-bottom:8px;font-weight:700;">Slot</label>
+        <select id="chooseDateSlotSelect" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #ddd;margin-bottom:12px;">
+          <option value="breakfast">Breakfast</option>
+          <option value="lunch" selected>Lunch</option>
+          <option value="dinner">Dinner</option>
+          <option value="other">Other</option>
+        </select>
+
+        <!-- NEW: remark input -->
+        <label style="display:block;margin-bottom:8px;font-weight:700;">Remark (optional)</label>
+        <textarea id="chooseDateSlotRemark" placeholder="Add a note (e.g. make for kids, bring to workplace...)" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd; min-height:80px; box-sizing:border-box; resize:vertical; font-family:inherit;"></textarea>
+      </div>
+      <footer class="modal-footer">
+        <button id="chooseDateSlotCancel" class="btn-light">Cancel</button>
+        <button id="chooseDateSlotConfirm" class="btn-green">Add</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- WEEKLY CALENDAR MODAL (open from calendar button) -->
+  <div id="weeklyCalendarModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="weeklyCalendarTitle">
+    <div class="modal-backdrop" id="weeklyCalendarBackdrop"></div>
+
+    <div class="modal-panel weekly-modal-panel" role="document">
+      <!-- header: left title, center arrows + range, right close -->
+      <header class="modal-header weekly-header-centered" aria-hidden="false">
+        <!-- left: Weekly Meal Plan pill -->
+        <div class="weekly-header-left">
+          <span class="weekly-title">Weekly Meal Plan</span>
+        </div>
+
+        <!-- center: prev / range / next -->
+        <div class="weekly-header-center" aria-hidden="false">
+          <button id="weekPrev" class="modal-arrow" aria-label="Previous week">‹</button>
+          <div id="weekRangeLabel" class="range-label" aria-live="polite" role="heading" aria-level="2"></div>
+          <button id="weekNext" class="modal-arrow" aria-label="Next week">›</button>
+        </div>
+
+        <!-- right: Add a Meal (orange) and close X -->
+        <div class="weekly-header-right">
+          <button id="weeklyAddMealTop" class="btn-add-meal-top" title="Add a meal">Add a Meal</button>
+          <button id="weeklyCalendarClose" class="modal-close" aria-label="Close weekly calendar">&times;</button>
+        </div>
+      </header>
+
+      <!-- body -->
+      <div class="modal-body" style="padding:8px 12px;">
+        <!-- IMPORTANT: .week-table-wrap must be present so CSS flex sizing works -->
+        <div class="week-table-wrap" style="width:100%; overflow:visible;">
+          <table id="weekCalendarTable" class="week-table" style="width:100%; border-collapse:collapse; table-layout:fixed;">
+            <thead>
+              <tr>
+                <th style="width:14%;">Day</th>
+                <th>Breakfast</th>
+                <th>Lunch</th>
+                <th>Dinner</th>
+                <th>Snacks</th>
+              </tr>
+            </thead>
+            <tbody id="weekCalendarBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="meal_plan.js?v=6"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {

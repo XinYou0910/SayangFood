@@ -491,3 +491,392 @@ html, body {
   padding: 22px;
 }
 #mealDetailDlg h2 { font-size: 20px; color: var(--primary-green); font-weight: 800; margin-bottom: 10px; }
+
+/* base tile look */
+.suggest-btn {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #fff;
+  color: #2e3d36;                 /* dark text like other tiles */
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: background .12s ease, color .12s ease, box-shadow .12s ease, border-color .12s ease, transform .08s ease;
+  margin: 6px;                    /* keep spacing consistent */
+  box-shadow: none;
+}
+
+/* hover / focus state: orange background + white text (match .slot-add) */
+.suggest-btn:hover,
+.suggest-btn:focus {
+  background: #f39c12 !important;
+  color: #ffffff !important;
+  border-color: #f39c12 !important;
+  box-shadow: 0 8px 24px rgba(243,156,18,0.18);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+/* accessibility focus ring */
+.suggest-btn:focus {
+  box-shadow: 0 0 0 4px rgba(243,156,18,0.12);
+}
+
+.suggestions-card .suggestions-grid .suggest-btn,
+.suggestions-grid .suggest-btn {
+  display: inline-block;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #fff;
+  color: #2e3d36;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: background .12s ease, color .12s ease, box-shadow .12s ease, transform .08s ease, border-color .12s ease;
+  margin: 6px;
+  box-shadow: none;
+}
+
+/* stronger selector + important to override less-specific rules */
+.suggestions-card .suggestions-grid .suggest-btn:hover,
+.suggestions-card .suggestions-grid .suggest-btn:focus,
+.suggestions-grid .suggest-btn:hover,
+.suggestions-grid .suggest-btn:focus {
+  background: #f39c12 !important;
+  color: #ffffff !important;
+  border-color: #f39c12 !important;
+  box-shadow: 0 8px 24px rgba(243,156,18,0.18) !important;
+  transform: translateY(-2px);
+  outline: none;
+}
+
+/* keyboard focus ring */
+.suggestions-card .suggestions-grid .suggest-btn:focus {
+  box-shadow: 0 0 0 4px rgba(243,156,18,0.12) !important;
+}
+
+/* Suggestion tile availability color states (box background) */
+.suggest-btn {
+  /* keep previous base rules; these modify background/color when availability classes are added */
+  transition: background .12s ease, color .12s ease, box-shadow .12s ease, border-color .12s ease, transform .08s ease;
+}
+
+/* AVAILABLE (enough ingredients) - soft green box */
+.suggest-btn.available {
+  background: rgba(230, 250, 235, 1);
+  border-color: rgba(170, 235, 190, 1);
+  color: #154d2b !important;
+  box-shadow: 0 6px 18px rgba(34, 120, 60, 0.06);
+}
+
+/* UNAVAILABLE (missing or insufficient) - soft red/pink box */
+.suggest-btn.unavailable {
+  background: rgba(255, 240, 240, 1);
+  border-color: rgba(250, 200, 200, 1);
+  color: #7a1b1b !important;
+  box-shadow: 0 6px 18px rgba(180, 30, 30, 0.04);
+}
+
+/* keep hover behaviour but slightly darker for both states */
+.suggest-btn.available:hover,
+.suggest-btn.available:focus {
+  background: #dff4df !important;
+  color: #0f4622 !important;
+  box-shadow: 0 10px 26px rgba(34,120,60,0.12);
+  transform: translateY(-2px);
+}
+
+.suggest-btn.unavailable:hover,
+.suggest-btn.unavailable:focus {
+  background: #ffecec !important;
+  color: #5d1111 !important;
+  box-shadow: 0 10px 26px rgba(180,30,30,0.10);
+  transform: translateY(-2px);
+}
+
+/* When tiles are still being checked (loading state) */
+.suggest-btn.pending {
+  opacity: 0.9;
+  filter: saturate(.9);
+  position: relative;
+}
+.suggest-btn.pending::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin-top: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.06);
+  border-top-color: rgba(0,0,0,0.25);
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 10px;
+}
+
+.btn-light {
+  padding: 8px 20px;
+  background: #fff;
+  border: 1px solid #cfcfcf;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.btn-light:hover {
+  background: #f4f4f4;
+}
+
+.btn-green {
+  padding: 8px 20px;
+  background: #4a7c59;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.btn-green:hover {
+  background: #3c6a4b;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+/* Center buttons in the choose-date-slot modal */
+#chooseDateSlotModal .modal-footer {
+  justify-content: center;   /* center horizontally */
+  gap: 14px;                 /* space between buttons */
+  padding: 18px 20px 22px;   /* comfortable padding (top/right/left/bottom) */
+  box-sizing: border-box;
+}
+
+/* Make sure the footer takes full modal width so centering is accurate */
+#chooseDateSlotModal .modal-panel .modal-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* Slight visual nudge so buttons sit a bit lower like your screenshot */
+#chooseDateSlotModal .modal-panel {
+  padding-bottom: 8px; /* reduce large panel padding if you prefer */
+}
+
+/* ---------- Weekly modal: full viewport ---------- */
+#weeklyCalendarModal {
+  align-items: stretch;
+  padding: 12px 8px;
+  box-sizing: border-box;
+}
+
+/* outer panel */
+#weeklyCalendarModal .modal-panel.weekly-modal-panel {
+  width: min(1200px, 96%);
+  margin: 20px auto;
+  height: calc(100vh - 80px);
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.18);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------------- HEADER ---------------- */
+
+#weeklyCalendarModal .modal-header.weekly-header-centered {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  padding: 14px 22px;
+  gap: 16px;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+}
+
+/* 1. Weekly Meal Plan pill → solid themed green */
+.weekly-header-left .weekly-title {
+  display: inline-block;
+  background: #4a7c59;           /* solid green */
+  color: #ffffff;
+  border-radius: 20px;
+  padding: 8px 18px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* 2. Center header: arrows + range */
+.weekly-header-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.weekly-header-center .modal-arrow {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.18);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#weekRangeLabel {
+  font-size: 17px;              /* bigger */
+  font-weight: 800;
+}
+
+/* 3. Right side: Add a Meal (orange) + close */
+.weekly-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-add-meal-top {
+  background: #f39c12;          /* themed orange */
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(243,156,18,0.25);
+}
+
+#weeklyCalendarModal .modal-close {
+  border: none;
+  background: transparent;
+  font-size: 26px;
+  cursor: pointer;
+  padding: 6px;
+}
+
+/* ---------------- TABLE AREA ---------------- */
+
+#weeklyCalendarModal .modal-body {
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+}
+
+.week-table {
+  width: 100%;
+  border-collapse: collapse;
+  height: 100%;
+  table-layout: fixed;
+  font-family: 'Noto Serif', serif;
+}
+
+/* Header row — reduce large empty spacing */
+.week-table thead th {
+  text-align: center;
+  padding: 10px 6px;          /* smaller */
+  font-size: 15px;
+  font-weight: 800;
+  border-bottom: 2px solid rgba(0,0,0,0.18);
+  background: #fafafa;
+}
+
+/* Body should divide height equally into 7 */
+.week-table thead { display: table-header-group; }
+
+.week-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.week-table thead th {
+  padding: 10px 6px;
+  background: #fafafa;
+  border-bottom: 2px solid rgba(0,0,0,0.18);
+}
+
+.week-table tbody {
+  display: table-row-group;      /* ← FIX */
+}
+
+.week-table tbody tr {
+  height: calc((100vh - 350px) / 7);   /* ← EVEN ROWS WITHOUT SCROLL */
+}
+
+.week-table td {
+  border-right: 1px solid rgba(0,0,0,0.12);
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+  padding: 10px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* 4. Table Borders — visible but not too strong */
+.week-table td {
+  border-right: 1px solid rgba(0,0,0,0.12);
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+  padding: 12px 8px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.week-table td:first-child {
+  font-weight: 700;
+  font-size: 15px;
+  text-align: left;
+  background: #fdfdfd;
+}
+
+/* assure rightmost border removed */
+.week-table td:last-child {
+  border-right: none;
+}
+
+/* meal tile */
+.week-meal-tile {
+  padding: 6px 12px;
+  background: #f7fbf8;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  color: #2b4e3f;
+  display: inline-block;
+}
+
+/* responsive tweak */
+@media (max-width:1000px) {
+  #weeklyCalendarModal .modal-panel.weekly-modal-panel { width: 96%; height: calc(100vh - 60px); }
+  .week-table tbody { height: calc(100% - 52px); }
+  .week-table thead th { font-size:14px; }
+  .week-table tbody td:first-child { width:120px; font-size:14px; }
+}
+
+#recipeDetailModal {
+    z-index: 15000 !important;
+}
+
+#recipeDetailModal .modal-panel {
+    z-index: 15001 !important;
+}
+
+/* Force recipe backdrop above weekly calendar backdrop */
+#recipeDetailModalBackdrop {
+    z-index: 14990 !important;
+}
