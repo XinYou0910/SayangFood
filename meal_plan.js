@@ -1279,7 +1279,7 @@ async function renderExpiring() {
     return payload;
   };
 
-})(); // end main IIFE
+}; // end main IIFE
 
 // ------------------------ Add Meal Modal (single header + ingredient rows) ------------------------
 (function(){
@@ -2160,4 +2160,4 @@ function fixIngredientModalZ() {
       if (!current || current > 8000) weekly.style.zIndex = '8000';
     } catch (e) {}
   }
-}
+}})();
