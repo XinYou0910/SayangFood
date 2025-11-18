@@ -1279,7 +1279,7 @@ async function renderExpiring() {
     return payload;
   };
 
-} // end main IIFE
+}; // end main IIFE
 
 // ------------------------ Add Meal Modal (single header + ingredient rows) ------------------------
 (function(){
