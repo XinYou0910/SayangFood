@@ -14,13 +14,13 @@
 }
 
 body {
+  font-family: 'Poppins', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', "Helvetica Neue", Arial;
+  background: linear-gradient(180deg, #dff0d8 0%, #ffffff 60%); /* Soft light green (food related) */
+  background-image: linear-gradient(135deg, #cdf8c0 100%); /* Soft yellow to orange gradient (fresh food colors) */
+  background-attachment: fixed;
+  color: #0f172a;
   margin: 0;
-  font-family: 'Noto Serif', serif;
-  background: linear-gradient(135deg, var(--bg-light) 0%, #ecf0f1 100%);
-  display: flex;
-  color: var(--text-dark);
-  line-height: 1.6;
-  min-height: 100vh;
+  padding: 0;
 }
 
 .page-wrapper, #pageContent {
