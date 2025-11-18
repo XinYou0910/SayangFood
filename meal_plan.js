@@ -174,9 +174,8 @@ async function filterInventoryForQuery(term){
 (function () {
   const state = { selected: new Date() };
 
-const suggestionsStatic = ["Fried Rice","Fried Noodle","Fried Chicken","Steam Egg","Pan Cake","Fried Vegetable"];
-// expiry items will now be loaded from food_analytics_data.php
-
+  const suggestionsStatic = ["Fried Rice","Fried Noodle","Fried Chicken","Steam Egg","Pan Cake","Fried Vegetable"];
+  // expiry items will now be loaded from food_analytics_data.php
 
   // UI meals store (names only)
   window.demoMeals = window.demoMeals || { breakfast:[], lunch:[], dinner:[], other:[] };
@@ -281,25 +280,61 @@ const suggestionsStatic = ["Fried Rice","Fried Noodle","Fried Chicken","Steam Eg
     renderMeals();
   };
 
-async function renderExpiring() {
-  const tb = document.getElementById("expiringList");
-  if (!tb) return;
+  async function renderExpiring() {
+    const tb = document.getElementById("expiringList");
+    if (!tb) return;
 
-  // show a temporary loading row
-  tb.innerHTML = `
-    <tr>
-      <td colspan="3" class="empty-row">Loading items near expiry…</td>
-    </tr>
-  `;
+    // show a temporary loading row
+    tb.innerHTML = `
+      <tr>
+        <td colspan="3" class="empty-row">Loading items near expiry…</td>
+      </tr>
+    `;
 
-  let list = [];
-  try {
-    // same source as food analytics – adjust path if needed
-    const res  = await fetch(`food_analytics_data.php?range=30`, { cache: "no-store" });
-    const data = await res.json();
-    list = Array.isArray(data.expiry_soon) ? data.expiry_soon : [];
-  } catch (err) {
-    console.error("[meal_plan] failed to load expiry_soon:", err);
+    let list = [];
+    try {
+      // same source as food analytics – adjust path if needed
+      const res  = await fetch(`food_analytics_data.php?range=30`, { cache: "no-store" });
+      const data = await res.json();
+      list = Array.isArray(data.expiry_soon) ? data.expiry_soon : [];
+    } catch (err) {
+      console.error("[meal_plan] failed to load expiry_soon:", err);
+    }
+
+    // no data case
+    if (!list || list.length === 0) {
+      tb.innerHTML = `
+        <tr>
+          <td colspan="3" class="empty-row">No items near expiry.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    // helper to compute "X day(s)" from expiry_date
+    const todayMs = (new Date()).setHours(0,0,0,0);
+
+    tb.innerHTML = list.map(item => {
+      const name  = escapeHtml(item.item_name || "");
+      const qty   = escapeHtml(item.quantity || "");        // e.g. "1 kg"
+      const exp   = item.expiry_date ? new Date(item.expiry_date) : null;
+
+      let daysLeftLabel = "-";
+      if (exp && !isNaN(exp)) {
+        const diffDays = Math.max(0, Math.round((exp.setHours(0,0,0,0) - todayMs) / 86400000));
+        if (diffDays === 0) daysLeftLabel = "Today";
+        else if (diffDays === 1) daysLeftLabel = "1 day";
+        else daysLeftLabel = `${diffDays} days`;
+      }
+
+      return `
+        <tr>
+          <td>${name}</td>
+          <td>${qty}</td>
+          <td>${daysLeftLabel}</td>
+        </tr>
+      `;
+    }).join("");
   }
 
   // ----------------- renderSuggestions & recipe modal flow -----------------
@@ -1198,65 +1233,6 @@ async function renderExpiring() {
     renderExpiring();
     renderMeals();
     attachMealTileClickHandlers();
-    
-    // If we arrived from a notification, open the meal detail and navigate to its date
-    try {
-      const shouldOpen = sessionStorage.getItem('shouldOpenMealDetail');
-      const mealPlanData = sessionStorage.getItem('mealPlanData');
-      if (shouldOpen === 'true' && mealPlanData) {
-        console.log('[meal_plan] notification present, processing mealPlanData');
-        let meal = null;
-        try { meal = JSON.parse(mealPlanData); } catch (e) { console.error('[meal_plan] failed to parse mealPlanData', e); }
-        // clear storage so it doesn't trigger again
-        sessionStorage.removeItem('shouldOpenMealDetail');
-        sessionStorage.removeItem('mealPlanData');
-
-        if (meal && meal.meal_date) {
-          // set selected date
-          try {
-            const [y,m,d] = meal.meal_date.split('-').map(Number);
-            state.selected = new Date(y, m-1, d);
-            renderStrip(); renderDayTitle();
-            // reload meals for this date
-            await loadMealsForDate(state.selected);
-            renderMeals();
-            attachMealTileClickHandlers();
-          } catch(err) {
-            console.error('[meal_plan] error setting selected date', err);
-          }
-        }
-
-        // prepare snapshot and fetch ingredients if meal_id present
-        const snapshot = { meal_name: meal?.meal_name || '', slot: meal?.meal_slot || '', remark: meal?.meal_remark || '', ingredients: [] };
-        if (meal && meal.meal_id) {
-          try {
-            const resp = await fetch(`api/get_meal_ingredients.php?meal_id=${encodeURIComponent(meal.meal_id)}&user_id=${encodeURIComponent(window.CURRENT_USER_ID||0)}`);
-            if (resp.ok) {
-              const json = await resp.json();
-              if (json && json.ok && Array.isArray(json.ingredients)) {
-                snapshot.ingredients = json.ingredients.map(it => ({
-                  name: it.item_name || it.item_name_snapshot || '',
-                  qty_value: it.required_qty_value ?? null,
-                  qty_unit: it.required_qty_unit || '',
-                  qty_text: it.required_qty_text || '',
-                  expiry_date: it.expiry_date || null,
-                  storage_place: it.storage_place || null
-                }));
-              }
-            }
-          } catch (err) { console.error('[meal_plan] failed to fetch meal ingredients', err); }
-        }
-
-        // show detail modal
-        try {
-          if (typeof showMealDetailModal === 'function') {
-            showMealDetailModal(snapshot.meal_name || meal?.meal_name || '', snapshot);
-          } else {
-            alert(`Meal: ${meal?.meal_name || snapshot.meal_name}\nDate: ${meal?.meal_date || ''}\nSlot: ${meal?.meal_slot || ''}`);
-          }
-        } catch (err) { console.error('[meal_plan] error opening meal detail modal', err); }
-      }
-    } catch (e) { console.error('[meal_plan] notification processing error', e); }
   });
 
   window.collectPlanPayload = function(){
@@ -1279,7 +1255,7 @@ async function renderExpiring() {
     return payload;
   };
 
-} // end main IIFE
+})(); // end main IIFE
 
 // ------------------------ Add Meal Modal (single header + ingredient rows) ------------------------
 (function(){
@@ -2160,4 +2136,4 @@ function fixIngredientModalZ() {
       if (!current || current > 8000) weekly.style.zIndex = '8000';
     } catch (e) {}
   }
-}})();
+}
