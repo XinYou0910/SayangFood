@@ -2482,243 +2482,6 @@ document.getElementById("calAddIngredientBtn").addEventListener("click", () => {
   } catch (e) {}
 })();
 
-// ----------------- AddCalendarMeal modal (separate from existing addMeal modal) -----------------
-(function(){
-  const OPEN_BTN_ID = 'weeklyAddMealTop'; // the "Add a Meal" button inside the weekly calendar
-  const MODAL_ID = 'addCalendarMealModal';
-  const BACKDROP_ID = 'global-modal-backdrop';
-
-  // create modal HTML only once
-  function ensureModal() {
-    let modal = document.getElementById(MODAL_ID);
-    if (modal) return modal;
-
-    modal = document.createElement('div');
-    modal.id = MODAL_ID;
-    modal.setAttribute('aria-hidden','true');
-    // modal container (full-screen)
-    Object.assign(modal.style, {
-      display: 'none',
-      position: 'fixed',
-      inset: 0,
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: '13000',
-      pointerEvents: 'none'
-    });
-
-    modal.innerHTML = `
-      <div class="modal-panel" role="dialog" aria-modal="true" style="
-          width:min(900px,94%);
-          max-height:86vh;
-          overflow:auto;
-          background:#fff;
-          border-radius:12px;
-          box-shadow:0 40px 120px rgba(0,0,0,0.35);
-          padding:22px;
-          position:relative;
-          z-index:13001;
-          pointer-events:auto;
-        ">
-        <button id="addCalendarClose" style="position:absolute; right:14px; top:10px; border:none; background:transparent; font-size:22px; cursor:pointer;">&times;</button>
-        <h2 style="margin:0 0 14px 0; font-family:'Noto Serif', serif; color:var(--primary-green);">Add Meal</h2>
-
-        <form id="addCalendarMealForm" style="display:flex; flex-direction:column; gap:12px;">
-          <label style="font-weight:700; color:var(--primary-green)">Date</label>
-          <input id="addCalendarDate" type="date" style="padding:10px 12px; border-radius:8px; border:1px solid rgba(0,0,0,0.08);" />
-
-          <label style="font-weight:700; color:var(--primary-green)">Slot</label>
-          <select id="addCalendarSlot" style="padding:10px 12px; border-radius:8px; border:1px solid rgba(0,0,0,0.08);">
-            <option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Other</option>
-          </select>
-
-          <label style="font-weight:700; color:var(--primary-green)">Meal Name</label>
-          <input id="addCalendarMealName" type="text" placeholder="e.g. Fried Rice" style="padding:10px 12px; border-radius:8px; border:1px solid rgba(0,0,0,0.08);" />
-
-          <div style="margin-top:6px;">
-            <strong style="color:var(--primary-green); display:block; margin-bottom:8px;">Ingredients</strong>
-            <div id="addCalendarIngredients" style="display:flex; flex-direction:column; gap:10px;"></div>
-            <button id="addCalendarIngredientBtn" type="button" style="margin-top:10px; padding:8px 12px; border-radius:8px; border:1px solid rgba(0,0,0,0.06); background:#fff; cursor:pointer;">+ Add ingredient</button>
-          </div>
-
-          <label style="font-weight:700; color:var(--primary-green)">Remark (optional)</label>
-          <textarea id="addCalendarRemark" placeholder="Optional note..." style="min-height:80px; padding:10px 12px; border-radius:8px; border:1px solid rgba(0,0,0,0.08);"></textarea>
-
-          <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:8px;">
-            <button id="addCalendarCancel" type="button" style="padding:10px 18px; border-radius:10px; border:1px solid rgba(0,0,0,0.12); background:#fff; cursor:pointer;">Cancel</button>
-            <button id="addCalendarSave" type="button" style="padding:10px 18px; border-radius:10px; border:none; background:var(--primary-green); color:#fff; cursor:pointer;">Add</button>
-          </div>
-        </form>
-      </div>
-    `;
-
-    document.body.appendChild(modal);
-
-    // close handlers
-    modal.querySelector('#addCalendarClose')?.addEventListener('click', () => hideModal(modal));
-    modal.querySelector('#addCalendarCancel')?.addEventListener('click', () => hideModal(modal));
-
-    return modal;
-  }
-
-  // create a dark global backdrop (re-uses existing ID if present)
-  function ensureBackdrop() {
-    let backdrop = document.getElementById(BACKDROP_ID);
-    if (!backdrop) {
-      backdrop = document.createElement('div');
-      backdrop.id = BACKDROP_ID;
-      document.body.appendChild(backdrop);
-    } else if (backdrop.parentNode !== document.body) {
-      document.body.appendChild(backdrop);
-    }
-    // default hidden style
-    Object.assign(backdrop.style, {
-      display: 'none',
-      position: 'fixed',
-      inset: '0',
-      background: 'rgba(0,0,0,0.45)',
-      zIndex: '12990',
-      pointerEvents: 'auto'
-    });
-    return backdrop;
-  }
-
-  // show/hide helpers that force higher z-indices and darker backdrop
-  function showModal(modalEl) {
-    if (!modalEl) return;
-    const backdrop = ensureBackdrop();
-
-    // darken backdrop more for calendar add modal
-    backdrop.style.background = 'rgba(0,0,0,0.65)';
-    backdrop.style.zIndex = '12990';
-    backdrop.style.display = 'block';
-
-    // lower weekly calendar modal z so our modal is always on top
-    const weekly = document.getElementById('weeklyCalendarModal');
-    if (weekly) weekly.style.zIndex = '8000';
-
-    // ensure modal appended to body and displayed
-    if (modalEl.parentNode !== document.body) document.body.appendChild(modalEl);
-    modalEl.style.display = 'flex';
-    modalEl.style.zIndex = '13000';
-    modalEl.setAttribute('aria-hidden','false');
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-
-    // clicking the backdrop hides the modal
-    backdrop.onclick = function(ev){
-      const panel = modalEl.querySelector('.modal-panel');
-      if (!panel) { hideModal(modalEl); return; }
-      const rect = panel.getBoundingClientRect();
-      if (!(ev.clientX >= rect.left && ev.clientX <= rect.right && ev.clientY >= rect.top && ev.clientY <= rect.bottom)) {
-        hideModal(modalEl);
-      }
-    };
-  }
-
-  function hideModal(modalEl) {
-    if (!modalEl) return;
-    const backdrop = document.getElementById(BACKDROP_ID);
-    if (backdrop) { backdrop.style.display = 'none'; backdrop.onclick = null; }
-    modalEl.style.display = 'none';
-    modalEl.setAttribute('aria-hidden','true');
-
-    // restore weekly calendar z-index
-    const weekly = document.getElementById('weeklyCalendarModal');
-    if (weekly) weekly.style.zIndex = '';
-
-    document.documentElement.style.overflow = '';
-    document.body.style.overflow = '';
-  }
-
-  // ingredient row builder (local to this modal). NOTE: initial state: NO rows.
-  function createIngredientRowForCalendar(container, prefill = {}) {
-    const row = document.createElement('div');
-    row.style.display = 'flex';
-    row.style.gap = '8px';
-    row.style.alignItems = 'center';
-
-    const name = document.createElement('input');
-    name.type = 'text';
-    name.placeholder = 'Ingredient name';
-    name.style.flex = '1';
-    name.style.padding = '8px 10px';
-    name.style.borderRadius = '6px';
-    name.style.border = '1px solid rgba(0,0,0,0.08)';
-
-    const qty = document.createElement('input');
-    qty.type = 'text';
-    qty.placeholder = 'Qty';
-    qty.style.width = '110px';
-    qty.style.padding = '8px 10px';
-    qty.style.borderRadius = '6px';
-    qty.style.border = '1px solid rgba(0,0,0,0.08)';
-
-    const unit = document.createElement('input');
-    unit.type = 'text';
-    unit.placeholder = 'Unit';
-    unit.style.width = '120px';
-    unit.style.padding = '8px 10px';
-    unit.style.borderRadius = '6px';
-    unit.style.border = '1px solid rgba(0,0,0,0.08)';
-
-    const remove = document.createElement('button');
-    remove.type = 'button';
-    remove.textContent = '✕';
-    Object.assign(remove.style, { border:'none', background:'transparent', cursor:'pointer', fontSize:'16px' });
-    remove.addEventListener('click', () => row.remove());
-
-    if (prefill.name) name.value = prefill.name;
-    if (prefill.qty) qty.value = prefill.qty;
-    if (prefill.unit) unit.value = prefill.unit;
-
-    row.appendChild(name);
-    row.appendChild(qty);
-    row.appendChild(unit);
-    row.appendChild(remove);
-
-    container.appendChild(row);
-    return row;
-  }
-
-  // wire open button
-  function wire() {
-    const openBtn = document.getElementById(OPEN_BTN_ID);
-    if (!openBtn) {
-      // fallback: any element with id 'calendarBtn' used earlier?
-      const fallback = document.getElementById('calendarBtn');
-      if (fallback) fallback.addEventListener('click', (e)=>{ e.preventDefault(); open(); });
-      return;
-    }
-    openBtn.addEventListener('click', (ev) => { ev.preventDefault(); open(); });
-  }
-
-  function open() {
-    const modal = ensureModal();
-    const ingContainer = modal.querySelector('#addCalendarIngredients');
-    const addIngBtn = modal.querySelector('#addCalendarIngredientBtn');
-    // ensure no initial ingredient row (user must click to add)
-    ingContainer.innerHTML = '';
-
-    // wire add ingredient only once
-    addIngBtn.onclick = (e) => {
-      e.preventDefault();
-      createIngredientRowForCalendar(ingContainer);
-    };
-
-    // prefill date with week start (optional)
-    try {
-      const sel = window.getSelectedDate ? window.getSelectedDate() : new Date();
-      const d = new Date(sel);
-      modal.querySelector('#addCalendarDate').value = d.toISOString().slice(0,10);
-    } catch(_) {}
-
-    showModal(modal);
-  }
-
-  wire();
-})();
-
 (function wireAddCalendarSaveRobust_PHPIDs() {
   const SAVE_HANDLER_ID = 'addCalendarMealSubmit';
   const MODAL_ID = 'addCalendarMealModal';
@@ -2822,9 +2585,73 @@ document.getElementById("calAddIngredientBtn").addEventListener("click", () => {
           return;
         }
 
-        // success
-        try { modalNow.style.display = 'none'; modalNow.setAttribute('aria-hidden','true'); } catch(_) {}
-        try { if (typeof reloadMealsForCurrentDate === 'function') reloadMealsForCurrentDate(); } catch(e){ console.warn(e); }
+        // success: hide modal and refresh UI
+        try { 
+          try { if (typeof hideModal === 'function') hideModal(modalNow); } catch(_) {}
+          try { modalNow.style.display = 'none'; modalNow.setAttribute('aria-hidden','true'); } catch(_) {}
+          try { 
+            const tryIds = ['addCalendarClose','addCalendarMealClose','addCalendarCancel','addCalendarCloseBtn'];
+            for (const id of tryIds) {
+              const b = document.getElementById(id);
+              if (b && b.offsetParent !== null) { b.click(); break; }
+            }
+          } catch(_) {}
+        } catch(e) { console.warn('[AddCalendarSave] close modal fallback error', e); }
+
+        function normDate(d) {
+          if (!d) return '';
+          if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+          if (/^\d{2}[\/-]\d{2}[\/-]\d{4}$/.test(d)) {
+            const parts = d.split(/[-\/]/);
+            return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+          }
+          const dt = new Date(d);
+          if (!isNaN(dt)) return dt.toISOString().slice(0,10);
+          return d;
+        }
+
+        const savedDate = normDate(payload.meal_date || '');
+        console.log('[AddCalendarSave] savedDate ->', savedDate, 'payload:', payload);
+
+        try {
+          // set page-level selected date so day view knows what to show
+          if (typeof window.setMealDate === 'function') {
+            try { window.setMealDate(savedDate); console.log('[AddCalendarSave] called setMealDate'); } catch(e) { console.warn(e); }
+          } else if (typeof window.setSelectedDate === 'function') {
+            try { window.setSelectedDate(savedDate); console.log('[AddCalendarSave] called setSelectedDate'); } catch(e) { console.warn(e); }
+          } else {
+            const jump = document.getElementById('jumpDate');
+            if (jump) {
+              try { jump.value = savedDate; jump.dispatchEvent(new Event('change')); console.log('[AddCalendarSave] set #jumpDate'); } catch(e) { console.warn(e); }
+            }
+          }
+        } catch(e){ console.warn('[AddCalendarSave] set date error', e); }
+
+        // Reload day-slot lists (await so UI updates)
+        try {
+          if (typeof reloadMealsForCurrentDate === 'function') {
+            await reloadMealsForCurrentDate(savedDate);
+            console.log('[AddCalendarSave] reloadMealsForCurrentDate completed for', savedDate);
+          } else {
+            console.warn('[AddCalendarSave] reloadMealsForCurrentDate not available');
+          }
+        } catch(e) {
+          console.warn('[AddCalendarSave] reloadMealsForCurrentDate error', e);
+        }
+
+        // Refresh weekly calendar (try a list of likely functions)
+        try {
+          const weeklyFns = ['renderWeek','renderWeeklyCalendar','renderWeeklyView','renderWeekCalendar','drawWeeklyCalendar'];
+          for (const fnName of weeklyFns) {
+            try {
+              const fn = window[fnName];
+              if (typeof fn === 'function') { try { fn(); console.log('[AddCalendarSave] called weekly render', fnName); } catch(e){ console.warn('[AddCalendarSave] error calling', fnName, e); } }
+            } catch(e){}
+          }
+          // event for any other listeners
+          try { document.dispatchEvent(new CustomEvent('mealSaved', { detail: payload })); console.log('[AddCalendarSave] dispatched mealSaved'); } catch(_) {}
+        } catch(e) { console.warn('[AddCalendarSave] weekly refresh error', e); }
+
         alert('Meal saved successfully!');
       } catch (err) {
         console.error('[AddCalendarSave] error', err);
@@ -2841,3 +2668,114 @@ document.getElementById("calAddIngredientBtn").addEventListener("click", () => {
     init().catch(e=>console.error(e));
   }
 })();
+
+async function reloadMealsForCurrentDate(dateStr) {
+  try {
+    // Determine date to load: explicit param, or page selected date function, or today
+    let dateToUse = dateStr || (typeof window.getSelectedDate === 'function' ? window.getSelectedDate() : null);
+    if (!dateToUse) {
+      const jump = document.getElementById('jumpDate');
+      if (jump && jump.value) dateToUse = jump.value;
+      else dateToUse = new Date().toISOString().slice(0,10);
+    }
+    // endpoints to try (first that returns ok JSON will be used)
+    const tryUrls = ['api/get_meals.php?date=' + encodeURIComponent(dateToUse), 'get_meals.php?date=' + encodeURIComponent(dateToUse)];
+
+    let resp = null, raw = null, json = null;
+    for (const u of tryUrls) {
+      try {
+        resp = await fetch(u, { cache: 'no-store' });
+        raw = await resp.text();
+        // try parse JSON, if parse fails continue to next url
+        try { json = raw ? JSON.parse(raw) : null; } catch(e) { json = null; }
+        if (resp.ok && json && Array.isArray(json)) break;
+      } catch (e) {
+        // network error - try next URL
+        json = null;
+      }
+    }
+
+    if (!json || !Array.isArray(json)) {
+      console.warn('[reloadMealsForCurrentDate] No JSON array returned from get_meals endpoints. Raw response:', raw);
+      return;
+    }
+
+    // normalize list by slot
+    const slots = { breakfast: [], lunch: [], dinner: [], snacks: [] };
+    json.forEach(m => {
+      // adapt to your API shape:
+      // expected minimal: m.meal_slot (e.g. 'breakfast'), m.meal_name, m.meal_id, m.remark, m.items (optional)
+      const slot = (m.meal_slot || m.slot || '').toLowerCase();
+      const s = slots[slot] || slots['breakfast']; // fallback if unknown
+      s.push(m);
+    });
+
+    // containers
+    const containerMap = {
+      breakfast: document.getElementById('breakfast-list'),
+      lunch: document.getElementById('lunch-list'),
+      dinner: document.getElementById('dinner-list'),
+      snacks: document.getElementById('snacks-list')
+    };
+
+    // helper to create a meal node
+    function createMealCard(meal) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'meal-card';
+      // basic style (optional) - you can remove or replace with your classes
+      wrapper.style.padding = '8px 10px';
+      wrapper.style.marginBottom = '8px';
+      wrapper.style.borderRadius = '8px';
+      wrapper.style.background = '#fff';
+      wrapper.style.boxShadow = '0 1px 0 rgba(0,0,0,0.03)';
+
+      const title = document.createElement('div');
+      title.style.fontWeight = '700';
+      title.textContent = meal.meal_name || meal.name || 'Unnamed meal';
+      wrapper.appendChild(title);
+
+      if (meal.remark) {
+        const r = document.createElement('div');
+        r.style.fontSize = '12px';
+        r.style.color = '#666';
+        r.textContent = meal.remark;
+        wrapper.appendChild(r);
+      }
+
+      // optional: show ingredients if present
+      const items = meal.items || meal.ingredients || [];
+      if (Array.isArray(items) && items.length) {
+        const ul = document.createElement('ul');
+        ul.style.margin = '6px 0 0 0';
+        ul.style.paddingLeft = '18px';
+        ul.style.fontSize = '13px';
+        items.slice(0,5).forEach(it => {
+          const li = document.createElement('li');
+          // attempt to display "name (qty unit)" in reasonable ways
+          const nm = it.name || it.item_name_snapshot || it.item || '';
+          const qv = it.qty_value || it.required_qty_value || it.qty || '';
+          const qu = it.qty_unit || it.required_qty_unit || it.unit || '';
+          li.textContent = nm + (qv ? ` — ${qv}${qu ? ' ' + qu : ''}` : '');
+          ul.appendChild(li);
+        });
+        wrapper.appendChild(ul);
+      }
+
+      return wrapper;
+    }
+
+    // clear and render
+    Object.keys(containerMap).forEach(k => {
+      const el = containerMap[k];
+      if (!el) return;
+      el.innerHTML = ''; // clear
+      (slots[k] || []).forEach(meal => {
+        el.appendChild(createMealCard(meal));
+      });
+    });
+
+    console.log('[reloadMealsForCurrentDate] rendered date', dateToUse);
+  } catch (err) {
+    console.error('[reloadMealsForCurrentDate] error', err);
+  }
+}
