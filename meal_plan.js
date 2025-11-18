@@ -923,6 +923,7 @@ async function filterInventoryForQuery(term){
       } catch (_) {
         dateInput.value = formatLocalDate(new Date());
       }
+      hideModal(modal);
       showModal(chooseModal);
     });
 
@@ -2141,55 +2142,60 @@ function fixIngredientModalZ() {
   const ingModal = document.getElementById("recipeDetailModal");
   if (!ingModal) return;
 
-  // Move modal to body to escape parent stacking contexts
+  // move modal to body to escape parent stacking contexts
   if (ingModal.parentNode !== document.body) {
     try { document.body.appendChild(ingModal); } catch (e) { /* ignore */ }
   }
 
-  // Ensure modal has fixed positioning
-  ingModal.style.position = ingModal.style.position || 'fixed';
-  ingModal.style.inset = ingModal.style.inset || '0';
-  ingModal.style.display = ingModal.style.display || 'flex';
-  ingModal.setAttribute('aria-hidden', 'false');
+  // ensure modal uses the shared modal stacking (same numbers as showModal)
+  const BACKDROP_ID = 'global-modal-backdrop';
+  const BACKDROP_Z = 11990;
+  const MODAL_Z    = 12000;
+  const PANEL_Z    = 12010;
 
-  // Find or create a backdrop and ensure it is placed before the modal in the DOM
-  let backdrop = document.getElementById('global-modal-backdrop') || ingModal.querySelector('.modal-backdrop');
+  // find or create the global backdrop
+  let backdrop = document.getElementById(BACKDROP_ID);
   if (!backdrop) {
     backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop';
-    try { document.body.insertBefore(backdrop, ingModal); } catch (e) { /* ignore */ }
+    backdrop.id = BACKDROP_ID;
+    document.body.appendChild(backdrop);
   } else if (backdrop.parentNode !== document.body) {
-    try { document.body.appendChild(backdrop); } catch (e) { /* ignore */ }
+    try { document.body.appendChild(backdrop); } catch(e){}
   }
 
-  // Large z-index values to guarantee visibility above other UI
-  const BACKDROP_Z = 2147483638;
-  const PANEL_Z    = 2147483647;
-  const MODAL_Z    = 2147483646;
+  try {
+    Object.assign(backdrop.style, {
+      display: 'block',
+      position: 'fixed',
+      inset: '0',
+      background: 'rgba(0,0,0,0.45)',
+      zIndex: String(BACKDROP_Z),
+      pointerEvents: 'auto'
+    });
+  } catch (e){}
 
   try {
-    backdrop.style.position = 'fixed';
-    backdrop.style.inset = '0';
-    backdrop.style.background = 'rgba(0,0,0,0.45)';
-    backdrop.style.zIndex = String(BACKDROP_Z);
-    backdrop.style.display = 'block';
-    backdrop.style.pointerEvents = 'auto';
-  } catch (e) {}
-
-  try {
-    ingModal.style.zIndex = String(MODAL_Z);
-    ingModal.style.pointerEvents = 'auto';
-  } catch (e) {}
+    // make the modal container visible and positioned like other modals
+    Object.assign(ingModal.style, {
+      display: 'flex',
+      position: 'fixed',
+      inset: '0',
+      zIndex: String(MODAL_Z),
+      pointerEvents: 'auto'
+    });
+    ingModal.setAttribute('aria-hidden','false');
+  } catch (e){}
 
   try {
     const panel = ingModal.querySelector('.modal-panel') || ingModal.querySelector('.modal-dialog') || ingModal;
     if (panel) {
       panel.style.position = panel.style.position || 'relative';
       panel.style.zIndex = String(PANEL_Z);
+      panel.style.pointerEvents = 'auto';
     }
-  } catch (e) {}
+  } catch (e){}
 
-  // Lower weekly calendar z-index slightly if present
+  // if weekly calendar exists, ensure it sits below normal modals
   if (weekly) {
     try {
       const current = Number(weekly.style.zIndex) || 0;
