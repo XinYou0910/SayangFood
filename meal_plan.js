@@ -800,22 +800,20 @@ async function filterInventoryForQuery(term){
     showModal(modal);
   }
 
-  // show modal (example)
+  // show modal (robust backdrop + z-index management)
   function showModal(modalEl) {
     if (!modalEl) return;
 
-    // ensure modal element is a direct child of <body> to avoid stacking-context traps
-    try {
-      if (modalEl.parentNode !== document.body) {
-        document.body.appendChild(modalEl);
-      }
-    } catch (e) {
-      // ignore if append fails
-    }
+    // ensure modal is attached to body so it escapes any stacking contexts
+    try { if (modalEl.parentNode !== document.body) document.body.appendChild(modalEl); } catch (e){}
 
-    // create a dedicated backdrop for this show call (unique id per call)
+    // panel (actual visual dialog) inside the modal container
+    const panel = modalEl.querySelector('.modal-panel') || modalEl.querySelector('.modal-dialog') || modalEl;
+
+    // single global backdrop id used across modals
     const BACKDROP_ID = 'global-modal-backdrop';
     let backdrop = document.getElementById(BACKDROP_ID);
+
     if (!backdrop) {
       backdrop = document.createElement('div');
       backdrop.id = BACKDROP_ID;
@@ -824,12 +822,16 @@ async function filterInventoryForQuery(term){
       document.body.appendChild(backdrop);
     }
 
-    // VERY HIGH z-index numbers to overcome existing modals/styling
-    // (use near max safe int for cross-browser)
-    const BACKDROP_Z = 2147483640;    // backdrop below the panel
-    const PANEL_Z    = 2147483645;    // panel content above backdrop
-    const MODAL_Z    = 2147483646;    // container above everything
+    // Ensure backdrop sits before modal in DOM so panel can be higher
+    try { if (backdrop.nextSibling !== modalEl) document.body.insertBefore(backdrop, modalEl); } catch(e){}
 
+    // z-index ordering (backdrop < modal container < panel)
+    // Keep these modest (not near 2147483647) to avoid platform edge cases
+    const BACKDROP_Z = 11990;
+    const MODAL_Z    = 12000;
+    const PANEL_Z    = 12010;
+
+    // style backdrop
     Object.assign(backdrop.style, {
       display: 'block',
       position: 'fixed',
@@ -839,10 +841,7 @@ async function filterInventoryForQuery(term){
       zIndex: String(BACKDROP_Z)
     });
 
-    // find panel inside modal if present
-    const panel = modalEl.querySelector('.modal-panel') || modalEl.querySelector('.modal-dialog') || modalEl;
-
-    // position and z-index the modal container and panel above backdrop
+    // show/position modal container
     try {
       modalEl.style.display = 'flex';
       modalEl.style.alignItems = modalEl.style.alignItems || 'center';
@@ -851,19 +850,25 @@ async function filterInventoryForQuery(term){
       modalEl.style.inset = '0';
       modalEl.style.zIndex = String(MODAL_Z);
       modalEl.setAttribute('aria-hidden', 'false');
-    } catch (e) {}
+      modalEl.style.pointerEvents = 'auto';
+    } catch (e){}
 
+    // ensure panel is above modal container & backdrop
     if (panel) {
-      panel.style.position = panel.style.position || 'relative';
-      panel.style.zIndex = String(PANEL_Z);
+      try {
+        // if panel is not already a child of body, leave it — we control z-indexs
+        panel.style.position = panel.style.position || 'relative';
+        panel.style.zIndex = String(PANEL_Z);
+        panel.style.pointerEvents = 'auto';
+      } catch(e){}
     }
 
-    // lock scroll
+    // lock background scroll while modal open
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
 
-    // clicking outside the panel closes this modal
-    backdrop.onclick = function (ev) {
+    // backdrop click closes modal but won't block panel because panel z-index is higher
+    backdrop.onclick = function(ev) {
       if (!panel) {
         hideModal(modalEl);
         return;
@@ -875,23 +880,23 @@ async function filterInventoryForQuery(term){
     };
   }
 
-  document.dispatchEvent(new Event("shownWeekly"));
-
   function hideModal(modalEl) {
     if (!modalEl) return;
 
-    // hide modal
-    modalEl.style.display = 'none';
-    modalEl.setAttribute('aria-hidden', 'true');
+    try {
+      modalEl.style.display = 'none';
+      modalEl.setAttribute('aria-hidden', 'true');
+      modalEl.style.pointerEvents = 'none';
+    } catch(e){}
 
-    // hide the global backdrop
     const backdrop = document.getElementById('global-modal-backdrop');
     if (backdrop) {
       backdrop.style.display = 'none';
       backdrop.onclick = null;
+      backdrop.style.pointerEvents = 'none';
     }
 
-    // restore scrolling (if no other modals rely on this, this is fine)
+    // restore page scroll
     document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
   }
@@ -1222,13 +1227,33 @@ async function filterInventoryForQuery(term){
       const existing = document.getElementById('mealDetailDlg');
       if (existing) existing.remove();
 
-      const addMealModal = document.getElementById('addMealModal');
-      const addOpen = addMealModal && addMealModal.getAttribute('aria-hidden') === 'false' && addMealModal.style.display !== 'none';
-      if (!addOpen && backdrop) {
-        backdrop.style.display = 'none';
-        backdrop.style.background = '';
+      // hide any global backdrops that may have been created
+      const globalBackdrop = document.getElementById('global-modal-backdrop');
+      if (globalBackdrop) {
+        globalBackdrop.style.display = 'none';
+        globalBackdrop.onclick = null;
+        // optionally remove from DOM to avoid conflicts:
+        // globalBackdrop.remove();
       }
 
+      const addMealBackdropEl = document.getElementById('addMealBackdrop');
+      if (addMealBackdropEl) {
+        // only hide it if the addMealModal is not open
+        const addMealModal = document.getElementById('addMealModal');
+        const addOpen = addMealModal && addMealModal.getAttribute('aria-hidden') === 'false' && addMealModal.style.display !== 'none';
+        if (!addOpen) {
+          addMealBackdropEl.style.display = 'none';
+          addMealBackdropEl.style.background = '';
+          addMealBackdropEl.onclick = null;
+        }
+      }
+
+      // Also hide any modal backdrops that are direct children (fallback)
+      document.querySelectorAll('.modal-backdrop').forEach(b => {
+        try { b.style.display = 'none'; b.onclick = null; } catch(e){}
+      });
+
+      // ensure scrolling is restored
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
     }
@@ -1622,8 +1647,13 @@ async function filterInventoryForQuery(term){
     modal.style.display = 'none';
 
     if (backdrop) {
-      backdrop.style.display = 'none';
-      backdrop.style.background = '';
+      backdrop.style.transition = 'background 180ms ease, opacity 180ms ease, backdrop-filter 180ms ease';
+      backdrop.style.background = 'rgba(0,0,0,0.0)';
+      backdrop.style.backdropFilter = 'blur(0px)';
+      backdrop.style.opacity = '0';
+      setTimeout(() => {
+        try { backdrop.style.display = 'none'; backdrop.onclick = null; } catch(e){}
+      }, 200);
     }
 
     document.documentElement.style.overflow = '';
@@ -1958,11 +1988,31 @@ async function filterInventoryForQuery(term){
           tile.style.justifyContent = 'center';
           tile.style.margin = '6px 8px'; // small margin around each tile
 
-          // click opens detail modal using mealSnapshots (if present)
           tile.addEventListener('click', () => {
+            // If we have the raw meal data from the weekly fetch, build a lightweight snapshot
+            // so the detail modal can render ingredients and remark immediately.
             let snapshot = null;
+
+            if (it && it.raw) {
+              snapshot = {
+                // unify field names used by showMealDetailModal
+                ingredients: Array.isArray(it.raw.ingredients) ? it.raw.ingredients.map(ing => ({
+                  // normalize to what showMealDetailModal expects: name, qty_value, qty_unit, qty_text, expiry_date, storage_place
+                  name: ing.item_name_snapshot ?? ing.item_name ?? ing.name ?? ing.ingredient_name ?? '',
+                  qty_value: ing.required_qty_value ?? ing.qty_value ?? ing.qty ?? '',
+                  qty_unit: ing.required_qty_unit ?? ing.qty_unit ?? ing.unit ?? '',
+                  qty_text: ing.required_qty_text ?? ing.qty_text ?? '',
+                  expiry_date: ing.expiry_date ?? null,
+                  storage_place: ing.storage_place ?? null
+                })) : [],
+                remark: it.raw.meal_remark ?? it.raw.remark ?? ''
+              };
+              showMealDetailModal(it.name, snapshot);
+              return;
+            }
+
+            // fallback to existing snapshot lookup (keeps behavior for tiles loaded from current day)
             if (window.mealSnapshots) {
-              // try to find snapshot by exact meal_name and (optionally) same meal_date
               for (const k of Object.keys(window.mealSnapshots)) {
                 const s = window.mealSnapshots[k];
                 if (!s) continue;
