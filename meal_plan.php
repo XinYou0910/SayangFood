@@ -99,9 +99,9 @@ if (!isset($_SESSION['user_id'])) {
               </div>
 
               <div class="slot">
-                <div class="slot-title">Other</div>
-                <div class="meal-row" id="other-list"></div>
-                <div class="slot-controls"><button class="slot-add" data-slot="other">+</button></div>
+                <div class="slot-title">Snacks</div>
+                <div class="meal-row" id="snacks-list"></div>
+                <div class="slot-controls"><button class="slot-add" data-slot="snacks">+</button></div>
               </div>
             </div>
           </div>
@@ -233,7 +233,7 @@ if (!isset($_SESSION['user_id'])) {
           <option value="breakfast">Breakfast</option>
           <option value="lunch" selected>Lunch</option>
           <option value="dinner">Dinner</option>
-          <option value="other">Other</option>
+          <option value="snacks">Snacks</option>
         </select>
 
         <!-- NEW: remark input -->
@@ -243,6 +243,84 @@ if (!isset($_SESSION['user_id'])) {
       <footer class="modal-footer">
         <button id="chooseDateSlotCancel" class="btn-light">Cancel</button>
         <button id="chooseDateSlotConfirm" class="btn-green">Add</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- NEW: Add Calendar Meal Modal -->
+  <div id="addCalendarMealModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="addCalendarMealTitle">
+    <div class="modal-backdrop" id="addCalendarMealBackdrop"></div>
+
+    <div class="modal-panel" role="document" style="width:min(760px, 95%); max-height:85vh;">
+      <header class="modal-header">
+        <h2 id="addCalendarMealTitle">Add Meal</h2>
+        <button id="addCalendarMealClose" class="modal-close" aria-label="Close">&times;</button>
+      </header>
+
+      <div class="modal-body" style="overflow:auto; padding:10px 6px;">
+        <form id="addCalendarMealForm" autocomplete="off">
+
+          <!-- Date -->
+          <div style="margin-bottom:20px;">
+            <label style="display:block; font-size:13px; font-weight:700; color:var(--primary-green); margin-bottom:8px;">
+              Date
+            </label>
+            <input type="date" id="calMealDate" name="meal_date"
+              style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border);">
+          </div>
+
+          <!-- Slot -->
+          <div style="margin-bottom:20px;">
+            <label style="display:block; font-size:13px; font-weight:700; color:var(--primary-green); margin-bottom:8px;">
+              Slot
+            </label>
+            <select id="calMealSlot" name="meal_slot"
+              style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border);">
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch">Lunch</option>
+              <option value="dinner">Dinner</option>
+              <option value="snacks">Snacks</option>
+            </select>
+          </div>
+
+          <!-- Meal Name -->
+          <div style="margin-bottom:20px;">
+            <label style="display:block; font-size:13px; font-weight:700; color:var(--primary-green); margin-bottom:8px;">
+              Meal Name
+            </label>
+            <input type="text" name="meal_name" placeholder="e.g. Fried Rice"
+              style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border);">
+          </div>
+
+          <!-- Ingredients -->
+          <div style="margin-bottom:20px;">
+            <label style="font-size:16px; font-weight:700; color:var(--primary-green); display:block; margin-bottom:12px;">
+              Ingredients
+            </label>
+
+            <div id="calIngredientsContainer"></div>
+
+            <button type="button" id="calAddIngredientBtn"
+              style="margin-top:12px; padding:10px 16px; border-radius:8px; border:1px solid var(--border); background:#fff; font-weight:700; cursor:pointer;">
+              + Add ingredient
+            </button>
+          </div>
+
+          <!-- Remark -->
+          <div style="margin-bottom:20px;">
+            <label style="display:block; font-size:13px; font-weight:700; color:var(--primary-green); margin-bottom:8px;">
+              Remark (optional)
+            </label>
+            <textarea name="meal_remark" placeholder="Optional note..."
+              style="width:100%; padding:10px 14px; min-height:80px; border-radius:8px; border:1px solid var(--border); resize:vertical;"></textarea>
+          </div>
+
+        </form>
+      </div>
+
+      <footer class="modal-footer" style="justify-content:flex-end; gap:12px;">
+        <button id="addCalendarMealCancel" class="btn-light">Cancel</button>
+        <button id="addCalendarMealSubmit" class="btn-green" type="button">Add Meal</button>
       </footer>
     </div>
   </div>
