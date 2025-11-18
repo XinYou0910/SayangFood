@@ -1016,7 +1016,8 @@ async function filterInventoryForQuery(term){
       }
 
       window.demoMeals = { breakfast:[], lunch:[], dinner:[], other:[] };
-      window.mealSnapshots = window.mealSnapshots || {};
+      // Clear snapshots for the new date so old snapshots from other dates won't interfere
+      window.mealSnapshots = {};
 
       json.meals.forEach((m, idx) => {
         const slotKey = (m.meal_slot || '').toLowerCase();
@@ -1031,6 +1032,7 @@ async function filterInventoryForQuery(term){
         window.mealSnapshots[key] = {
           slot,
           index: window.demoMeals[slot].length - 1,
+          meal_date: yyyy,               // EXPLICIT date scoping
           meal_name: m.meal_name,
           remark: m.meal_remark || '',
           ingredients: (Array.isArray(m.ingredients) ? m.ingredients.map(it => ({
@@ -1082,21 +1084,29 @@ async function filterInventoryForQuery(term){
     const slot = tile.dataset.slot;
     const index = tile.dataset.index != null ? Number(tile.dataset.index) : null;
 
-    // find snapshot if available
+    // find snapshot if available AND matching the currently selected date
     let snapshot = null;
+    const selectedDateStr = (function() {
+      try { return formatLocalDate(state.selected); } catch(_) { return formatLocalDate(new Date()); }
+    })();
+
     if (window.mealSnapshots) {
+      // prefer exact slot+index+date match
       for (const k of Object.keys(window.mealSnapshots)) {
         const s = window.mealSnapshots[k];
         if (!s) continue;
-        if (slot != null && index != null) {
-          if (s.slot === slot && Number(s.index) === index) { snapshot = s; break; }
+        if (slot != null && index != null && s.slot === slot && Number(s.index) === index && s.meal_date === selectedDateStr) {
+          snapshot = s;
+          break;
         }
       }
+
+      // fallback: name match but still require the same date to avoid cross-date collisions
       if (!snapshot) {
-        // fallback: try to match by name
         for (const k of Object.keys(window.mealSnapshots)) {
           const s = window.mealSnapshots[k];
-          if (s && s.meal_name === name) { snapshot = s; break; }
+          if (!s) continue;
+          if (s.meal_name === name && s.meal_date === selectedDateStr) { snapshot = s; break; }
         }
       }
     }
