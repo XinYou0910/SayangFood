@@ -880,3 +880,11 @@ html, body {
 #recipeDetailModalBackdrop {
     z-index: 14990 !important;
 }
+
+#recipeDetailModal,
+#recipeDetailModal .modal-panel,
+#recipeDetailModal .modal-dialog {
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  pointer-events: auto !important;
+}

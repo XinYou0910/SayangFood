@@ -174,9 +174,8 @@ async function filterInventoryForQuery(term){
 (function () {
   const state = { selected: new Date() };
 
-const suggestionsStatic = ["Fried Rice","Fried Noodle","Fried Chicken","Steam Egg","Pan Cake","Fried Vegetable"];
-// expiry items will now be loaded from food_analytics_data.php
-
+  const suggestionsStatic = ["Fried Rice","Fried Noodle","Fried Chicken","Steam Egg","Pan Cake","Fried Vegetable"];
+  // expiry items will now be loaded from food_analytics_data.php
 
   // UI meals store (names only)
   window.demoMeals = window.demoMeals || { breakfast:[], lunch:[], dinner:[], other:[] };
@@ -281,25 +280,61 @@ const suggestionsStatic = ["Fried Rice","Fried Noodle","Fried Chicken","Steam Eg
     renderMeals();
   };
 
-async function renderExpiring() {
-  const tb = document.getElementById("expiringList");
-  if (!tb) return;
+  async function renderExpiring() {
+    const tb = document.getElementById("expiringList");
+    if (!tb) return;
 
-  // show a temporary loading row
-  tb.innerHTML = `
-    <tr>
-      <td colspan="3" class="empty-row">Loading items near expiry…</td>
-    </tr>
-  `;
+    // show a temporary loading row
+    tb.innerHTML = `
+      <tr>
+        <td colspan="3" class="empty-row">Loading items near expiry…</td>
+      </tr>
+    `;
 
-  let list = [];
-  try {
-    // same source as food analytics – adjust path if needed
-    const res  = await fetch(`food_analytics_data.php?range=30`, { cache: "no-store" });
-    const data = await res.json();
-    list = Array.isArray(data.expiry_soon) ? data.expiry_soon : [];
-  } catch (err) {
-    console.error("[meal_plan] failed to load expiry_soon:", err);
+    let list = [];
+    try {
+      // same source as food analytics – adjust path if needed
+      const res  = await fetch(`food_analytics_data.php?range=30`, { cache: "no-store" });
+      const data = await res.json();
+      list = Array.isArray(data.expiry_soon) ? data.expiry_soon : [];
+    } catch (err) {
+      console.error("[meal_plan] failed to load expiry_soon:", err);
+    }
+
+    // no data case
+    if (!list || list.length === 0) {
+      tb.innerHTML = `
+        <tr>
+          <td colspan="3" class="empty-row">No items near expiry.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    // helper to compute "X day(s)" from expiry_date
+    const todayMs = (new Date()).setHours(0,0,0,0);
+
+    tb.innerHTML = list.map(item => {
+      const name  = escapeHtml(item.item_name || "");
+      const qty   = escapeHtml(item.quantity || "");        // e.g. "1 kg"
+      const exp   = item.expiry_date ? new Date(item.expiry_date) : null;
+
+      let daysLeftLabel = "-";
+      if (exp && !isNaN(exp)) {
+        const diffDays = Math.max(0, Math.round((exp.setHours(0,0,0,0) - todayMs) / 86400000));
+        if (diffDays === 0) daysLeftLabel = "Today";
+        else if (diffDays === 1) daysLeftLabel = "1 day";
+        else daysLeftLabel = `${diffDays} days`;
+      }
+
+      return `
+        <tr>
+          <td>${name}</td>
+          <td>${qty}</td>
+          <td>${daysLeftLabel}</td>
+        </tr>
+      `;
+    }).join("");
   }
 
   // ----------------- renderSuggestions & recipe modal flow -----------------
@@ -765,22 +800,20 @@ async function renderExpiring() {
     showModal(modal);
   }
 
-  // show modal (example)
+  // show modal (robust backdrop + z-index management)
   function showModal(modalEl) {
     if (!modalEl) return;
 
-    // ensure modal element is a direct child of <body> to avoid stacking-context traps
-    try {
-      if (modalEl.parentNode !== document.body) {
-        document.body.appendChild(modalEl);
-      }
-    } catch (e) {
-      // ignore if append fails
-    }
+    // ensure modal is attached to body so it escapes any stacking contexts
+    try { if (modalEl.parentNode !== document.body) document.body.appendChild(modalEl); } catch (e){}
 
-    // create a dedicated backdrop for this show call (unique id per call)
+    // panel (actual visual dialog) inside the modal container
+    const panel = modalEl.querySelector('.modal-panel') || modalEl.querySelector('.modal-dialog') || modalEl;
+
+    // single global backdrop id used across modals
     const BACKDROP_ID = 'global-modal-backdrop';
     let backdrop = document.getElementById(BACKDROP_ID);
+
     if (!backdrop) {
       backdrop = document.createElement('div');
       backdrop.id = BACKDROP_ID;
@@ -789,12 +822,16 @@ async function renderExpiring() {
       document.body.appendChild(backdrop);
     }
 
-    // VERY HIGH z-index numbers to overcome existing modals/styling
-    // (use near max safe int for cross-browser)
-    const BACKDROP_Z = 2147483640;    // backdrop below the panel
-    const PANEL_Z    = 2147483645;    // panel content above backdrop
-    const MODAL_Z    = 2147483646;    // container above everything
+    // Ensure backdrop sits before modal in DOM so panel can be higher
+    try { if (backdrop.nextSibling !== modalEl) document.body.insertBefore(backdrop, modalEl); } catch(e){}
 
+    // z-index ordering (backdrop < modal container < panel)
+    // Keep these modest (not near 2147483647) to avoid platform edge cases
+    const BACKDROP_Z = 11990;
+    const MODAL_Z    = 12000;
+    const PANEL_Z    = 12010;
+
+    // style backdrop
     Object.assign(backdrop.style, {
       display: 'block',
       position: 'fixed',
@@ -804,10 +841,7 @@ async function renderExpiring() {
       zIndex: String(BACKDROP_Z)
     });
 
-    // find panel inside modal if present
-    const panel = modalEl.querySelector('.modal-panel') || modalEl.querySelector('.modal-dialog') || modalEl;
-
-    // position and z-index the modal container and panel above backdrop
+    // show/position modal container
     try {
       modalEl.style.display = 'flex';
       modalEl.style.alignItems = modalEl.style.alignItems || 'center';
@@ -816,19 +850,25 @@ async function renderExpiring() {
       modalEl.style.inset = '0';
       modalEl.style.zIndex = String(MODAL_Z);
       modalEl.setAttribute('aria-hidden', 'false');
-    } catch (e) {}
+      modalEl.style.pointerEvents = 'auto';
+    } catch (e){}
 
+    // ensure panel is above modal container & backdrop
     if (panel) {
-      panel.style.position = panel.style.position || 'relative';
-      panel.style.zIndex = String(PANEL_Z);
+      try {
+        // if panel is not already a child of body, leave it — we control z-indexs
+        panel.style.position = panel.style.position || 'relative';
+        panel.style.zIndex = String(PANEL_Z);
+        panel.style.pointerEvents = 'auto';
+      } catch(e){}
     }
 
-    // lock scroll
+    // lock background scroll while modal open
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
 
-    // clicking outside the panel closes this modal
-    backdrop.onclick = function (ev) {
+    // backdrop click closes modal but won't block panel because panel z-index is higher
+    backdrop.onclick = function(ev) {
       if (!panel) {
         hideModal(modalEl);
         return;
@@ -840,23 +880,23 @@ async function renderExpiring() {
     };
   }
 
-  document.dispatchEvent(new Event("shownWeekly"));
-
   function hideModal(modalEl) {
     if (!modalEl) return;
 
-    // hide modal
-    modalEl.style.display = 'none';
-    modalEl.setAttribute('aria-hidden', 'true');
+    try {
+      modalEl.style.display = 'none';
+      modalEl.setAttribute('aria-hidden', 'true');
+      modalEl.style.pointerEvents = 'none';
+    } catch(e){}
 
-    // hide the global backdrop
     const backdrop = document.getElementById('global-modal-backdrop');
     if (backdrop) {
       backdrop.style.display = 'none';
       backdrop.onclick = null;
+      backdrop.style.pointerEvents = 'none';
     }
 
-    // restore scrolling (if no other modals rely on this, this is fine)
+    // restore page scroll
     document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
   }
@@ -981,7 +1021,8 @@ async function renderExpiring() {
       }
 
       window.demoMeals = { breakfast:[], lunch:[], dinner:[], other:[] };
-      window.mealSnapshots = window.mealSnapshots || {};
+      // Clear snapshots for the new date so old snapshots from other dates won't interfere
+      window.mealSnapshots = {};
 
       json.meals.forEach((m, idx) => {
         const slotKey = (m.meal_slot || '').toLowerCase();
@@ -996,6 +1037,7 @@ async function renderExpiring() {
         window.mealSnapshots[key] = {
           slot,
           index: window.demoMeals[slot].length - 1,
+          meal_date: yyyy,               // EXPLICIT date scoping
           meal_name: m.meal_name,
           remark: m.meal_remark || '',
           ingredients: (Array.isArray(m.ingredients) ? m.ingredients.map(it => ({
@@ -1047,21 +1089,29 @@ async function renderExpiring() {
     const slot = tile.dataset.slot;
     const index = tile.dataset.index != null ? Number(tile.dataset.index) : null;
 
-    // find snapshot if available
+    // find snapshot if available AND matching the currently selected date
     let snapshot = null;
+    const selectedDateStr = (function() {
+      try { return formatLocalDate(state.selected); } catch(_) { return formatLocalDate(new Date()); }
+    })();
+
     if (window.mealSnapshots) {
+      // prefer exact slot+index+date match
       for (const k of Object.keys(window.mealSnapshots)) {
         const s = window.mealSnapshots[k];
         if (!s) continue;
-        if (slot != null && index != null) {
-          if (s.slot === slot && Number(s.index) === index) { snapshot = s; break; }
+        if (slot != null && index != null && s.slot === slot && Number(s.index) === index && s.meal_date === selectedDateStr) {
+          snapshot = s;
+          break;
         }
       }
+
+      // fallback: name match but still require the same date to avoid cross-date collisions
       if (!snapshot) {
-        // fallback: try to match by name
         for (const k of Object.keys(window.mealSnapshots)) {
           const s = window.mealSnapshots[k];
-          if (s && s.meal_name === name) { snapshot = s; break; }
+          if (!s) continue;
+          if (s.meal_name === name && s.meal_date === selectedDateStr) { snapshot = s; break; }
         }
       }
     }
@@ -1177,13 +1227,33 @@ async function renderExpiring() {
       const existing = document.getElementById('mealDetailDlg');
       if (existing) existing.remove();
 
-      const addMealModal = document.getElementById('addMealModal');
-      const addOpen = addMealModal && addMealModal.getAttribute('aria-hidden') === 'false' && addMealModal.style.display !== 'none';
-      if (!addOpen && backdrop) {
-        backdrop.style.display = 'none';
-        backdrop.style.background = '';
+      // hide any global backdrops that may have been created
+      const globalBackdrop = document.getElementById('global-modal-backdrop');
+      if (globalBackdrop) {
+        globalBackdrop.style.display = 'none';
+        globalBackdrop.onclick = null;
+        // optionally remove from DOM to avoid conflicts:
+        // globalBackdrop.remove();
       }
 
+      const addMealBackdropEl = document.getElementById('addMealBackdrop');
+      if (addMealBackdropEl) {
+        // only hide it if the addMealModal is not open
+        const addMealModal = document.getElementById('addMealModal');
+        const addOpen = addMealModal && addMealModal.getAttribute('aria-hidden') === 'false' && addMealModal.style.display !== 'none';
+        if (!addOpen) {
+          addMealBackdropEl.style.display = 'none';
+          addMealBackdropEl.style.background = '';
+          addMealBackdropEl.onclick = null;
+        }
+      }
+
+      // Also hide any modal backdrops that are direct children (fallback)
+      document.querySelectorAll('.modal-backdrop').forEach(b => {
+        try { b.style.display = 'none'; b.onclick = null; } catch(e){}
+      });
+
+      // ensure scrolling is restored
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
     }
@@ -1198,65 +1268,6 @@ async function renderExpiring() {
     renderExpiring();
     renderMeals();
     attachMealTileClickHandlers();
-    
-    // If we arrived from a notification, open the meal detail and navigate to its date
-    try {
-      const shouldOpen = sessionStorage.getItem('shouldOpenMealDetail');
-      const mealPlanData = sessionStorage.getItem('mealPlanData');
-      if (shouldOpen === 'true' && mealPlanData) {
-        console.log('[meal_plan] notification present, processing mealPlanData');
-        let meal = null;
-        try { meal = JSON.parse(mealPlanData); } catch (e) { console.error('[meal_plan] failed to parse mealPlanData', e); }
-        // clear storage so it doesn't trigger again
-        sessionStorage.removeItem('shouldOpenMealDetail');
-        sessionStorage.removeItem('mealPlanData');
-
-        if (meal && meal.meal_date) {
-          // set selected date
-          try {
-            const [y,m,d] = meal.meal_date.split('-').map(Number);
-            state.selected = new Date(y, m-1, d);
-            renderStrip(); renderDayTitle();
-            // reload meals for this date
-            await loadMealsForDate(state.selected);
-            renderMeals();
-            attachMealTileClickHandlers();
-          } catch(err) {
-            console.error('[meal_plan] error setting selected date', err);
-          }
-        }
-
-        // prepare snapshot and fetch ingredients if meal_id present
-        const snapshot = { meal_name: meal?.meal_name || '', slot: meal?.meal_slot || '', remark: meal?.meal_remark || '', ingredients: [] };
-        if (meal && meal.meal_id) {
-          try {
-            const resp = await fetch(`api/get_meal_ingredients.php?meal_id=${encodeURIComponent(meal.meal_id)}&user_id=${encodeURIComponent(window.CURRENT_USER_ID||0)}`);
-            if (resp.ok) {
-              const json = await resp.json();
-              if (json && json.ok && Array.isArray(json.ingredients)) {
-                snapshot.ingredients = json.ingredients.map(it => ({
-                  name: it.item_name || it.item_name_snapshot || '',
-                  qty_value: it.required_qty_value ?? null,
-                  qty_unit: it.required_qty_unit || '',
-                  qty_text: it.required_qty_text || '',
-                  expiry_date: it.expiry_date || null,
-                  storage_place: it.storage_place || null
-                }));
-              }
-            }
-          } catch (err) { console.error('[meal_plan] failed to fetch meal ingredients', err); }
-        }
-
-        // show detail modal
-        try {
-          if (typeof showMealDetailModal === 'function') {
-            showMealDetailModal(snapshot.meal_name || meal?.meal_name || '', snapshot);
-          } else {
-            alert(`Meal: ${meal?.meal_name || snapshot.meal_name}\nDate: ${meal?.meal_date || ''}\nSlot: ${meal?.meal_slot || ''}`);
-          }
-        } catch (err) { console.error('[meal_plan] error opening meal detail modal', err); }
-      }
-    } catch (e) { console.error('[meal_plan] notification processing error', e); }
   });
 
   window.collectPlanPayload = function(){
@@ -1279,7 +1290,7 @@ async function renderExpiring() {
     return payload;
   };
 
-}; // end main IIFE
+})(); // end main IIFE
 
 // ------------------------ Add Meal Modal (single header + ingredient rows) ------------------------
 (function(){
@@ -1636,8 +1647,13 @@ async function renderExpiring() {
     modal.style.display = 'none';
 
     if (backdrop) {
-      backdrop.style.display = 'none';
-      backdrop.style.background = '';
+      backdrop.style.transition = 'background 180ms ease, opacity 180ms ease, backdrop-filter 180ms ease';
+      backdrop.style.background = 'rgba(0,0,0,0.0)';
+      backdrop.style.backdropFilter = 'blur(0px)';
+      backdrop.style.opacity = '0';
+      setTimeout(() => {
+        try { backdrop.style.display = 'none'; backdrop.onclick = null; } catch(e){}
+      }, 200);
     }
 
     document.documentElement.style.overflow = '';
@@ -1972,11 +1988,31 @@ async function renderExpiring() {
           tile.style.justifyContent = 'center';
           tile.style.margin = '6px 8px'; // small margin around each tile
 
-          // click opens detail modal using mealSnapshots (if present)
           tile.addEventListener('click', () => {
+            // If we have the raw meal data from the weekly fetch, build a lightweight snapshot
+            // so the detail modal can render ingredients and remark immediately.
             let snapshot = null;
+
+            if (it && it.raw) {
+              snapshot = {
+                // unify field names used by showMealDetailModal
+                ingredients: Array.isArray(it.raw.ingredients) ? it.raw.ingredients.map(ing => ({
+                  // normalize to what showMealDetailModal expects: name, qty_value, qty_unit, qty_text, expiry_date, storage_place
+                  name: ing.item_name_snapshot ?? ing.item_name ?? ing.name ?? ing.ingredient_name ?? '',
+                  qty_value: ing.required_qty_value ?? ing.qty_value ?? ing.qty ?? '',
+                  qty_unit: ing.required_qty_unit ?? ing.qty_unit ?? ing.unit ?? '',
+                  qty_text: ing.required_qty_text ?? ing.qty_text ?? '',
+                  expiry_date: ing.expiry_date ?? null,
+                  storage_place: ing.storage_place ?? null
+                })) : [],
+                remark: it.raw.meal_remark ?? it.raw.remark ?? ''
+              };
+              showMealDetailModal(it.name, snapshot);
+              return;
+            }
+
+            // fallback to existing snapshot lookup (keeps behavior for tiles loaded from current day)
             if (window.mealSnapshots) {
-              // try to find snapshot by exact meal_name and (optionally) same meal_date
               for (const k of Object.keys(window.mealSnapshots)) {
                 const s = window.mealSnapshots[k];
                 if (!s) continue;
@@ -2160,4 +2196,4 @@ function fixIngredientModalZ() {
       if (!current || current > 8000) weekly.style.zIndex = '8000';
     } catch (e) {}
   }
-}})();
+}
